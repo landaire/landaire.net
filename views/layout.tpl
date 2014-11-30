@@ -14,6 +14,7 @@
     </div>
 
 {% block javascript %}
+    <script src="//cdnjs.cloudflare.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/js/bootstrap.min.js"></script>
 {% endblock %}
 </body>
