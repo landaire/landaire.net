@@ -16,4 +16,10 @@ var routes = []Route{
 		Pattern:     "/",
 		HandlerFunc: PortfolioIndex,
 	},
+	Route{
+		Name:        "id3_fix",
+		Method:      "GET",
+		Pattern:     "/id3/fix",
+		HandlerFunc: Id3FixSong,
+	},
 }
