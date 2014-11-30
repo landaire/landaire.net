@@ -5,7 +5,10 @@ import (
 
 	"github.com/codegangsta/negroni"
 	"github.com/gorilla/mux"
+	nlogrus "github.com/meatballhat/negroni-logrus"
 )
+
+var Log = nlogrus.NewMiddleware()
 
 func main() {
 	port := ":" + os.Getenv("PORT")
@@ -24,6 +27,7 @@ func main() {
 	}
 
 	n := negroni.Classic()
+	n.Use(Log)
 	n.UseHandler(router)
 	n.Run(port)
 }
