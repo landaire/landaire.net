@@ -10,19 +10,18 @@ The XVal API allows anyone to decrypt the x-value displayed on the system info o
 
 
 - [Up](https://github.com/landaire/Up)
-Up was a project I had started in an attempt to make a cross-platform FATX (File Allocation Table for Xbox) file system utility when I was 16 years old. It was my first *real* endeavour into C++, and it really taught me a lot. The project was open-sourced February 18, 2012 after about a month or two of off and on development. It currently has support for OS X and Windows, but is definitely compilable on Linux (yet only tested on Ubuntu) and supports reading operations on both Xbox 360-formatted USB drives and hard disks.
+A cross-platform FATX (File Allocation Table for Xbox) file system utility. Currently has support for OS X and Windows, Linux (only tested on Ubuntu) and supports reading operations on both Xbox 360-formatted USB drives and hard disks.
 
 
 - [Party Buffalo](https://code.google.com/p/party-buffalo)
-Party Buffalo was yet another FATX file system utility I had started developing in August of 2010 when I was 13 years old. It started out as a project to learn more about C# and a simple file system, while at the same time providing a tool for the Xbox 360 community. At the time there was really no decent *free* FATX utility, so I decided to make one. It was the first tool to work for almost any hard drive (other utilities would only work for 20 GB, 60 GB, or 120 GB HDDs) without hardcoding offsets, and was also the first to support reading metadata for various files so users didn't have to blindly figure out what things were on their hard drive. This included reading cached system files when applicable, [STFS](http://free60.org/STFS) metadata, and other types of system files. The project was officially discontinued in 2013, after receiving over 1 million downloads.
+Party Buffalo yet another FATX file system utility I had started developing in August of 2010 when I was 13 years old. It started out as a project to learn more about C# and a simple file system, while at the same time providing a tool for the Xbox 360 community. At the time there was really no decent *free* FATX utility, so I decided to make one. It was the first tool to work for almost any hard drive (other utilities would only work for 20 GB, 60 GB, or 120 GB HDDs) without hardcoding offsets, and was also the first to support reading metadata for various files so users didn't have to blindly figure out what things were on their hard drive. This included reading cached system files when applicable, [STFS](http://free60.org/STFS) metadata, and other types of system files. The project was officially discontinued in 2013, after receiving over 1 million downloads.
 
 - [addpaths.cpp](https://gist.github.com/landaire/3168270)
-addpaths.cpp is an app for Xbox 360 development kits, which allows users to mount additional system paths so that they can be explored using the remote file system viewing utility called Xbox 360 Neighborhood, which is included in the official Xbox 360 SDK.
+An app for Xbox 360 development kits which allows users to mount additional system paths so that they can be explored from PCs using Xbox 360 Neighborhood (included in the official Xbox 360 SDK).
 
-- [quote_gabek](https://github.com/landaire/quote_gabek)
-[@QuotesGabek](http://twitter.com/QuotesGabek) was a twitter bot I created to constantly annoy my friend [Gabriel Kirkpatrick](http://twitter.com/gabe_k) by quoting his tweets and adding random stupid things to what he said.
+- [quote_gabek](https://github.com/landaire/quote_gabek) A Twitter bot to constantly annoy [Gabriel Kirkpatrick](http://twitter.com/gabe_k) by quoting his tweets and adding random things to what he said.
 
 - [music-mover-go](https://github.com/landaire/music-mover-go)
-The Go Music Mover was an app I had made to scan my `~/Downloads` directory for new `.mp3` files, set the ID3v2 tag information, then move the file to my external HDD.
+Scans the `~/Downloads` directory for new `.mp3` files, sets the ID3v2 tag information, and moves the file to a target directory.
 
 Open-source projects contributed to: [HypeMachine-Extension](https://github.com/fzakaria/HypeMachine-Extension), [revel](https://github.com/revel/revel)
