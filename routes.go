@@ -22,4 +22,16 @@ var routes = []Route{
 		Pattern:     "/id3/fix",
 		HandlerFunc: Id3FixSong,
 	},
+	Route{
+		Name:        "xval_index",
+		Method:      "GET",
+		Pattern:     "/xval",
+		HandlerFunc: XvalIndex,
+	},
+	//	Route{
+	//		Name:        "xval_api",
+	//		Method:      "GET",
+	//		Pattern:     "/xval.json",
+	//		HandlerFunc: XvalApi,
+	//	},
 }

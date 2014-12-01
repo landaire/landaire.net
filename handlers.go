@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"regexp"
+	"strings"
 	"time"
 
 	"encoding/json"
@@ -13,12 +14,19 @@ import (
 
 	"github.com/flosch/pongo2"
 	_ "github.com/flosch/pongo2-addons"
+	xv "github.com/landaire/xval"
 )
 
 type BinaryFileResponse struct {
 	Name    string
 	File    http.File
 	ModTime time.Time
+}
+
+type XvalResult struct {
+	DesKey, DecryptedData []byte
+	XValueFlags           []string
+	Error                 string
 }
 
 func PortfolioIndex(w http.ResponseWriter, r *http.Request) {
@@ -34,6 +42,74 @@ func PortfolioIndex(w http.ResponseWriter, r *http.Request) {
 	// Render the template
 	template := pongo2.Must(pongo2.FromFile("./views/portfolio.tpl"))
 	template.ExecuteWriter(pongo2.Context{"body_content": string(content)}, w)
+}
+
+func XvalIndex(w http.ResponseWriter, r *http.Request) {
+	query := r.URL.Query()
+	serial := query.Get("serial")
+	xval := strings.Replace(query.Get("xval"), "-", "", -1)
+
+	var decryptionError string
+	var decryptionResultData *XvalResult
+	validationErrors := make(map[string][]string)
+	hasErrors := false
+
+	if serial != "" && xval != "" {
+		serialConstraints := []Constraint{
+			ExactLength{
+				Value:        serial,
+				Length:       12,
+				ErrorMessage: "Serial number must be 12 characters",
+			},
+			Match{
+				Value:        serial,
+				Regex:        regexp.MustCompile(`\d{12}`),
+				ErrorMessage: "Serial number contains invalid characters",
+			},
+		}
+
+		xvalConstraints := []Constraint{
+			ExactLength{
+				Value:        xval,
+				Length:       16,
+				ErrorMessage: "X Value should be 16 characters without dashes.",
+			},
+		}
+
+		for key, constraintArr := range map[string][]Constraint{"serial": serialConstraints, "xval": xvalConstraints} {
+			for _, val := range constraintArr {
+				if !val.Validate() {
+					newArray := append(validationErrors[key], val.GetErrorMessage())
+					Log.Logger.Info(key)
+					validationErrors[key] = newArray
+					hasErrors = true
+				}
+			}
+		}
+
+		if !hasErrors {
+			fmt.Println("does not have errors")
+			desKey, data, err := xv.Decrypt(serial, xval)
+
+			if err != nil {
+				decryptionError = err.Error()
+			} else {
+				decryptionResultData = &XvalResult{desKey, data, xv.TextResult(data), fmt.Sprint(err)}
+			}
+
+		}
+	}
+
+	// Render the template
+	template := pongo2.Must(pongo2.FromFile("./views/xval.tpl"))
+	template.ExecuteWriter(pongo2.Context{
+		"serial":            serial,
+		"xval":              xval,
+		"has_errors":        hasErrors,
+		"validation_errors": validationErrors,
+		"decryption_error":  decryptionError,
+		"decryption_result": decryptionResultData,
+	}, w)
 }
 
 // Fixes the ID3 tag info for a remote audio file
