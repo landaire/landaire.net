@@ -152,7 +152,12 @@ func Id3FixSong(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "audio/mpeg")
 
-	response, _ := fixSong(artist, title, body)
+	response, err := fixSong(artist, title, body)
+	if err != nil {
+		writeJsonError(w, http.StatusInternalServerError, err)
+		return
+	}
+
 	defer response.File.Close()
 
 	http.ServeContent(w, r, response.Name, response.ModTime, response.File)
@@ -161,6 +166,7 @@ func Id3FixSong(w http.ResponseWriter, r *http.Request) {
 func writeJsonError(w http.ResponseWriter, status int, err error) {
 	w.WriteHeader(status)
 
+	Log.Logger.Error(err)
 	data, _ := json.Marshal(map[string]string{
 		"error": fmt.Sprintf("%s", err),
 	})

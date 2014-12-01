@@ -51,11 +51,6 @@ func fixSong(artist, title string, data []byte) (*BinaryFileResponse, error) {
 		return nil, err
 	}
 
-	if parsedFile == nil {
-		Log.Logger.Error("File was not able to be parsed")
-		return nil, errors.New("Could not parse file")
-	}
-
 	songTitle := parsedFile.Title()
 	songArtist := parsedFile.Artist()
 
