@@ -1,0 +1,72 @@
+{
+	"ImportPath": "landaire",
+	"GoVersion": "go1.3.3",
+	"Deps": [
+		{
+			"ImportPath": "code.google.com/p/go.text/unicode/norm",
+			"Comment": "null-112",
+			"Rev": "2f707e0ad64637ca1318279be7201f5ed19c4050"
+		},
+		{
+			"ImportPath": "github.com/Sirupsen/logrus",
+			"Comment": "v0.6.1-10-g6c28e16",
+			"Rev": "6c28e16200e55c2549705ac24ea58976c07f18ac"
+		},
+		{
+			"ImportPath": "github.com/codegangsta/negroni",
+			"Comment": "v0.1-43-g0942b5e",
+			"Rev": "0942b5e3ae397dd19c85234d7e936cb3c1327a63"
+		},
+		{
+			"ImportPath": "github.com/extemporalgenome/slug",
+			"Rev": "de70af6e24d0e6bdd6eaef276d2e9910e68a1397"
+		},
+		{
+			"ImportPath": "github.com/flosch/go-humanize",
+			"Rev": "3ba51eabe50663842d569003bab93fc256883173"
+		},
+		{
+			"ImportPath": "github.com/flosch/pongo2",
+			"Comment": "v1.0-rc1-138-gee174e4",
+			"Rev": "ee174e4b93252c883fca044cb69cd4e58f9a8734"
+		},
+		{
+			"ImportPath": "github.com/flosch/pongo2-addons",
+			"Rev": "bb4da1901facc08b4edd9261050143b95e36d0a1"
+		},
+		{
+			"ImportPath": "github.com/gorilla/context",
+			"Rev": "50c25fb3b2b3b3cc724e9b6ac75fb44b3bccd0da"
+		},
+		{
+			"ImportPath": "github.com/gorilla/mux",
+			"Rev": "e444e69cbd2e2e3e0749a2f3c717cec491552bbf"
+		},
+		{
+			"ImportPath": "github.com/landaire/go-taglib",
+			"Rev": "498c1f3c9b2375ee5a6c33748a9a9510ffb57cdf"
+		},
+		{
+			"ImportPath": "github.com/landaire/xval",
+			"Rev": "fbb041a8096b5dafbedd01cbdac3be221392bc11"
+		},
+		{
+			"ImportPath": "github.com/meatballhat/negroni-logrus",
+			"Rev": "d5e114d7a445f7a3652cf807d3f83d5dceb8de26"
+		},
+		{
+			"ImportPath": "github.com/russross/blackfriday",
+			"Comment": "v1.2-31-g48aaef5",
+			"Rev": "48aaef5fbf8eb2337daca96fcc89f973981b9137"
+		},
+		{
+			"ImportPath": "github.com/shurcooL/go/github_flavored_markdown/sanitized_anchor_name",
+			"Rev": "37fb1155a44a5e39fc9775216c9cc6f6847dfa23"
+		},
+		{
+			"ImportPath": "golang.org/x/text/transform",
+			"Comment": "null-112",
+			"Rev": "2f707e0ad64637ca1318279be7201f5ed19c4050"
+		}
+	]
+}
