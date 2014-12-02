@@ -8,6 +8,13 @@
 </head>
 <body>
     <div class="container">
+        {% if show_back_link|default:false %}
+            <div class="row">
+                <div class="col-xs-3">
+                    <a href="/">&larr; Back to main page</a>
+                </div>
+            </div>
+        {% endif %}
         {% block content %}
 
         {% endblock %}

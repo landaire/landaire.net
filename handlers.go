@@ -103,6 +103,8 @@ func XvalIndex(w http.ResponseWriter, r *http.Request) {
 	// Render the template
 	template := pongo2.Must(pongo2.FromFile("./views/xval.tpl"))
 	template.ExecuteWriter(pongo2.Context{
+		"title":             "Xbox 360 X Value Checker",
+		"show_back_link":    true,
 		"serial":            serial,
 		"xval":              xval,
 		"has_errors":        hasErrors,
