@@ -40,8 +40,11 @@ func PortfolioIndex(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Render the template
-	template := pongo2.Must(pongo2.FromFile("./views/portfolio.tpl"))
-	template.ExecuteWriter(pongo2.Context{"body_content": string(content)}, w)
+	template := pongo2.Must(pongo2.FromFile("./views/portfolio.html"))
+	template.ExecuteWriter(pongo2.Context{
+		"show_back_link": false,
+		"body_content":   string(content),
+	}, w)
 }
 
 func XvalIndex(w http.ResponseWriter, r *http.Request) {
@@ -101,10 +104,9 @@ func XvalIndex(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Render the template
-	template := pongo2.Must(pongo2.FromFile("./views/xval.tpl"))
+	template := pongo2.Must(pongo2.FromFile("./views/xval.html"))
 	template.ExecuteWriter(pongo2.Context{
 		"title":             "Xbox 360 X Value Checker",
-		"show_back_link":    true,
 		"serial":            serial,
 		"xval":              xval,
 		"has_errors":        hasErrors,
