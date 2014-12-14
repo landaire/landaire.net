@@ -3,12 +3,30 @@ package main
 import (
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"os"
 
+	"math/rand"
+
 	taglib "github.com/landaire/go-taglib"
 )
+
+var (
+	letters   = []rune(`abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ`)
+	tempFiles = make(chan string)
+)
+
+func init() {
+	// Delete any existing files in ./tmp
+	os.RemoveAll("./tmp")
+
+	// This other goroutine will clean up files in ./tmp after they're served
+	go func() {
+		for filePath := range tempFiles {
+			os.Remove(filePath)
+		}
+	}()
+}
 
 // Checks a response for errors.
 // Returns a revel.Result or nil depending on if the response is bad or good (respectively)
@@ -30,26 +48,30 @@ func checkResponse(resp *http.Response, err error) error {
 
 // Writes ID3v2 tags to the MP3 file given by the data argument
 func fixSong(artist, title string, data []byte) (*BinaryFileResponse, error) {
-	file, err := ioutil.TempFile("", "id3_")
+	// Can't open a temp file twice... so create it in this dir I guess
+	name, err := getTempName()
+	if err != nil {
+		return nil, err
+	}
+
+	file, err := os.Create(name)
 
 	if err != nil {
 		Log.Logger.Error("Error creating file:", err)
 		return nil, err
 	}
 
+	defer func() { tempFiles <- name }()
+
 	file.Write(data)
 	file.Close()
 
-	// Now that the data is written to a file, do some taglib stuff
-	// this line may cause a race condition on systems where TMPTIME is > 0 and this
-	// file was written at 23:59:59 or something like that.
 	parsedFile, err := taglib.Read(file.Name())
-	defer parsedFile.Close()
-
 	if err != nil {
-		Log.Logger.Errorf("Error reading file %s: %s\n", file.Name(), err)
+		Log.Logger.Errorf("Taglib error reading file %s: %s\n", file.Name(), err)
 		return nil, err
 	}
+	defer parsedFile.Close()
 
 	songTitle := parsedFile.Title()
 	songArtist := parsedFile.Artist()
@@ -65,7 +87,11 @@ func fixSong(artist, title string, data []byte) (*BinaryFileResponse, error) {
 	parsedFile.Close()
 
 	// file is used in the BinaryResult
-	file, _ = os.Open(file.Name())
+	file, err = os.Open(file.Name())
+	if err != nil {
+		Log.Logger.Error(fmt.Sprintf("Could not open file %s", file.Name()))
+	}
+
 	// The info is required for the mod time
 	info, err := file.Stat()
 	if err != nil {
@@ -80,4 +106,33 @@ func fixSong(artist, title string, data []byte) (*BinaryFileResponse, error) {
 		Name:    fmt.Sprintf("\"%s - %s.mp3\"", artist, title),
 		ModTime: info.ModTime(),
 	}, nil
+}
+
+func getTempName() (string, error) {
+	randPart := make([]rune, 10)
+
+	for i := range randPart {
+		randPart[i] = letters[rand.Intn(len(letters))]
+	}
+
+	if pathExists, _ := exists("./tmp"); !pathExists {
+		if err := os.Mkdir("tmp", 0755); err != nil {
+			Log.Logger.Error("Error creating tmp dir:", err)
+			return "", err
+		}
+	}
+
+	// Note that taglib requires the file extension
+	return "./tmp/id3_" + string(randPart) + ".mp3", nil
+}
+
+func exists(path string) (bool, error) {
+	_, err := os.Stat(path)
+	if err == nil {
+		return true, nil
+	}
+	if os.IsNotExist(err) {
+		return false, nil
+	}
+	return false, err
 }
