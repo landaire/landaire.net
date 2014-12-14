@@ -1,1 +1,1 @@
-web: ./landaire
+web: ./bin/landaire
