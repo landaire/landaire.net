@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -15,6 +16,10 @@ import (
 	"github.com/flosch/pongo2"
 	_ "github.com/flosch/pongo2-addons"
 	xv "github.com/landaire/xval"
+)
+
+var (
+	quoteEscaper = strings.NewReplacer("\\", "\\\\", `"`, "\\\"")
 )
 
 type BinaryFileResponse struct {
@@ -121,12 +126,12 @@ func XvalIndex(w http.ResponseWriter, r *http.Request) {
 func Id3FixSong(w http.ResponseWriter, r *http.Request) {
 
 	query := r.URL.Query()
-	url := query.Get("url")
+	songUrl := query.Get("url")
 	title := query.Get("title")
 	artist := query.Get("artist")
 
 	// Check the response header to make sure the file is actually an audio file
-	resp, err := http.Head(url)
+	resp, err := http.Head(songUrl)
 	if err := checkResponse(resp, err); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
@@ -139,7 +144,7 @@ func Id3FixSong(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Get the file
-	resp, err = http.Get(url)
+	resp, err = http.Get(songUrl)
 	if err = checkResponse(resp, err); err != nil {
 		writeJsonError(w, http.StatusBadRequest, err)
 		return
@@ -154,8 +159,6 @@ func Id3FixSong(w http.ResponseWriter, r *http.Request) {
 
 	body, err := ioutil.ReadAll(resp.Body)
 
-	w.Header().Set("Content-Type", "audio/mpeg")
-
 	response, err := fixSong(artist, title, body)
 	if err != nil {
 		writeJsonError(w, http.StatusInternalServerError, err)
@@ -164,7 +167,10 @@ func Id3FixSong(w http.ResponseWriter, r *http.Request) {
 
 	defer response.File.Close()
 
-	http.ServeContent(w, r, response.Name, response.ModTime, response.File)
+	escapedName := quoteEscaper.Replace(response.Name)
+	w.Header().Set("Content-Type", "audio/mpeg")
+	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s\";", escapedName))
+	io.Copy(w, response.File)
 }
 
 func writeJsonError(w http.ResponseWriter, status int, err error) {

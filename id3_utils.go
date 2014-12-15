@@ -100,10 +100,10 @@ func fixSong(artist, title string, data []byte) (*BinaryFileResponse, error) {
 		return nil, err
 	}
 
-	// Return the revel BinaryResult
+	// Return the BinaryFileResult
 	return &BinaryFileResponse{
 		File:    file,
-		Name:    fmt.Sprintf("\"%s - %s.mp3\"", artist, title),
+		Name:    fmt.Sprintf("%s - %s.mp3", artist, title),
 		ModTime: info.ModTime(),
 	}, nil
 }
