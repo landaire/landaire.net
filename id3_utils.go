@@ -108,6 +108,7 @@ func fixSong(artist, title string, data []byte) (*BinaryFileResponse, error) {
 	}, nil
 }
 
+// Gets a temp file path relative to the application binary
 func getTempName() (string, error) {
 	randPart := make([]rune, 10)
 
@@ -126,6 +127,7 @@ func getTempName() (string, error) {
 	return "./tmp/id3_" + string(randPart) + ".mp3", nil
 }
 
+// Checks if a file/folder exists
 func exists(path string) (bool, error) {
 	_, err := os.Stat(path)
 	if err == nil {
