@@ -13,7 +13,7 @@ The XVal API allows anyone to decrypt the x-value displayed on the system info o
 A cross-platform FATX (File Allocation Table for Xbox) file system utility. Currently has support for OS X and Windows, Linux (only tested on Ubuntu) and supports reading operations on both Xbox 360-formatted USB drives and hard disks.
 
 
-- [Party Buffalo](https://code.google.com/p/party-buffalo)
+- [Party Buffalo](https://github.com/landaire/party-buffalo)
 Party Buffalo yet another FATX file system utility I had started developing in August of 2010 when I was 13 years old. It started out as a project to learn more about C# and a simple file system, while at the same time providing a tool for the Xbox 360 community. At the time there was really no decent *free* FATX utility, so I decided to make one. It was the first tool to work for almost any hard drive (other utilities would only work for 20 GB, 60 GB, or 120 GB HDDs) without hardcoding offsets, and was also the first to support reading metadata for various files so users didn't have to blindly figure out what things were on their hard drive. This included reading cached system files when applicable, [STFS](http://free60.org/STFS) metadata, and other types of system files. The project was officially discontinued in 2013, after receiving over 1 million downloads.
 
 - [addpaths.cpp](https://gist.github.com/landaire/3168270)
