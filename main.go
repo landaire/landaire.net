@@ -4,11 +4,14 @@ import (
 	"os"
 
 	"github.com/codegangsta/negroni"
-	"github.com/gorilla/mux"
+	"github.com/julienschmidt/httprouter"
 	nlogrus "github.com/meatballhat/negroni-logrus"
 )
 
-var Log = nlogrus.NewMiddleware()
+var (
+	Log    = nlogrus.NewMiddleware()
+	logger = Log.Logger
+)
 
 func main() {
 	port := ":" + os.Getenv("PORT")
@@ -16,14 +19,10 @@ func main() {
 		port = ":3000"
 	}
 
-	router := mux.NewRouter().StrictSlash(true)
+	router := httprouter.New()
 
 	for _, route := range routes {
-		router.
-			Methods(route.Method).
-			Path(route.Pattern).
-			Name(route.Name).
-			Handler(route.HandlerFunc)
+		router.Handle(route.Method, route.Pattern, route.HandlerFunc)
 	}
 
 	n := negroni.Classic()

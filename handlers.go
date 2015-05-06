@@ -4,7 +4,6 @@ import (
 	"errors"
 	"io"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"regexp"
 	"strings"
@@ -16,10 +15,14 @@ import (
 	"github.com/flosch/pongo2"
 	_ "github.com/flosch/pongo2-addons"
 	xv "github.com/landaire/xval"
+	//	"github.com/bradfitz/gomemcache/memcache"
+	"github.com/julienschmidt/httprouter"
 )
 
 var (
 	quoteEscaper = strings.NewReplacer("\\", "\\\\", `"`, "\\\"")
+
+//	mc *memcache.Client
 )
 
 type BinaryFileResponse struct {
@@ -34,8 +37,22 @@ type XvalResult struct {
 	Error                 string
 }
 
-func PortfolioIndex(w http.ResponseWriter, r *http.Request) {
-	log.Printf("Hit portfolio")
+func init() {
+	//	mc = memcache.New("127.0.0.1:11211")
+}
+
+func PortfolioIndex(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	logger.Println("Hit portfolio")
+
+	//	renderedContent, err := mc.Get("portfolio")
+	//
+	//	if err != nil && renderedContent != nil {
+	//		logger.Println("Got cached content")
+	//		w.Write(renderedContent.Value)
+	//		return
+	//	} else {
+	//		logger.Error(err)
+	//	}
 
 	content, err := ioutil.ReadFile("./views/portfolio.md")
 
@@ -46,13 +63,34 @@ func PortfolioIndex(w http.ResponseWriter, r *http.Request) {
 
 	// Render the template
 	template := pongo2.Must(pongo2.FromFile("./views/portfolio.html"))
-	template.ExecuteWriter(pongo2.Context{
+
+	context := pongo2.Context{
 		"show_back_link": false,
 		"body_content":   string(content),
-	}, w)
+	}
+
+	content, err = template.ExecuteBytes(context)
+
+	if err != nil {
+		return
+	}
+
+	//	logger.Println("Setting cache")
+	//
+	//	err = mc.Set(&memcache.Item{
+	//		Key: "portfolio",
+	//		Value: content,
+	//		Expiration: int32((24 * time.Hour * 7) / time.Millisecond),
+	//	})
+
+	if err != nil {
+		logger.Error(err)
+	}
+
+	w.Write(content)
 }
 
-func XvalIndex(w http.ResponseWriter, r *http.Request) {
+func XvalIndex(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	query := r.URL.Query()
 	serial := query.Get("serial")
 	xval := strings.Replace(query.Get("xval"), "-", "", -1)
@@ -123,7 +161,7 @@ func XvalIndex(w http.ResponseWriter, r *http.Request) {
 
 // Fixes the ID3 tag info for a remote audio file
 // GET /id3/fix
-func Id3FixSong(w http.ResponseWriter, r *http.Request) {
+func Id3FixSong(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 
 	query := r.URL.Query()
 	songUrl := query.Get("url")
