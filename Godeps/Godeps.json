@@ -1,6 +1,6 @@
 {
 	"ImportPath": "landaire",
-	"GoVersion": "go1.3.3",
+	"GoVersion": "go1.4.2",
 	"Deps": [
 		{
 			"ImportPath": "code.google.com/p/go.text/unicode/norm",
@@ -35,12 +35,8 @@
 			"Rev": "bb4da1901facc08b4edd9261050143b95e36d0a1"
 		},
 		{
-			"ImportPath": "github.com/gorilla/context",
-			"Rev": "50c25fb3b2b3b3cc724e9b6ac75fb44b3bccd0da"
-		},
-		{
-			"ImportPath": "github.com/gorilla/mux",
-			"Rev": "e444e69cbd2e2e3e0749a2f3c717cec491552bbf"
+			"ImportPath": "github.com/julienschmidt/httprouter",
+			"Rev": "8c199fb6259ffc1af525cc3ad52ee60ba8359669"
 		},
 		{
 			"ImportPath": "github.com/landaire/go-taglib",
@@ -56,12 +52,12 @@
 		},
 		{
 			"ImportPath": "github.com/russross/blackfriday",
-			"Comment": "v1.2-31-g48aaef5",
-			"Rev": "48aaef5fbf8eb2337daca96fcc89f973981b9137"
+			"Comment": "v1.2-60-gd3270c4",
+			"Rev": "d3270c47aca4443007405354152a2a1c478ac6b9"
 		},
 		{
-			"ImportPath": "github.com/shurcooL/go/github_flavored_markdown/sanitized_anchor_name",
-			"Rev": "37fb1155a44a5e39fc9775216c9cc6f6847dfa23"
+			"ImportPath": "github.com/shurcooL/sanitized_anchor_name",
+			"Rev": "8e87604bec3c645a4eeaee97dfec9f25811ff20d"
 		},
 		{
 			"ImportPath": "golang.org/x/text/transform",

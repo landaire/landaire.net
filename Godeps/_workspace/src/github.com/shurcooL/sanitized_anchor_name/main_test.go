@@ -3,7 +3,7 @@ package sanitized_anchor_name_test
 import (
 	"fmt"
 
-	"github.com/shurcooL/go/github_flavored_markdown/sanitized_anchor_name"
+	"github.com/shurcooL/sanitized_anchor_name"
 )
 
 func ExampleCreate() {
@@ -12,7 +12,7 @@ func ExampleCreate() {
 	fmt.Println(anchorName)
 
 	// Output:
-	//this-is-a-header
+	// this-is-a-header
 }
 
 func ExampleCreate2() {
@@ -25,11 +25,11 @@ func ExampleCreate2() {
 	fmt.Println(sanitized_anchor_name.Create("Hello, 世界"))
 
 	// Output:
-	//this-is-a-header
-	//this-is-also-a-header
-	//main-go
-	//article-123
-	//let-s-try-this-shall-we
-	//""
-	//hello-世界
+	// this-is-a-header
+	// this-is-also-a-header
+	// main-go
+	// article-123
+	// let-s-try-this-shall-we
+	// ""
+	// hello-世界
 }
