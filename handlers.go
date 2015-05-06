@@ -126,7 +126,7 @@ func XvalIndex(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 			for _, val := range constraintArr {
 				if !val.Validate() {
 					newArray := append(validationErrors[key], val.GetErrorMessage())
-					Log.Logger.Info(key)
+					logger.Info(key)
 					validationErrors[key] = newArray
 					hasErrors = true
 				}
@@ -214,7 +214,7 @@ func Id3FixSong(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 func writeJsonError(w http.ResponseWriter, status int, err error) {
 	w.WriteHeader(status)
 
-	Log.Logger.Error(err)
+	logger.Error(err)
 	data, _ := json.Marshal(map[string]string{
 		"error": fmt.Sprintf("%s", err),
 	})
