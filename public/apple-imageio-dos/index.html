@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  
+<title>Apple ImageIO Denial of Service | lander&#x27;s posts</title>
+
+
+
+<meta property="og:title" content="Apple ImageIO Denial of Service">
+
+
+
+<meta name="author" content="@landaire">
+
+
+<meta property="og:locale" content="en-US">
+
+
+<meta name="description" content="nothing interesting">
+<meta property="og:description" content="nothing interesting">
+
+
+
+<link rel="canonical" href="https://landaire.net/apple-imageio-dos/">
+<meta property="og:url" content="https://landaire.net/apple-imageio-dos/">
+
+
+
+<meta property="og:site_name" content="lander&#x27;s posts" />
+
+
+
+
+
+  <meta property="og:type" content="article" />
+  <meta property="article:published_time" content="2016-04-22T15:01:55-07:00">
+
+
+
+  <link rel="prev" href="https://landaire.net/phpbb-3-1-7-security-update/">
+
+
+
+
+
+  <meta name="twitter:card" content="summary">
+
+
+
+  <meta property="twitter:title" content="Apple ImageIO Denial of Service">
+
+
+
+
+
+
+
+
+<script type="application/ld+json">
+{
+  "author": {
+    "@type":"Person",
+	  "name":"@landaire",
+  },
+  "description": "nothing interesting",
+  "url": "https://landaire.net/apple-imageio-dos/",
+  "@context":"https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "Apple ImageIO Denial of Service"
+  
+    
+    
+      "datePublished":"2016-04-22T15:01:55-07:00",
+    
+    "mainEntityOfPage":{
+      "@type":"WebPage",
+      "@id":"https://landaire.net/apple-imageio-dos/"
+    },
+  
+}
+</script>
+
+  <link rel="stylesheet" href="https://landaire.net/main.css">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Libre+Baskerville:400,400i,700">
+
+  <link rel="icon" type="image/png" sizes="32x32" href="https://landaire.net/assets/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="https://landaire.net/assets/favicon-16x16.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="https://landaire.net/assets/apple-touch-icon.png">
+
+  
+
+  
+
+  
+  
+</head>
+
+<body>
+  
+  <nav class="nav">
+    <div class="nav-container">
+      <a href="https://landaire.net">
+        <h2 class="nav-title">lander&#x27;s posts</h2>
+      </a>
+      <ul>
+        
+          
+            <li><a href="https://landaire.net"></a></li>
+          
+        
+      </ul>
+    </div>
+  </nav>
+  
+
+  <main>
+    
+  <div class="post">
+  	<div class="post-info">
+  		<span>Written by</span> @landaire<br>
+  		<span>on&nbsp;</span><time datetime="2016-04-22T15:01:55-07:00">April 22, 2016</time>
+  	</div>
+  	<h1 class="post-title">Apple ImageIO Denial of Service</h1>
+  	<div class="post-line"></div>
+  	<p>Last Updated: April 5, 2017 to address some incompleteness and errors. You can view the revision history <a href="https://github.com/landaire/landaire.net">here</a>.</p>
+<p><img src="/img/pngbleed.jpg" alt="#png #bleed #vulnmarketing #infosec #hype. click the image if you're using Safari" /></p>
+<p>Application Services is a framework in iOS and OS X which provides what's known as the Image I/O framework. ImageIO itself is a collection of utilities and data types for parsing various image formats. It's used in many OS X and iOS applications including:</p>
+<ul>
+<li>Tweetbot</li>
+<li>Safari</li>
+<li>Messages</li>
+<li>Mail</li>
+<li>Preview</li>
+</ul>
+<p>Some popular applications that <em>do not</em> use ImageIO include:</p>
+<ul>
+<li>Chrome</li>
+<li>Firefox</li>
+<li>Telegram</li>
+</ul>
+<p>Given the impact of media processing bugs such as Stagefright I decided that this would be a good target for fuzzing. I created a simple application that uses some various features of ImageIO, grabbed a small PNG I had on my desktop which happened to be a screenshot, and let afl run.</p>
+<p>I checked on my fuzzer after 30 minutes and already a crash!</p>
+<p>Here's the code used: <a href="https://gist.github.com/landaire/63e9a94f197c345335d165a16cea6a64">Gist</a> (this is almost verbatim Apple's ImageIO sample).</p>
+<p><strong>Note: a tl;dr is available at the bottom</strong></p>
+<h1 id="png-structure">PNG Structure</h1>
+<p>Before I dive into the vulnerability I'll talk a little bit about the structure of PNG files. PNGs are comprised of the header and chunks with chunks starting at offset 0x8 in the file. Each chunk contains the chunk type (a 4-character ASCII string), some data, and a CRC32 of that data.</p>
+<p>The chunk structure can be represented as the following Go struct:</p>
+<pre data-lang="go" style="background-color:#2b303b;color:#c0c5ce;" class="language-go "><code class="language-go" data-lang="go"><span style="color:#b48ead;">type </span><span>Chunk </span><span style="color:#b48ead;">struct </span><span>{
+</span><span>	</span><span style="color:#bf616a;">Length </span><span style="color:#b48ead;">uint32
+</span><span>	</span><span style="color:#bf616a;">Type   </span><span>[</span><span style="color:#d08770;">4</span><span>]</span><span style="color:#b48ead;">byte
+</span><span>	</span><span style="color:#bf616a;">Data   </span><span>[]</span><span style="color:#b48ead;">byte
+</span><span>	</span><span style="color:#bf616a;">CRC    </span><span style="color:#b48ead;">uint32
+</span><span>}
+</span></code></pre>
+<p>The PNG specification defines 4 &quot;critical&quot; chunk types and 14 &quot;ancillary&quot; chunk types for a total of 18 formally defined types <a href="https://www.w3.org/TR/PNG/#4Concepts.FormatTypes">which you can find here</a>. Any chunks not specified here are considered unknown chunks that can be handled by the decoder.</p>
+<h1 id="the-vulnerability">The vulnerability</h1>
+<p>Inspecting the crash log of the application makes it pretty obvious that we have a null pointer dereference:</p>
+<pre style="background-color:#2b303b;color:#c0c5ce;"><code><span>Exception Type:  EXC_BAD_ACCESS (SIGSEGV)
+</span><span>Exception Subtype: KERN_INVALID_ADDRESS at 0x0000000000000000
+</span><span>Triggered by Thread:  0
+</span></code></pre>
+<p>The stack trace tells us a little more though:</p>
+<pre style="background-color:#2b303b;color:#c0c5ce;"><code><span>Thread 0 name:  Dispatch queue: com.apple.main-thread
+</span><span>Thread 0 Crashed:
+</span><span>0       ImageIO                       	0x18699a618 0x186994000 + 0x6618	// read_user_chunk_callback + 0x13c
+</span><span>1       ImageIO                       	0x18699a610 0x186994000 + 0x6610	// read_user_chunk_callback + 0x134
+</span><span>2       ImageIO                       	0x18699a328 0x186994000 + 0x6328	// png_handle_unknown + 0x44
+</span><span>3       ImageIO                       	0x18699961c 0x186994000 + 0x561c	// _cg_png_read_info + 0x11c
+</span><span>4       ImageIO                       	0x186997b38 0x186994000 + 0x3b38	// initImagePng + 0x654
+</span><span>5       ImageIO                       	0x186996c98 0x186994000 + 0x2c98	// makeImagePlus + 0x4e4
+</span><span>6       ImageIO                       	0x186996240 0x186994000 + 0x2240	// CGImageSourceCreateImageAtIndex + 0xb8
+</span><span>7       UIKit                         	0x18ad473d8 0x18abe0000 + 0x1673d8	// _UIImageRefFromData + 0x1a8
+</span><span>8       UIKit                         	0x18aed2ff8 0x18abe0000 + 0x2f2ff8	// -[UIImage(UIImagePrivate) _initWithData:preserveScale:cache:] + 0x78
+</span><span>9       UIKit                         	0x18ad471fc 0x18abe0000 + 0x1671fc	// +[UIImage imageWithData:] + 0x48
+</span></code></pre>
+<p><code>read_user_chunk_callback</code> is where the crash occurs. A quick Google search for this and <code>png_handle_unknown</code> yields some results in libpng. Some more digging around the source code lead me to conclude that Apple uses libpng under the hood for the PNG files and the crashing image has an unknown (non-standard) chunk that's related to the crash. <a href="https://github.com/glennrp/libpng/blob/e744ee13382d810246e94256c488bb7ebc000789/pngrutil.c#L2826"><code>png_handle_unknown</code></a> will, if <code>PNG_READ_UNKNOWN_CHUNKS_SUPPORTED</code> is enabled, <a href="https://github.com/glennrp/libpng/blob/e744ee13382d810246e94256c488bb7ebc000789/pngrutil.c#L2859-L2865">call a user function callback</a> for the application to handle the chunk. So <code>read_user_chunk_callback</code> is the name of Apple's custom chunk handler.</p>
+<p>A quick diff between the input file and crasher revealed that the input file had a chunk with data size of 0. What's happening here is:</p>
+<ul>
+<li>libpng which is compiled to read unknow chunks hits an unknown chunk</li>
+<li>ImageIO has an unknown chunk callback setup</li>
+<li>Since the size of the chunk data is 0, libpng gives the callback a null data chunk pointer</li>
+<li>The data section is used without first checking the size of the value of the pointer</li>
+</ul>
+<p>Earlier I mentioned that the image I grabbed was some random screenshot I had sitting on my desktop. It turns out that screenshots taken on OS X include a custom <code>iDOT</code> chunk which contain some additional 28 bytes of data. The structure for the
+screenshots I took were of form:</p>
+<pre data-lang="go" style="background-color:#2b303b;color:#c0c5ce;" class="language-go "><code class="language-go" data-lang="go"><span style="color:#bf616a;">num_entries uint32 </span><span>(</span><span style="color:#bf616a;">usually </span><span style="color:#d08770;">0x00000002</span><span>)
+</span><span style="color:#bf616a;">unk1        uint32 </span><span>(</span><span style="color:#bf616a;">usually </span><span style="color:#d08770;">0x00000000</span><span>)
+</span><span style="color:#bf616a;">width       uint32
+</span><span style="color:#bf616a;">unk2        uint32 </span><span>(</span><span style="color:#bf616a;">usually </span><span style="color:#d08770;">0x00000028</span><span>)
+</span><span style="color:#bf616a;">width       uint32
+</span><span style="color:#bf616a;">width       uint32
+</span><span style="color:#bf616a;">unk3        uint32
+</span></code></pre>
+<p>(Yes, the width appears to be repeated 3 times)</p>
+<p>I couldn't figure out what the unknown data is and wasn't too motivated to reverse engineer the rest of the function so if anyone reading this has any ideas, please ping me on Twitter (@landaire).</p>
+<p>This was the offending chunk which is handled by this callback. Taking any screenshot and setting the size of the <code>iDOT</code> chunk to 0 is enough to trigger the bug.</p>
+<h1 id="impact">Impact</h1>
+<p>This bug can be triggered any time a PNG file is being processed. So really, anything that processes the image can be caused to crash. Some examples:</p>
+<ul>
+<li>Receiving the malicious image via text message with message previews turned on will crash SpringBoard on iOS</li>
+<li>Entering a message thread containing the image will crash the messages app</li>
+<li>Opening an email containing the image will crash the mail client</li>
+<li>Posting a link to the image will crash some third-party Twitter clients which try to load the image (Tweetbot for example)</li>
+<li>Visiting a page containing the image will crash Safari's content renderer</li>
+</ul>
+<h1 id="affected-versions">Affected versions</h1>
+<p>The only devices I had available at the time were an iPad on iOS 7.1, my iPhone on iOS 9.0.2, and my Mac on OS X 10.11.2. All of these devices were vulnerable. It's reasonable to assume that this bug goes back quite far.</p>
+<table><thead><tr><th></th><th>iOS</th><th>OS X</th></tr></thead><tbody>
+<tr><td>Minimum tested version</td><td>7.1</td><td>10.11.1</td></tr>
+<tr><td>Fixed version</td><td>9.3.2</td><td>10.11.5</td></tr>
+</tbody></table>
+<h1 id="other-findings">Other findings</h1>
+<p>In exploring this bug I thought it was useful to test out various applications to see how they would handle this type of invalid image. Since the chunks all contain a CRC32 of the data, you cannot modify the image outright and then upload it to
+almost any service. Twitter and imgur were two hosts I tried and they both would not accept the image because of the invalid CRC32. I wrote a <a href="https://gitlab.com/landaire/png-crc-fix">simple Go utility</a> that iterates the chunks and fixes any
+invalid CRCs.</p>
+<p>After fixing the chunk both hosts accepted the image just fine. imgur (and likely most other hosts) do not bother to strip unknown chunks so uploading the image to imgur puts those users at risk. Twitter and Facebook on the other hand will re-encode any image as
+a JPEG which will obviously remove the malicious chunk.</p>
+<p>I think that this is interesting and really important for privacy-concerned people. Before investigating this bug I had not considered additional chunks <em>not</em> being stripped when uploading an image to services. It makes sense, but it seems like this
+would be an easy way for vendors to hide additional info about the device which took the image outside of the EXIF-related chunks and have them survive re-encoding.</p>
+<h1 id="timeline">Timeline</h1>
+<ul>
+<li>Dec 16, 2015: Reported vulnerability to vendor</li>
+<li>Dec 17, 2015: Vendor acknowledged vulnerability</li>
+<li>Dec 27, 2015: Posted pic to Twitter to see what would happen</li>
+<li>Dec 27, 2015: Vendor said the bug was undergoing triage</li>
+<li>Mar 21, 2016 (91 days since disclosure): iOS 9.3 released and bug still not fixed, status update requested</li>
+<li>Mar 22, 2016: Vendor notified me that a fix is &quot;in progress&quot;</li>
+<li>April 22, 2016: Public disclosure</li>
+<li>May 16, 2016: iOS 9.3.2 and macOS 10.11.5 were released, giving this vulnerability CVE-2016-1811</li>
+</ul>
+<p>If you'd like to have a sample image, you can find it <a href="/img/crasher.png">here</a>. <strong>NOTE</strong> if you are using Safari, your browser's renderer process will crash. If you aren't, you will see a screenshot of a Kanye tweet.</p>
+<p><strong>tl;dr</strong> a custom PNG chunk with a 0-length data field will trigger null pointer dereference causing the application to crash similar to the
+<a href="http://arstechnica.com/apple/2013/08/rendering-bug-crashes-os-x-and-ios-apps-with-string-of-arabic-characters/">CoreText</a> crash from 2013.</p>
+<p>shoutouts to my boys ed snowden and james comey</p>
+
+  </div>
+
+	
+
+  <div class="pagination">
+  	<a href="https://landaire.net/yaesu-obfuscation/" class="left arrow">&#8592;</a>
+		<a href="#" class="top">Top</a>
+		<a href="https://landaire.net/phpbb-3-1-7-security-update/" class="right arrow">&#8594;</a>
+  </div>
+
+  </main>
+
+  
+  <footer>
+    <span>&copy; 2021 Aaran Xu. Made with <a href="https://www.getzola.org">Zola</a> using the <a
+          href="https://github.com/aaranxu/tale-zola">Tale-Zola</a> theme.</span>
+  </footer>
+  
+</body>
+</html>
