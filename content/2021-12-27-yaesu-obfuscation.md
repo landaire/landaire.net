@@ -18,7 +18,7 @@ The Reddit poster mentioned that if you go through the firmware update process v
 
 ## Initial Recon
 
-Yaesu provides a firmware updater in the form of a Windows application on their website:
+Yaesu provides a Windows application on their website that can be used to update a radio's firmware:
 
 {{ resize_image(path="/img/yaesu/firmware_page.png", width=500, height=500, op="fit") }}
 
@@ -46,11 +46,11 @@ Resources fit into one of many different [resource types](https://docs.microsoft
 
 {{ resize_image(path="/img/yaesu/res_update_info.png", width=800, height=800, op="fit") }}
 
-`RES_UPDATE_INFO` looks like just binary data -- perhaps this is our firmware image? Unfortunately looking at the "Strings" tab in XPEViewer or running the `strings` utility over this data yields nonsensical data. The firmware image is likely encrypted.
+`RES_UPDATE_INFO` looks like just binary data -- perhaps this is our firmware image? Unfortunately looking at the "Strings" tab in XPEViewer or running the `strings` utility over this data yields nonsensical strings. The firmware image is likely encrypted.
 
 ## Reverse Engineering the Binary
 
-Let's load the update utility into our disassembler of choice to figure out how the data is encrypted. I'll be using IDA Pro, but Ghidra, radare2, or Binary Ninja are all great alternatives. Where possible I'll try to show the cleaned up form of code in C since it'll closer match the decompiler and machine code output.
+Let's load the update utility into our disassembler of choice to figure out how the data is encrypted. I'll be using IDA Pro, but Ghidra, radare2, or Binary Ninja are all great alternatives. Where possible I'll try to show the cleaned up form of code in C since it'll be a closer match to the decompiler and machine code output.
 
 A good starting point is the the string we saw above, `RES_UPDATE_INFO`. Windows applications load resources by calling one of the [`FindResource*` APIs](https://docs.microsoft.com/en-us/windows/win32/api/winbase/nf-winbase-findresourcea). `FindResourceA` has the following parameters:
 
@@ -58,7 +58,7 @@ A good starting point is the the string we saw above, `RES_UPDATE_INFO`. Windows
 2. `lpName`, the resource name.
 3. `lpType`, the reosurce type.
 
-In our disassembler we can look for references to the `RES_UPDATE_INFO` string and find calls to `FindResourceA` with this string as an argument in the `lpName` position.
+In our disassembler we can look for references to the `RES_UPDATE_INFO` string and look for calls to `FindResourceA` with this string as an argument in the `lpName` position.
 
 {{ resize_image(path="/img/yaesu/update_info_xrefs.png", width=800, height=800, op="fit") }}
 
@@ -67,11 +67,11 @@ We find a match in a function which happens to find/load *all* of these custom r
 {{ resize_image(path="/img/yaesu/load_resource_decompiler_output.png", width=800, height=800, op="fit") }}
 
 
-There's a few ways we can see how this data is used, but there may be lots of steps between when data is loaded into memory and when it's used. To speed things up we're going to use a debugger's assistance. I used WinDbg's [Time Travel Debugging](https://docs.microsoft.com/en-us/windows-hardware/drivers/debugger/time-travel-debugging-overview) to record an execution trace of the updater while it updates my radio. TTD is an invaluable tool and I'd highly recommend using it when possible.
+We know where the data is loaded by the application, so now we need to see how it's used. Doing static analysis from this point may be more work than it's worth if the data is operated on later. To speed things up we're going to use a debugger's assistance. I used WinDbg's [Time Travel Debugging](https://docs.microsoft.com/en-us/windows-hardware/drivers/debugger/time-travel-debugging-overview) to record an execution trace of the updater while it updates my radio. TTD is an invaluable tool and I'd highly recommend using it when possible.
 
-The decompiler output shows this function copies the `RES_UPDATE_INFO` resource to a dynamically allocated buffer. The `qmemcpy()` is inlined and represented by a `rep movsd` instruction in the disassembly, so we need to break at the `movsd` instruction and examine the `edi` register's (destination address) value. I set a breakpoint using `bp 0x406968` and can see it's `0x2be5020`. We can now set a memory access breakpoint by entering `ba r4 0x2be5020` in the command Window to see where this data is used next.
+The decompiler output shows this function copies the `RES_UPDATE_INFO` resource to a dynamically allocated buffer. The `qmemcpy()` is inlined and represented by a `rep movsd` instruction in the disassembly, so we need to break at the `movsd` instruction and examine the `edi` register's (destination address) value. I set a breakpoint by typing `bp 0x406968` in the command window, letting the application run, and when it breaks we can see the `edi` register value is `0x2be5020`. We can now set a memory access breakpoint using `ba r4 0x2be5020` to see where this data is used next.
 
-Our breakpoint is hit at `0x4047DC` -- back to the disassembler. In IDA you can press `G` to go to an address. Enter the address and we're finally at what looks like the data processing function:
+Our breakpoint is hit at `0x4047DC` -- back to the disassembler. In IDA you can press `G` and enter this address to jump to it. We're finally at what looks like the data processing function:
 
 {{ resize_image(path="/img/yaesu/deobfuscate_function.png", width=800, height=800, op="fit") }}
 
@@ -91,7 +91,7 @@ bool __thiscall sub_4047B0(char *this)
 
   encrypted_data = *(char **)(*((_DWORD *)AfxGetModuleState() + 1) + 160);
   Time = *(int *)encrypted_data;
-  sub_404720(&Time, (int)&time_string, "%Y%m%d%H%M%S");
+  format_timestamp(&Time, (int)&time_string, "%Y%m%d%H%M%S");
   v10 = 1;
   v7 = 0;
   v9 = off_4244A0;
@@ -106,7 +106,7 @@ bool __thiscall sub_4047B0(char *this)
 }
 ```
 
-The timestamp is passed to `sub_4082c0`  on line 18 and the remainder of the update image is passed to `sub_408350` on line 19. We care about the data right now and based on how `sub_408350` is called I'd wager its signature is something like:
+The timestamp string is passed to `sub_4082c0` on line 18 and the remainder of the update image is passed to `sub_408350` on line 19. We only care about the firmware data right now, and based on how `sub_408350` is called I'd wager its signature is something like:
 
 ```c
 status_t sub_408350(uint8_t *input, size_t input_len, uint8_t *output, output_len, size_t *out_data_processed);
@@ -185,7 +185,7 @@ LABEL_12:
 }
 ```
 
-I think we've found our function that starts decrypting the firmware! To confirm, let's set a breakpoint in our debugger where this function is called, `0x404842`, so we can examine the contents of the `output` parameter before and after it's executed.
+I think we've found our function that starts decrypting the firmware! To confirm, I set a breakpoint in our debugger at the address where this function is called in `sub_4047B0`, `0x404842`, so we can examine the contents of the `output` parameter before and after it's executed.
 
 Here's the data before:
 
@@ -212,8 +212,8 @@ At this point if we were just interested in getting the plaintext firmware we co
 Just to recap from the last section:
 
 - We've identified our data processing routine (let's call this function `decrypt_update_info`).
-- We know that the first 4 bytes of the update info are a Unix timestamp that's formatted as a string and used for an unknown purpose.
-- We know which function decrypts our firmware image.
+- We know that the first 4 bytes of the update data are a Unix timestamp that's formatted as a string and used for an unknown purpose.
+- We know which function begins decrypting our firmware image.
 
 ### Data Decryption
 
@@ -311,7 +311,7 @@ Lots going on here, but let's take a look at step #3. If we take the bytes `0xAA
 | 1 | 0 | 1 | 0 | 1 | 0 | 1 | 0 |    | 0 | 1 | 1 | 1 | 0 | 1 | 1 | 1 |
 ```
 
-This routine does this process over 8 bytes at a time, completely filling the 64-byte scratch buffer with 1s and 0s just like the table above.
+This routine does this process over 8 bytes at a time and completely fills the 64-byte scratch buffer with 1s and 0s just like the table above.
 
 Now let's look at step #4 and see what's going on in `sub_407980`:
 
@@ -448,9 +448,9 @@ _BYTE *__thiscall sub_407980(void *this, _BYTE *a2, int a3)
 }
 ```
 
-Oof. This is substantially more complicated but looks like the meat of the decryption algorithm. We'll refer to this function, `sub_407980`, as `decrypt_data` from here on out. We can see what may be an immediate roadblock: this function takes in a C++ `this` pointer (line 40) and uses data from it while performing bitwise operations (line 53, 58, etc.). For now let's call this our "key" and come back to it later.
+Oof. This is substantially more complicated but looks like the meat of the decryption algorithm. We'll refer to this function, `sub_407980`, as `decrypt_data` from here on out. We can see what may be an immediate roadblock: this function takes in a C++ `this` pointer (line 5) and performs bitwise operations on one of its members (line 53, 58, etc.). For now let's call this class member `key` and come back to it later.
 
-This function is the perfect example of decompilers emitting less than ideal code as a result of compiler optimizations/code reordering. It's really hard to tell even at a glance what data we already know about is being referenced and at least for me TTD was essential here for debugging why my own implementation was broken. It was a hard-fought battle, but this function can be broken up into 3 high-level phases:
+This function is the perfect example of decompilers emitting less than ideal code as a result of compiler optimizations/code reordering. It's really hard to tell even at a glance what data we already know about is being referenced and, at least for me, TTD was essential for following how data flows. It took a few hours of banging my head against IDA and WinDbg to understand, but this function can be broken up into 3 high-level phases:
 
 1. Building a 48-byte buffer containing our key material XOR'd with data from a static table.
 
@@ -470,20 +470,27 @@ This function is the perfect example of decompilers emitting less than ideal cod
   v31 = 15;
   do
   {
-      // The end of this loop is odd -- but it's writing a byte somewhere? come back
-      // to this later
+    // The end statement of this loop is strange -- it's writing a byte somewhere? come back
+    // to this later
     for ( i = 0; i < 48; *((_BYTE *)&v33 + i + 3) = v18 )
     {
-    // v28 Starts at 0
+    // v28 Starts at 0 but is incremented by 1 during each iteration of the outer `while` loop
       v7 = v28;
       // v5 is our last argument which was 0
       if ( !v5 )
-        // overwrite v7 with v4, which is 15
+        // overwrite v7 with v4, which begins at 15 but is decremented by 1 during each iteration
+        // of the outer `while` loop
         v7 = v4;
       // left-hand side of the xor, *(_BYTE *)(i + 48 * v7 + v3 + 4)
-      // v3 in this context is our `this` pointer + 4, giving us *(_BYTE *)(i + (48 * v7) + this->maybe_key)
-      // so the left-hand side of the xor is likely indexing into our key material:
-      // this->maybe_key[i + 48 * v7]
+      //     v3 in this context is our `this` pointer + 4, giving us *(_BYTE *)(i + (48 * v7) + this->maybe_key)
+      //     so the left-hand side of the xor is likely indexing into our key material:
+      //     this->maybe_key[i + 48 * loop_multiplier]
+      //
+      // right-hand side of the xor, a2[(unsigned __int8)byte_424E50[i] + 31]
+      //     a2 is our input encrypted data, and byte_424E50 is some static data
+      //
+      // this full statement can be rewritten as:
+      //     v8 = this->maybe_key[i + 48 * loop_multiplier] ^ encrypted_data[byte_424E50[i] + 31]
       v8 = *(_BYTE *)(i + 48 * v7 + v3 + 4) ^ a2[(unsigned __int8)byte_424E50[i] + 31];
 
       v9 = v28;
@@ -501,16 +508,17 @@ This function is the perfect example of decompilers emitting less than ideal cod
 
       // snip
 
-      // this gets written at the end of the loop... hm
+      // v18 gets written to the scratch buffer at the end of the loop...
       v18 = *(_BYTE *)(i + 48 * v17 + v3 + 9) ^ a2[(unsigned __int8)byte_424E55[i] + 31];
 
       // this was probably the *real* last statement of the for-loop
+      // i.e. for (int i = 0; i < 48; i += 6)
       i += 6;
     }
 ```
 
 
-2. Build a 32-byte buffer containing data from an 0x800-byte static table, with lookups originating from indices built from the buffer in step #1. Combine this 32-byte buffer with the 48-byte buffer in step #1.
+2. Build a 32-byte buffer containing data from an 0x800-byte static table, with indexes into this table originating from indices built from the buffer in step #1. Combine this 32-byte buffer with the 48-byte buffer in step #1.
 
 ```c,linenos
     // dword_424E80 -- some static data
@@ -569,6 +577,7 @@ This function is the perfect example of decompilers emitting less than ideal cod
 
         // result[3] ^= step2_bytes[unk_425680[output_index] + 3]
         result[3] ^= *((_BYTE *)v32 + (unsigned __int8)result[byte_425683 - a2] + 3);
+        // Move our our pointer to the output buffer forward by 4 bytes
         result += 4;
         --v30;
       }
@@ -585,8 +594,9 @@ This function is the perfect example of decompilers emitting less than ideal cod
 
         // v22 = *result ^ step2_bytes[unk_425680[output_index] - 1]
         v22 = *result ^ *((_BYTE *)v32 + (unsigned __int8)result[v20] + 3);
-        // i'm not sure why this is incremented here, but this really makes the code ugly
 
+        // I'm not sure why the output buffer pointer is incremented here, but
+        // this really makes the code ugly
         result += 4;
 
         // Write the byte generated above to offset 0x1c
@@ -610,7 +620,7 @@ This function is the perfect example of decompilers emitting less than ideal cod
     }
 ```
 
-The inner loop in the `else` branch above I think is kind of nasty, so here it is reimplmented in Rust after much debugging to figure out exactly what was going on:
+The inner loop in the `else` branch above I think is kind of nasty, so here it is reimplemented in Rust:
 
 ```rust,linenos
 for _ in 0..8 {
@@ -634,31 +644,34 @@ for _ in 0..8 {
 ```
 
 
-### "Key" Setup
+### Key Setup
 
-We now need to figure out how our key is set up for usage in the `decrypt_data` function above. My approach here is to set a breakpoint at the first instruction to use this data in `decrypt_data`, which happens to be `xor bl, [ecx + esi + 4]` at `0x4079d3`. We know this because the left-hand side of the XOR operation, the key material, will be the *second* operand in the `xor` instruction. As a reminder, the decompiler shows the XOR as:
+We now need to figure out how our key is set up for usage in the `decrypt_data` function above. My approach here is to set a breakpoint at the first instruction to use the key data in `decrypt_data`, which happens to be `xor bl, [ecx + esi + 4]` at `0x4079d3`. I know this is where we should break because in the decompiler output the left-hand side of the XOR operation, the key material, will be the *second* operand in the `xor` instruction. As a reminder, the decompiler shows the XOR as:
 
 ```c
 v8 = *(_BYTE *)(i + 48 * v7 + v3 + 4) ^ a2[(unsigned __int8)byte_424E50[i] + 31];
 ```
 
-The breakpoint is hit and the address we're loading from is `0x19f2b7`. We can now lean on TTD to help us figure out where this data was last written. Set a 1-byte memory write breakpoint at this address using `ba w1 0x19f5c4` and press the `Go Back` button. If you've never used TTD before, this operates exactly as `Go` would except *backwards* in the program's trace. In this case it will execute backward until either a breakpoint is hit, interrupt is generated, or we reach the start of the program.
+The breakpoint is hit and the address we're loading from is `0x19f5c4`. We can now lean on TTD to help us figure out where this data was last written. Set a 1-byte memory write breakpoint at this address using `ba w1 0x19f5c4` and press the `Go Back` button. If you've never used TTD before, this operates exactly as `Go` would except *backwards* in the program's trace. In this case it will execute backward until either a breakpoint is hit, interrupt is generated, or we reach the start of the program.
 
-Our memory write breakpoint gets triggered at `0x4078fb` -- a function we haven't seen before. The callstack shows that it's called not terribly far from our `decrypt_update_info` routine!
+Our memory write breakpoint gets triggered at `0x4078fb` -- a function we haven't seen before. The callstack shows that it's called not terribly far from the `decrypt_update_info` routine!
 
 - `set_key` (we are here -- function is originally called `sub_407850`)
 - `sub_4082c0`
 - `decrypt_update_info`
 
+What's `sub_4082c0`?
+
 {{ resize_image(path="/img/yaesu/timestamp_inflation.png", width=800, height=800, op="fit") }}
 
-Not a lot to see here except the same function called 4 times, initially with the timestamp string as an argument in position 0, a pointer to 64-byte buffer, and each subsequent function call using the return value of the last. The function our debugger just broke into takes only 1 argument, which is the 64-byte buffer used across *all* of these function calls. So what's going on in `sub_407e80`?
+Not a lot to see here except the same function called 4 times, initially with the timestamp string as an argument in position 0, a 64-byte buffer, and bunch of function calls using the return value of the last as its input. The function our debugger just broke into takes only 1 argument, which is the 64-byte buffer used across *all* of these function calls. So what's going on in `sub_407e80`?
 
 {{ resize_image(path="/img/yaesu/inflate_timestamp.png", width=800, height=800, op="fit") }}
 
 The bitwise operations that look supsiciously similar to the byte to bit inflation we saw above with the firmware data. After renaming things and performing some loop unrolling, things look like this:
 
 ```c,linenos
+// sub_407850
 int inflate_timestamp(void *this, char *timestamp_str, char *output, uint8_t *key) {
     for (size_t output_idx = 0; output_idx < 8; output_idx++) {
         uint8_t ts_byte = *timestamp_str;
@@ -666,18 +679,19 @@ int inflate_timestamp(void *this, char *timestamp_str, char *output, uint8_t *ke
             timestamp_str += 1;
         }
 
-        for (int bit_idx = 7; bit_idx > 0; bit_idx--) {
+        for (int bit_idx = 0; bit_idx < 8; bit_idx++) {
             uint8_t bit_value = (ts_byte >> (7 - bit_idx)) & 1;
             output[(output_idx * 8) + bit_idx] ^= bit_value;
         }
     }
 
     set_key(this, key);
-    perform_bit_swap(this, output, 1);
+    decrypt_data(this, output, 1);
 
     return timestamp_str;
 }
 
+// sub_4082c0
 int set_key_to_timestamp(void *this, char *timestamp_str) {
     uint8_t key_buf[64];
     memset(&key_buf, 0, sizeof(key_buf));
@@ -779,12 +793,12 @@ void set_key(void *this, uint8_t *key) {
 
 1. Update data is read from resources
 2. The first 4 bytes of the update data are a Unix timestamp
-3. The timestamp is formatted as a string, has each byte inflated to its bit representation, and mixed with some static key material. This is repeated 4 times with the output of the previous run used as an input to the next.
-4. The resulting data from step 3 is used as a key.
+3. The timestamp is formatted as a string, has each byte inflated to its bit representation, and decrypted using some static key material as the key. This is repeated 4 times with the output of the previous run used as an input to the next.
+4. The resulting data from step 3 is used as a key for decrypting data.
 5. The remainder of the firmware update image is inflated to its bit representation 8 bytes at a time and uses the dynamic key and 3 other unique static lookup tables to transform the inflated input data.
 6. The result from step 5 is deflated back into its *byte* representation.
 
-My decryption utility which reimplements this magic in Rust can be found at [https://github.com/landaire/yahoo](https://github.com/landaire/yahoo).
+My decryption utility which completely reimplements this magic in Rust can be found at [https://github.com/landaire/porkchop](https://github.com/landaire/porkchop).
 
 ## Loading the Firmware in IDA Pro
 
