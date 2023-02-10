@@ -45,8 +45,6 @@
 
 
 
-  <link rel="prev" href="https://landaire.net/apple-imageio-dos/">
-
 
 
 
@@ -237,107 +235,107 @@
 <a href="&#x2F;img&#x2F;yaesu&#x2F;deobfuscate_function.png"><img src="https:&#x2F;&#x2F;landaire.net&#x2F;processed_images&#x2F;acdc8642e8d4225e00.png" /></a>
 <p>We broke when dereferencing <code>v2</code> and IDA has automatically named the variable it's being assigned to as <code>Time</code>. The <code>Time</code> variable is passed to another function which formats it as a string with <code>%Y%m%d%H%M%S</code>. Let's clean up the variables to reflect what we know:</p>
 <pre data-linenos data-lang="c" style="background-color:#2b303b;color:#c0c5ce;" class="language-c "><code class="language-c" data-lang="c"><table><tbody><tr><td>1</td><td><span style="color:#b48ead;">bool</span><span> __thiscall </span><span style="color:#8fa1b3;">sub_4047B0</span><span>(</span><span style="color:#b48ead;">char </span><span>*</span><span style="color:#bf616a;">this</span><span>)
-</span><tr><td>2</td><td><span>{
-</span><tr><td>3</td><td><span>  </span><span style="color:#b48ead;">char </span><span>*encrypted_data; </span><span style="color:#65737e;">// esi
-</span><tr><td>4</td><td><span>  BOOL v3; </span><span style="color:#65737e;">// ebx
-</span><tr><td>5</td><td><span>  </span><span style="color:#b48ead;">char </span><span>*v4; </span><span style="color:#65737e;">// eax
-</span><tr><td>6</td><td><span>  </span><span style="color:#b48ead;">char </span><span>*time_string; </span><span style="color:#65737e;">// [esp+Ch] [ebp-320h] BYREF
-</span><tr><td>7</td><td><span>  </span><span style="color:#b48ead;">int</span><span> v7; </span><span style="color:#65737e;">// [esp+10h] [ebp-31Ch] BYREF
-</span><tr><td>8</td><td><span>  __time64_t Time; </span><span style="color:#65737e;">// [esp+14h] [ebp-318h] BYREF
-</span><tr><td>9</td><td><span>  </span><span style="color:#b48ead;">int </span><span>(__thiscall **v9)(</span><span style="color:#b48ead;">void </span><span>*, </span><span style="color:#b48ead;">char</span><span>); </span><span style="color:#65737e;">// [esp+1Ch] [ebp-310h]
-</span><tr><td>10</td><td><span>  </span><span style="color:#b48ead;">int</span><span> v10; </span><span style="color:#65737e;">// [esp+328h] [ebp-4h]
-</span><tr><td>11</td><td><span>
-</span><tr><td>12</td><td><span>  </span><span style="color:#65737e;">// rename v2 to encrypted_data
-</span><tr><td>13</td><td><span>  encrypted_data = *(</span><span style="color:#b48ead;">char </span><span>**)(*((_DWORD *)</span><span style="color:#bf616a;">AfxGetModuleState</span><span>() + </span><span style="color:#d08770;">1</span><span>) + </span><span style="color:#d08770;">160</span><span>);
-</span><tr><td>14</td><td><span>  Time = *(</span><span style="color:#b48ead;">int </span><span>*)encrypted_data;
-</span><tr><td>15</td><td><span>  </span><span style="color:#65737e;">// rename this function and its 2nd parameter
-</span><tr><td>16</td><td><span>  </span><span style="color:#bf616a;">format_timestamp</span><span>(&amp;Time, (</span><span style="color:#b48ead;">int</span><span>)&amp;time_string, &quot;</span><span style="color:#a3be8c;">%Y%m</span><span style="color:#d08770;">%d</span><span style="color:#a3be8c;">%H%M</span><span style="color:#d08770;">%S</span><span>&quot;);
-</span><tr><td>17</td><td><span>  v10 = </span><span style="color:#d08770;">1</span><span>;
-</span><tr><td>18</td><td><span>  v7 = </span><span style="color:#d08770;">0</span><span>;
-</span><tr><td>19</td><td><span>  v9 = off_4244A0;
-</span><tr><td>20</td><td><span>  </span><span style="color:#bf616a;">sub_4082C0</span><span>(time_string);
-</span><tr><td>21</td><td><span>  v3 = </span><span style="color:#bf616a;">sub_408350</span><span>(encrypted_data + </span><span style="color:#d08770;">4</span><span>, </span><span style="color:#d08770;">0x100000</span><span>, this + </span><span style="color:#d08770;">92</span><span>, </span><span style="color:#d08770;">0x100000</span><span>, &amp;v7) == </span><span style="color:#d08770;">0</span><span>;
-</span><tr><td>22</td><td><span>  v4 = time_string - </span><span style="color:#d08770;">16</span><span>;
-</span><tr><td>23</td><td><span>  v9 = off_4244A0;
-</span><tr><td>24</td><td><span>  v10 = -</span><span style="color:#d08770;">1</span><span>;
-</span><tr><td>25</td><td><span>  </span><span style="color:#b48ead;">if </span><span>( </span><span style="color:#bf616a;">_InterlockedDecrement</span><span>((</span><span style="color:#b48ead;">volatile signed </span><span>__int32 *)time_string - </span><span style="color:#d08770;">1</span><span>) &lt;= </span><span style="color:#d08770;">0 </span><span>)
-</span><tr><td>26</td><td><span>    (*(</span><span style="color:#b48ead;">void </span><span>(__stdcall **)(</span><span style="color:#b48ead;">char </span><span>*))(**(_DWORD **)v4 + </span><span style="color:#d08770;">4</span><span>))(v4);
-</span><tr><td>27</td><td><span>  </span><span style="color:#b48ead;">return</span><span> v3;
-</span><tr><td>28</td><td><span>}
-</span></tr></tbody></table></code></pre>
+</span></td></tr><tr><td>2</td><td><span>{
+</span></td></tr><tr><td>3</td><td><span>  </span><span style="color:#b48ead;">char </span><span>*encrypted_data; </span><span style="color:#65737e;">// esi
+</span></td></tr><tr><td>4</td><td><span>  BOOL v3; </span><span style="color:#65737e;">// ebx
+</span></td></tr><tr><td>5</td><td><span>  </span><span style="color:#b48ead;">char </span><span>*v4; </span><span style="color:#65737e;">// eax
+</span></td></tr><tr><td>6</td><td><span>  </span><span style="color:#b48ead;">char </span><span>*time_string; </span><span style="color:#65737e;">// [esp+Ch] [ebp-320h] BYREF
+</span></td></tr><tr><td>7</td><td><span>  </span><span style="color:#b48ead;">int</span><span> v7; </span><span style="color:#65737e;">// [esp+10h] [ebp-31Ch] BYREF
+</span></td></tr><tr><td>8</td><td><span>  __time64_t Time; </span><span style="color:#65737e;">// [esp+14h] [ebp-318h] BYREF
+</span></td></tr><tr><td>9</td><td><span>  </span><span style="color:#b48ead;">int </span><span>(__thiscall **v9)(</span><span style="color:#b48ead;">void </span><span>*, </span><span style="color:#b48ead;">char</span><span>); </span><span style="color:#65737e;">// [esp+1Ch] [ebp-310h]
+</span></td></tr><tr><td>10</td><td><span>  </span><span style="color:#b48ead;">int</span><span> v10; </span><span style="color:#65737e;">// [esp+328h] [ebp-4h]
+</span></td></tr><tr><td>11</td><td><span>
+</span></td></tr><tr><td>12</td><td><span>  </span><span style="color:#65737e;">// rename v2 to encrypted_data
+</span></td></tr><tr><td>13</td><td><span>  encrypted_data = *(</span><span style="color:#b48ead;">char </span><span>**)(*((_DWORD *)</span><span style="color:#bf616a;">AfxGetModuleState</span><span>() + </span><span style="color:#d08770;">1</span><span>) + </span><span style="color:#d08770;">160</span><span>);
+</span></td></tr><tr><td>14</td><td><span>  Time = *(</span><span style="color:#b48ead;">int </span><span>*)encrypted_data;
+</span></td></tr><tr><td>15</td><td><span>  </span><span style="color:#65737e;">// rename this function and its 2nd parameter
+</span></td></tr><tr><td>16</td><td><span>  </span><span style="color:#bf616a;">format_timestamp</span><span>(&amp;Time, (</span><span style="color:#b48ead;">int</span><span>)&amp;time_string, &quot;</span><span style="color:#a3be8c;">%Y%m</span><span style="color:#d08770;">%d</span><span style="color:#a3be8c;">%H%M</span><span style="color:#d08770;">%S</span><span>&quot;);
+</span></td></tr><tr><td>17</td><td><span>  v10 = </span><span style="color:#d08770;">1</span><span>;
+</span></td></tr><tr><td>18</td><td><span>  v7 = </span><span style="color:#d08770;">0</span><span>;
+</span></td></tr><tr><td>19</td><td><span>  v9 = off_4244A0;
+</span></td></tr><tr><td>20</td><td><span>  </span><span style="color:#bf616a;">sub_4082C0</span><span>(time_string);
+</span></td></tr><tr><td>21</td><td><span>  v3 = </span><span style="color:#bf616a;">sub_408350</span><span>(encrypted_data + </span><span style="color:#d08770;">4</span><span>, </span><span style="color:#d08770;">0x100000</span><span>, this + </span><span style="color:#d08770;">92</span><span>, </span><span style="color:#d08770;">0x100000</span><span>, &amp;v7) == </span><span style="color:#d08770;">0</span><span>;
+</span></td></tr><tr><td>22</td><td><span>  v4 = time_string - </span><span style="color:#d08770;">16</span><span>;
+</span></td></tr><tr><td>23</td><td><span>  v9 = off_4244A0;
+</span></td></tr><tr><td>24</td><td><span>  v10 = -</span><span style="color:#d08770;">1</span><span>;
+</span></td></tr><tr><td>25</td><td><span>  </span><span style="color:#b48ead;">if </span><span>( </span><span style="color:#bf616a;">_InterlockedDecrement</span><span>((</span><span style="color:#b48ead;">volatile signed </span><span>__int32 *)time_string - </span><span style="color:#d08770;">1</span><span>) &lt;= </span><span style="color:#d08770;">0 </span><span>)
+</span></td></tr><tr><td>26</td><td><span>    (*(</span><span style="color:#b48ead;">void </span><span>(__stdcall **)(</span><span style="color:#b48ead;">char </span><span>*))(**(_DWORD **)v4 + </span><span style="color:#d08770;">4</span><span>))(v4);
+</span></td></tr><tr><td>27</td><td><span>  </span><span style="color:#b48ead;">return</span><span> v3;
+</span></td></tr><tr><td>28</td><td><span>}
+</span></td></tr></tbody></table></code></pre>
 <p>The timestamp string is passed to <code>sub_4082c0</code> on line 20 and the remainder of the update image is passed to <code>sub_408350</code> on line 21. I'm going to focus on <code>sub_408350</code> since I only care about the firmware data right now and based on how this function is called I'd wager its signature is something like:</p>
 <pre data-lang="c" style="background-color:#2b303b;color:#c0c5ce;" class="language-c "><code class="language-c" data-lang="c"><span>status_t </span><span style="color:#8fa1b3;">sub_408350</span><span>(uint8_t *</span><span style="color:#bf616a;">input</span><span>, size_t </span><span style="color:#bf616a;">input_len</span><span>, uint8_t *</span><span style="color:#bf616a;">output</span><span>, </span><span style="color:#bf616a;">output_len</span><span>, size_t *</span><span style="color:#bf616a;">out_data_processed</span><span>);
 </span></code></pre>
 <p>Let's see what it does:</p>
 <pre data-linenos data-lang="c" style="background-color:#2b303b;color:#c0c5ce;" class="language-c "><code class="language-c" data-lang="c"><table><tbody><tr><td>1</td><td><span style="color:#b48ead;">int</span><span> __stdcall </span><span style="color:#8fa1b3;">sub_408350</span><span>(</span><span style="color:#b48ead;">char </span><span>*</span><span style="color:#bf616a;">a1</span><span>, </span><span style="color:#b48ead;">int </span><span style="color:#bf616a;">a2</span><span>, </span><span style="color:#b48ead;">int </span><span style="color:#bf616a;">a3</span><span>, </span><span style="color:#b48ead;">int </span><span style="color:#bf616a;">a4</span><span>, _DWORD *</span><span style="color:#bf616a;">a5</span><span>)
-</span><tr><td>2</td><td><span>{
-</span><tr><td>3</td><td><span>  </span><span style="color:#b48ead;">int</span><span> v5; </span><span style="color:#65737e;">// edx
-</span><tr><td>4</td><td><span>  </span><span style="color:#b48ead;">int</span><span> v7; </span><span style="color:#65737e;">// ebp
-</span><tr><td>5</td><td><span>  </span><span style="color:#b48ead;">int</span><span> v8; </span><span style="color:#65737e;">// esi
-</span><tr><td>6</td><td><span>  </span><span style="color:#b48ead;">unsigned int</span><span> i; </span><span style="color:#65737e;">// ecx
-</span><tr><td>7</td><td><span>  </span><span style="color:#b48ead;">char</span><span> v10; </span><span style="color:#65737e;">// al
-</span><tr><td>8</td><td><span>  </span><span style="color:#b48ead;">char </span><span>*v11; </span><span style="color:#65737e;">// eax
-</span><tr><td>9</td><td><span>  </span><span style="color:#b48ead;">int</span><span> v13; </span><span style="color:#65737e;">// [esp+10h] [ebp-54h]
-</span><tr><td>10</td><td><span>  </span><span style="color:#b48ead;">char</span><span> v14[</span><span style="color:#d08770;">64</span><span>]; </span><span style="color:#65737e;">// [esp+20h] [ebp-44h] BYREF
-</span><tr><td>11</td><td><span>
-</span><tr><td>12</td><td><span>  v5 = a2;
-</span><tr><td>13</td><td><span>  v7 = </span><span style="color:#d08770;">0</span><span>;
-</span><tr><td>14</td><td><span>  </span><span style="color:#96b5b4;">memset</span><span>(v14, </span><span style="color:#d08770;">0</span><span>, sizeof(v14));
-</span><tr><td>15</td><td><span>  </span><span style="color:#b48ead;">if </span><span>( a2 &lt;= </span><span style="color:#d08770;">0 </span><span>)
-</span><tr><td>16</td><td><span>  {
-</span><tr><td>17</td><td><span>LABEL_13:
-</span><tr><td>18</td><td><span>    *a5 = v7;
-</span><tr><td>19</td><td><span>    </span><span style="color:#b48ead;">return </span><span style="color:#d08770;">0</span><span>;
-</span><tr><td>20</td><td><span>  }
-</span><tr><td>21</td><td><span>  </span><span style="color:#b48ead;">else
-</span><tr><td>22</td><td><span>  {
-</span><tr><td>23</td><td><span>    </span><span style="color:#b48ead;">while </span><span>( </span><span style="color:#d08770;">1 </span><span>)
-</span><tr><td>24</td><td><span>    {
-</span><tr><td>25</td><td><span>      v8 = v5;
-</span><tr><td>26</td><td><span>      </span><span style="color:#b48ead;">if </span><span>( v5 &gt;= </span><span style="color:#d08770;">8 </span><span>)
-</span><tr><td>27</td><td><span>        v8 = </span><span style="color:#d08770;">8</span><span>;
-</span><tr><td>28</td><td><span>      v13 = v5 - v8;
-</span><tr><td>29</td><td><span>      </span><span style="color:#b48ead;">for </span><span>( i = </span><span style="color:#d08770;">0</span><span>; i &lt; </span><span style="color:#d08770;">0x40</span><span>; i += </span><span style="color:#d08770;">8 </span><span>)
-</span><tr><td>30</td><td><span>      {
-</span><tr><td>31</td><td><span>        v10 = *a1;
-</span><tr><td>32</td><td><span>        v14[i] = (</span><span style="color:#b48ead;">unsigned </span><span>__int8)*a1 &gt;&gt; </span><span style="color:#d08770;">7</span><span>;
-</span><tr><td>33</td><td><span>        v14[i + </span><span style="color:#d08770;">1</span><span>] = (v10 &amp; </span><span style="color:#d08770;">0x40</span><span>) != </span><span style="color:#d08770;">0</span><span>;
-</span><tr><td>34</td><td><span>        v14[i + </span><span style="color:#d08770;">2</span><span>] = (v10 &amp; </span><span style="color:#d08770;">0x20</span><span>) != </span><span style="color:#d08770;">0</span><span>;
-</span><tr><td>35</td><td><span>        v14[i + </span><span style="color:#d08770;">3</span><span>] = (v10 &amp; </span><span style="color:#d08770;">0x10</span><span>) != </span><span style="color:#d08770;">0</span><span>;
-</span><tr><td>36</td><td><span>        v14[i + </span><span style="color:#d08770;">4</span><span>] = (v10 &amp; </span><span style="color:#d08770;">8</span><span>) != </span><span style="color:#d08770;">0</span><span>;
-</span><tr><td>37</td><td><span>        v14[i + </span><span style="color:#d08770;">5</span><span>] = (v10 &amp; </span><span style="color:#d08770;">4</span><span>) != </span><span style="color:#d08770;">0</span><span>;
-</span><tr><td>38</td><td><span>        v14[i + </span><span style="color:#d08770;">6</span><span>] = (v10 &amp; </span><span style="color:#d08770;">2</span><span>) != </span><span style="color:#d08770;">0</span><span>;
-</span><tr><td>39</td><td><span>        v14[i + </span><span style="color:#d08770;">7</span><span>] = v10 &amp; </span><span style="color:#d08770;">1</span><span>;
-</span><tr><td>40</td><td><span>        ++a1;
-</span><tr><td>41</td><td><span>      }
-</span><tr><td>42</td><td><span>      </span><span style="color:#bf616a;">sub_407980</span><span>(v14, </span><span style="color:#d08770;">0</span><span>);
-</span><tr><td>43</td><td><span>      </span><span style="color:#b48ead;">if </span><span>( v8 )
-</span><tr><td>44</td><td><span>        </span><span style="color:#b48ead;">break</span><span>;
-</span><tr><td>45</td><td><span>LABEL_12:
-</span><tr><td>46</td><td><span>      </span><span style="color:#b48ead;">if </span><span>( v13 &lt;= </span><span style="color:#d08770;">0 </span><span>)
-</span><tr><td>47</td><td><span>        </span><span style="color:#b48ead;">goto</span><span> LABEL_13;
-</span><tr><td>48</td><td><span>      v5 = v13;
-</span><tr><td>49</td><td><span>    }
-</span><tr><td>50</td><td><span>    v11 = &amp;v14[</span><span style="color:#d08770;">1</span><span>];
-</span><tr><td>51</td><td><span>    </span><span style="color:#b48ead;">while </span><span>( </span><span style="color:#d08770;">1 </span><span>)
-</span><tr><td>52</td><td><span>    {
-</span><tr><td>53</td><td><span>      --v8;
-</span><tr><td>54</td><td><span>      </span><span style="color:#b48ead;">if </span><span>( v7 &gt;= a4 )
-</span><tr><td>55</td><td><span>        </span><span style="color:#b48ead;">return </span><span>-</span><span style="color:#d08770;">101</span><span>;
-</span><tr><td>56</td><td><span>      *(_BYTE *)(a3 + v7++) = v11[</span><span style="color:#d08770;">6</span><span>] | (</span><span style="color:#d08770;">2
-</span><tr><td>57</td><td><span>                                      * (v11[</span><span style="color:#d08770;">5</span><span>] | (</span><span style="color:#d08770;">2
-</span><tr><td>58</td><td><span>                                                 * (v11[</span><span style="color:#d08770;">4</span><span>] | (</span><span style="color:#d08770;">2
-</span><tr><td>59</td><td><span>                                                            * (v11[</span><span style="color:#d08770;">3</span><span>] | (</span><span style="color:#d08770;">2
-</span><tr><td>60</td><td><span>                                                                       * (v11[</span><span style="color:#d08770;">2</span><span>] | (</span><span style="color:#d08770;">2
-</span><tr><td>61</td><td><span>                                                                                  * (v11[</span><span style="color:#d08770;">1</span><span>] | (</span><span style="color:#d08770;">2
-</span><tr><td>62</td><td><span>                                                                                             * (*v11 | (</span><span style="color:#d08770;">2 </span><span>* *(v11 - </span><span style="color:#d08770;">1</span><span>))))))))))))));
-</span><tr><td>63</td><td><span>      v11 += </span><span style="color:#d08770;">8</span><span>;
-</span><tr><td>64</td><td><span>      </span><span style="color:#b48ead;">if </span><span>( !v8 )
-</span><tr><td>65</td><td><span>        </span><span style="color:#b48ead;">goto</span><span> LABEL_12;
-</span><tr><td>66</td><td><span>    }
-</span><tr><td>67</td><td><span>  }
-</span><tr><td>68</td><td><span>}
-</span></tr></tbody></table></code></pre>
+</span></td></tr><tr><td>2</td><td><span>{
+</span></td></tr><tr><td>3</td><td><span>  </span><span style="color:#b48ead;">int</span><span> v5; </span><span style="color:#65737e;">// edx
+</span></td></tr><tr><td>4</td><td><span>  </span><span style="color:#b48ead;">int</span><span> v7; </span><span style="color:#65737e;">// ebp
+</span></td></tr><tr><td>5</td><td><span>  </span><span style="color:#b48ead;">int</span><span> v8; </span><span style="color:#65737e;">// esi
+</span></td></tr><tr><td>6</td><td><span>  </span><span style="color:#b48ead;">unsigned int</span><span> i; </span><span style="color:#65737e;">// ecx
+</span></td></tr><tr><td>7</td><td><span>  </span><span style="color:#b48ead;">char</span><span> v10; </span><span style="color:#65737e;">// al
+</span></td></tr><tr><td>8</td><td><span>  </span><span style="color:#b48ead;">char </span><span>*v11; </span><span style="color:#65737e;">// eax
+</span></td></tr><tr><td>9</td><td><span>  </span><span style="color:#b48ead;">int</span><span> v13; </span><span style="color:#65737e;">// [esp+10h] [ebp-54h]
+</span></td></tr><tr><td>10</td><td><span>  </span><span style="color:#b48ead;">char</span><span> v14[</span><span style="color:#d08770;">64</span><span>]; </span><span style="color:#65737e;">// [esp+20h] [ebp-44h] BYREF
+</span></td></tr><tr><td>11</td><td><span>
+</span></td></tr><tr><td>12</td><td><span>  v5 = a2;
+</span></td></tr><tr><td>13</td><td><span>  v7 = </span><span style="color:#d08770;">0</span><span>;
+</span></td></tr><tr><td>14</td><td><span>  </span><span style="color:#96b5b4;">memset</span><span>(v14, </span><span style="color:#d08770;">0</span><span>, sizeof(v14));
+</span></td></tr><tr><td>15</td><td><span>  </span><span style="color:#b48ead;">if </span><span>( a2 &lt;= </span><span style="color:#d08770;">0 </span><span>)
+</span></td></tr><tr><td>16</td><td><span>  {
+</span></td></tr><tr><td>17</td><td><span>LABEL_13:
+</span></td></tr><tr><td>18</td><td><span>    *a5 = v7;
+</span></td></tr><tr><td>19</td><td><span>    </span><span style="color:#b48ead;">return </span><span style="color:#d08770;">0</span><span>;
+</span></td></tr><tr><td>20</td><td><span>  }
+</span></td></tr><tr><td>21</td><td><span>  </span><span style="color:#b48ead;">else
+</span></td></tr><tr><td>22</td><td><span>  {
+</span></td></tr><tr><td>23</td><td><span>    </span><span style="color:#b48ead;">while </span><span>( </span><span style="color:#d08770;">1 </span><span>)
+</span></td></tr><tr><td>24</td><td><span>    {
+</span></td></tr><tr><td>25</td><td><span>      v8 = v5;
+</span></td></tr><tr><td>26</td><td><span>      </span><span style="color:#b48ead;">if </span><span>( v5 &gt;= </span><span style="color:#d08770;">8 </span><span>)
+</span></td></tr><tr><td>27</td><td><span>        v8 = </span><span style="color:#d08770;">8</span><span>;
+</span></td></tr><tr><td>28</td><td><span>      v13 = v5 - v8;
+</span></td></tr><tr><td>29</td><td><span>      </span><span style="color:#b48ead;">for </span><span>( i = </span><span style="color:#d08770;">0</span><span>; i &lt; </span><span style="color:#d08770;">0x40</span><span>; i += </span><span style="color:#d08770;">8 </span><span>)
+</span></td></tr><tr><td>30</td><td><span>      {
+</span></td></tr><tr><td>31</td><td><span>        v10 = *a1;
+</span></td></tr><tr><td>32</td><td><span>        v14[i] = (</span><span style="color:#b48ead;">unsigned </span><span>__int8)*a1 &gt;&gt; </span><span style="color:#d08770;">7</span><span>;
+</span></td></tr><tr><td>33</td><td><span>        v14[i + </span><span style="color:#d08770;">1</span><span>] = (v10 &amp; </span><span style="color:#d08770;">0x40</span><span>) != </span><span style="color:#d08770;">0</span><span>;
+</span></td></tr><tr><td>34</td><td><span>        v14[i + </span><span style="color:#d08770;">2</span><span>] = (v10 &amp; </span><span style="color:#d08770;">0x20</span><span>) != </span><span style="color:#d08770;">0</span><span>;
+</span></td></tr><tr><td>35</td><td><span>        v14[i + </span><span style="color:#d08770;">3</span><span>] = (v10 &amp; </span><span style="color:#d08770;">0x10</span><span>) != </span><span style="color:#d08770;">0</span><span>;
+</span></td></tr><tr><td>36</td><td><span>        v14[i + </span><span style="color:#d08770;">4</span><span>] = (v10 &amp; </span><span style="color:#d08770;">8</span><span>) != </span><span style="color:#d08770;">0</span><span>;
+</span></td></tr><tr><td>37</td><td><span>        v14[i + </span><span style="color:#d08770;">5</span><span>] = (v10 &amp; </span><span style="color:#d08770;">4</span><span>) != </span><span style="color:#d08770;">0</span><span>;
+</span></td></tr><tr><td>38</td><td><span>        v14[i + </span><span style="color:#d08770;">6</span><span>] = (v10 &amp; </span><span style="color:#d08770;">2</span><span>) != </span><span style="color:#d08770;">0</span><span>;
+</span></td></tr><tr><td>39</td><td><span>        v14[i + </span><span style="color:#d08770;">7</span><span>] = v10 &amp; </span><span style="color:#d08770;">1</span><span>;
+</span></td></tr><tr><td>40</td><td><span>        ++a1;
+</span></td></tr><tr><td>41</td><td><span>      }
+</span></td></tr><tr><td>42</td><td><span>      </span><span style="color:#bf616a;">sub_407980</span><span>(v14, </span><span style="color:#d08770;">0</span><span>);
+</span></td></tr><tr><td>43</td><td><span>      </span><span style="color:#b48ead;">if </span><span>( v8 )
+</span></td></tr><tr><td>44</td><td><span>        </span><span style="color:#b48ead;">break</span><span>;
+</span></td></tr><tr><td>45</td><td><span>LABEL_12:
+</span></td></tr><tr><td>46</td><td><span>      </span><span style="color:#b48ead;">if </span><span>( v13 &lt;= </span><span style="color:#d08770;">0 </span><span>)
+</span></td></tr><tr><td>47</td><td><span>        </span><span style="color:#b48ead;">goto</span><span> LABEL_13;
+</span></td></tr><tr><td>48</td><td><span>      v5 = v13;
+</span></td></tr><tr><td>49</td><td><span>    }
+</span></td></tr><tr><td>50</td><td><span>    v11 = &amp;v14[</span><span style="color:#d08770;">1</span><span>];
+</span></td></tr><tr><td>51</td><td><span>    </span><span style="color:#b48ead;">while </span><span>( </span><span style="color:#d08770;">1 </span><span>)
+</span></td></tr><tr><td>52</td><td><span>    {
+</span></td></tr><tr><td>53</td><td><span>      --v8;
+</span></td></tr><tr><td>54</td><td><span>      </span><span style="color:#b48ead;">if </span><span>( v7 &gt;= a4 )
+</span></td></tr><tr><td>55</td><td><span>        </span><span style="color:#b48ead;">return </span><span>-</span><span style="color:#d08770;">101</span><span>;
+</span></td></tr><tr><td>56</td><td><span>      *(_BYTE *)(a3 + v7++) = v11[</span><span style="color:#d08770;">6</span><span>] | (</span><span style="color:#d08770;">2
+</span></td></tr><tr><td>57</td><td><span>                                      * (v11[</span><span style="color:#d08770;">5</span><span>] | (</span><span style="color:#d08770;">2
+</span></td></tr><tr><td>58</td><td><span>                                                 * (v11[</span><span style="color:#d08770;">4</span><span>] | (</span><span style="color:#d08770;">2
+</span></td></tr><tr><td>59</td><td><span>                                                            * (v11[</span><span style="color:#d08770;">3</span><span>] | (</span><span style="color:#d08770;">2
+</span></td></tr><tr><td>60</td><td><span>                                                                       * (v11[</span><span style="color:#d08770;">2</span><span>] | (</span><span style="color:#d08770;">2
+</span></td></tr><tr><td>61</td><td><span>                                                                                  * (v11[</span><span style="color:#d08770;">1</span><span>] | (</span><span style="color:#d08770;">2
+</span></td></tr><tr><td>62</td><td><span>                                                                                             * (*v11 | (</span><span style="color:#d08770;">2 </span><span>* *(v11 - </span><span style="color:#d08770;">1</span><span>))))))))))))));
+</span></td></tr><tr><td>63</td><td><span>      v11 += </span><span style="color:#d08770;">8</span><span>;
+</span></td></tr><tr><td>64</td><td><span>      </span><span style="color:#b48ead;">if </span><span>( !v8 )
+</span></td></tr><tr><td>65</td><td><span>        </span><span style="color:#b48ead;">goto</span><span> LABEL_12;
+</span></td></tr><tr><td>66</td><td><span>    }
+</span></td></tr><tr><td>67</td><td><span>  }
+</span></td></tr><tr><td>68</td><td><span>}
+</span></td></tr></tbody></table></code></pre>
 <p>I think we've found our function that starts decrypting the firmware! To confirm, we want to see what the <code>output</code> parameter's data looks like before and after this function is called. I set a breakpoint in the debugger at the address where it's called (<code>bp 0x404842</code>) and put the value of the <code>edi</code> register (<code>0x2d7507c</code>) in WinDbg's memory window.</p>
 <p>Here's the data before:</p>
 
@@ -362,83 +360,83 @@
 <h3 id="data-decryption">Data Decryption</h3>
 <p>Let's look at the firmware image decryption routine with some renamed variables:</p>
 <pre data-linenos data-lang="c" style="background-color:#2b303b;color:#c0c5ce;" class="language-c "><code class="language-c" data-lang="c"><table><tbody><tr><td>1</td><td><span style="color:#b48ead;">int</span><span> __thiscall </span><span style="color:#8fa1b3;">decrypt_data</span><span>(
-</span><tr><td>2</td><td><span>        </span><span style="color:#b48ead;">void </span><span>*</span><span style="color:#bf616a;">this</span><span>,
-</span><tr><td>3</td><td><span>        </span><span style="color:#b48ead;">char </span><span>*</span><span style="color:#bf616a;">encrypted_data</span><span>,
-</span><tr><td>4</td><td><span>        </span><span style="color:#b48ead;">int </span><span style="color:#bf616a;">encrypted_data_len</span><span>,
-</span><tr><td>5</td><td><span>        </span><span style="color:#b48ead;">char </span><span>*</span><span style="color:#bf616a;">output_data</span><span>,
-</span><tr><td>6</td><td><span>        </span><span style="color:#b48ead;">int </span><span style="color:#bf616a;">output_data_len</span><span>,
-</span><tr><td>7</td><td><span>        _DWORD *</span><span style="color:#bf616a;">bytes_written</span><span>)
-</span><tr><td>8</td><td><span>{
-</span><tr><td>9</td><td><span>  </span><span style="color:#b48ead;">int</span><span> data_len; </span><span style="color:#65737e;">// edx
-</span><tr><td>10</td><td><span>  </span><span style="color:#b48ead;">int</span><span> output_index; </span><span style="color:#65737e;">// ebp
-</span><tr><td>11</td><td><span>  </span><span style="color:#b48ead;">int</span><span> block_size; </span><span style="color:#65737e;">// esi
-</span><tr><td>12</td><td><span>  </span><span style="color:#b48ead;">unsigned int</span><span> i; </span><span style="color:#65737e;">// ecx
-</span><tr><td>13</td><td><span>  </span><span style="color:#b48ead;">char</span><span> encrypted_byte; </span><span style="color:#65737e;">// al
-</span><tr><td>14</td><td><span>  </span><span style="color:#b48ead;">char </span><span>*idata; </span><span style="color:#65737e;">// eax
-</span><tr><td>15</td><td><span>  </span><span style="color:#b48ead;">int</span><span> remaining_data; </span><span style="color:#65737e;">// [esp+10h] [ebp-54h]
-</span><tr><td>16</td><td><span>  </span><span style="color:#b48ead;">char</span><span> inflated_data[</span><span style="color:#d08770;">64</span><span>]; </span><span style="color:#65737e;">// [esp+20h] [ebp-44h] BYREF
-</span><tr><td>17</td><td><span>
-</span><tr><td>18</td><td><span>  data_len = encrypted_data_len;
-</span><tr><td>19</td><td><span>  output_index = </span><span style="color:#d08770;">0</span><span>;
-</span><tr><td>20</td><td><span>  </span><span style="color:#96b5b4;">memset</span><span>(inflated_data, </span><span style="color:#d08770;">0</span><span>, sizeof(inflated_data));
-</span><tr><td>21</td><td><span>  </span><span style="color:#b48ead;">if </span><span>( encrypted_data_len &lt;= </span><span style="color:#d08770;">0 </span><span>)
-</span><tr><td>22</td><td><span>  {
-</span><tr><td>23</td><td><span>LABEL_13:
-</span><tr><td>24</td><td><span>    *bytes_written = output_index;
-</span><tr><td>25</td><td><span>    </span><span style="color:#b48ead;">return </span><span style="color:#d08770;">0</span><span>;
-</span><tr><td>26</td><td><span>  }
-</span><tr><td>27</td><td><span>  </span><span style="color:#b48ead;">else
-</span><tr><td>28</td><td><span>  {
-</span><tr><td>29</td><td><span>    </span><span style="color:#b48ead;">while </span><span>( </span><span style="color:#d08770;">1 </span><span>)
-</span><tr><td>30</td><td><span>    {
-</span><tr><td>31</td><td><span>      block_size = data_len;
-</span><tr><td>32</td><td><span>      </span><span style="color:#b48ead;">if </span><span>( data_len &gt;= </span><span style="color:#d08770;">8 </span><span>)
-</span><tr><td>33</td><td><span>        block_size = </span><span style="color:#d08770;">8</span><span>;
-</span><tr><td>34</td><td><span>      remaining_data = data_len - block_size;
-</span><tr><td>35</td><td><span>
-</span><tr><td>36</td><td><span>      </span><span style="color:#65737e;">// inflate 1 byte of input data to 8 bytes of its bit representation
-</span><tr><td>37</td><td><span>      </span><span style="color:#b48ead;">for </span><span>( i = </span><span style="color:#d08770;">0</span><span>; i &lt; </span><span style="color:#d08770;">0x40</span><span>; i += </span><span style="color:#d08770;">8 </span><span>)
-</span><tr><td>38</td><td><span>      {
-</span><tr><td>39</td><td><span>        encrypted_byte = *encrypted_data;
-</span><tr><td>40</td><td><span>        inflated_data[i] = (</span><span style="color:#b48ead;">unsigned </span><span>__int8)*encrypted_data &gt;&gt; </span><span style="color:#d08770;">7</span><span>;
-</span><tr><td>41</td><td><span>        inflated_data[i + </span><span style="color:#d08770;">1</span><span>] = (encrypted_byte &amp; </span><span style="color:#d08770;">0x40</span><span>) != </span><span style="color:#d08770;">0</span><span>;
-</span><tr><td>42</td><td><span>        inflated_data[i + </span><span style="color:#d08770;">2</span><span>] = (encrypted_byte &amp; </span><span style="color:#d08770;">0x20</span><span>) != </span><span style="color:#d08770;">0</span><span>;
-</span><tr><td>43</td><td><span>        inflated_data[i + </span><span style="color:#d08770;">3</span><span>] = (encrypted_byte &amp; </span><span style="color:#d08770;">0x10</span><span>) != </span><span style="color:#d08770;">0</span><span>;
-</span><tr><td>44</td><td><span>        inflated_data[i + </span><span style="color:#d08770;">4</span><span>] = (encrypted_byte &amp; </span><span style="color:#d08770;">8</span><span>) != </span><span style="color:#d08770;">0</span><span>;
-</span><tr><td>45</td><td><span>        inflated_data[i + </span><span style="color:#d08770;">5</span><span>] = (encrypted_byte &amp; </span><span style="color:#d08770;">4</span><span>) != </span><span style="color:#d08770;">0</span><span>;
-</span><tr><td>46</td><td><span>        inflated_data[i + </span><span style="color:#d08770;">6</span><span>] = (encrypted_byte &amp; </span><span style="color:#d08770;">2</span><span>) != </span><span style="color:#d08770;">0</span><span>;
-</span><tr><td>47</td><td><span>        inflated_data[i + </span><span style="color:#d08770;">7</span><span>] = encrypted_byte &amp; </span><span style="color:#d08770;">1</span><span>;
-</span><tr><td>48</td><td><span>        ++encrypted_data;
-</span><tr><td>49</td><td><span>      }
-</span><tr><td>50</td><td><span>      </span><span style="color:#65737e;">// do something with the inflated data
-</span><tr><td>51</td><td><span>      </span><span style="color:#bf616a;">sub_407980</span><span>(this, inflated_data, </span><span style="color:#d08770;">0</span><span>);
-</span><tr><td>52</td><td><span>      </span><span style="color:#b48ead;">if </span><span>( block_size )
-</span><tr><td>53</td><td><span>        </span><span style="color:#b48ead;">break</span><span>;
-</span><tr><td>54</td><td><span>LABEL_12:
-</span><tr><td>55</td><td><span>      </span><span style="color:#b48ead;">if </span><span>( remaining_data &lt;= </span><span style="color:#d08770;">0 </span><span>)
-</span><tr><td>56</td><td><span>        </span><span style="color:#b48ead;">goto</span><span> LABEL_13;
-</span><tr><td>57</td><td><span>      data_len = remaining_data;
-</span><tr><td>58</td><td><span>    }
-</span><tr><td>59</td><td><span>    </span><span style="color:#65737e;">// deflate the data back to bytes
-</span><tr><td>60</td><td><span>    idata = &amp;inflated_data[</span><span style="color:#d08770;">1</span><span>];
-</span><tr><td>61</td><td><span>    </span><span style="color:#b48ead;">while </span><span>( </span><span style="color:#d08770;">1 </span><span>)
-</span><tr><td>62</td><td><span>    {
-</span><tr><td>63</td><td><span>      --block_size;
-</span><tr><td>64</td><td><span>      </span><span style="color:#b48ead;">if </span><span>( output_index &gt;= output_data_len )
-</span><tr><td>65</td><td><span>        </span><span style="color:#b48ead;">return </span><span>-</span><span style="color:#d08770;">101</span><span>;
-</span><tr><td>66</td><td><span>      output_data[output_index++] = idata[</span><span style="color:#d08770;">6</span><span>] | (</span><span style="color:#d08770;">2
-</span><tr><td>67</td><td><span>                                              * (idata[</span><span style="color:#d08770;">5</span><span>] | (</span><span style="color:#d08770;">2
-</span><tr><td>68</td><td><span>                                                           * (idata[</span><span style="color:#d08770;">4</span><span>] | (</span><span style="color:#d08770;">2
-</span><tr><td>69</td><td><span>                                                                        * (idata[</span><span style="color:#d08770;">3</span><span>] | (</span><span style="color:#d08770;">2
-</span><tr><td>70</td><td><span>                                                                                     * (idata[</span><span style="color:#d08770;">2</span><span>] | (</span><span style="color:#d08770;">2
-</span><tr><td>71</td><td><span>                                                                                                  * (idata[</span><span style="color:#d08770;">1</span><span>] | (</span><span style="color:#d08770;">2 </span><span>* (*idata | (</span><span style="color:#d08770;">2 </span><span>* *(idata - </span><span style="color:#d08770;">1</span><span>))))))))))))));
-</span><tr><td>72</td><td><span>      idata += </span><span style="color:#d08770;">8</span><span>;
-</span><tr><td>73</td><td><span>      </span><span style="color:#b48ead;">if </span><span>( !block_size )
-</span><tr><td>74</td><td><span>        </span><span style="color:#b48ead;">goto</span><span> LABEL_12;
-</span><tr><td>75</td><td><span>    }
-</span><tr><td>76</td><td><span>  }
-</span><tr><td>77</td><td><span>}
-</span></tr></tbody></table></code></pre>
+</span></td></tr><tr><td>2</td><td><span>        </span><span style="color:#b48ead;">void </span><span>*</span><span style="color:#bf616a;">this</span><span>,
+</span></td></tr><tr><td>3</td><td><span>        </span><span style="color:#b48ead;">char </span><span>*</span><span style="color:#bf616a;">encrypted_data</span><span>,
+</span></td></tr><tr><td>4</td><td><span>        </span><span style="color:#b48ead;">int </span><span style="color:#bf616a;">encrypted_data_len</span><span>,
+</span></td></tr><tr><td>5</td><td><span>        </span><span style="color:#b48ead;">char </span><span>*</span><span style="color:#bf616a;">output_data</span><span>,
+</span></td></tr><tr><td>6</td><td><span>        </span><span style="color:#b48ead;">int </span><span style="color:#bf616a;">output_data_len</span><span>,
+</span></td></tr><tr><td>7</td><td><span>        _DWORD *</span><span style="color:#bf616a;">bytes_written</span><span>)
+</span></td></tr><tr><td>8</td><td><span>{
+</span></td></tr><tr><td>9</td><td><span>  </span><span style="color:#b48ead;">int</span><span> data_len; </span><span style="color:#65737e;">// edx
+</span></td></tr><tr><td>10</td><td><span>  </span><span style="color:#b48ead;">int</span><span> output_index; </span><span style="color:#65737e;">// ebp
+</span></td></tr><tr><td>11</td><td><span>  </span><span style="color:#b48ead;">int</span><span> block_size; </span><span style="color:#65737e;">// esi
+</span></td></tr><tr><td>12</td><td><span>  </span><span style="color:#b48ead;">unsigned int</span><span> i; </span><span style="color:#65737e;">// ecx
+</span></td></tr><tr><td>13</td><td><span>  </span><span style="color:#b48ead;">char</span><span> encrypted_byte; </span><span style="color:#65737e;">// al
+</span></td></tr><tr><td>14</td><td><span>  </span><span style="color:#b48ead;">char </span><span>*idata; </span><span style="color:#65737e;">// eax
+</span></td></tr><tr><td>15</td><td><span>  </span><span style="color:#b48ead;">int</span><span> remaining_data; </span><span style="color:#65737e;">// [esp+10h] [ebp-54h]
+</span></td></tr><tr><td>16</td><td><span>  </span><span style="color:#b48ead;">char</span><span> inflated_data[</span><span style="color:#d08770;">64</span><span>]; </span><span style="color:#65737e;">// [esp+20h] [ebp-44h] BYREF
+</span></td></tr><tr><td>17</td><td><span>
+</span></td></tr><tr><td>18</td><td><span>  data_len = encrypted_data_len;
+</span></td></tr><tr><td>19</td><td><span>  output_index = </span><span style="color:#d08770;">0</span><span>;
+</span></td></tr><tr><td>20</td><td><span>  </span><span style="color:#96b5b4;">memset</span><span>(inflated_data, </span><span style="color:#d08770;">0</span><span>, sizeof(inflated_data));
+</span></td></tr><tr><td>21</td><td><span>  </span><span style="color:#b48ead;">if </span><span>( encrypted_data_len &lt;= </span><span style="color:#d08770;">0 </span><span>)
+</span></td></tr><tr><td>22</td><td><span>  {
+</span></td></tr><tr><td>23</td><td><span>LABEL_13:
+</span></td></tr><tr><td>24</td><td><span>    *bytes_written = output_index;
+</span></td></tr><tr><td>25</td><td><span>    </span><span style="color:#b48ead;">return </span><span style="color:#d08770;">0</span><span>;
+</span></td></tr><tr><td>26</td><td><span>  }
+</span></td></tr><tr><td>27</td><td><span>  </span><span style="color:#b48ead;">else
+</span></td></tr><tr><td>28</td><td><span>  {
+</span></td></tr><tr><td>29</td><td><span>    </span><span style="color:#b48ead;">while </span><span>( </span><span style="color:#d08770;">1 </span><span>)
+</span></td></tr><tr><td>30</td><td><span>    {
+</span></td></tr><tr><td>31</td><td><span>      block_size = data_len;
+</span></td></tr><tr><td>32</td><td><span>      </span><span style="color:#b48ead;">if </span><span>( data_len &gt;= </span><span style="color:#d08770;">8 </span><span>)
+</span></td></tr><tr><td>33</td><td><span>        block_size = </span><span style="color:#d08770;">8</span><span>;
+</span></td></tr><tr><td>34</td><td><span>      remaining_data = data_len - block_size;
+</span></td></tr><tr><td>35</td><td><span>
+</span></td></tr><tr><td>36</td><td><span>      </span><span style="color:#65737e;">// inflate 1 byte of input data to 8 bytes of its bit representation
+</span></td></tr><tr><td>37</td><td><span>      </span><span style="color:#b48ead;">for </span><span>( i = </span><span style="color:#d08770;">0</span><span>; i &lt; </span><span style="color:#d08770;">0x40</span><span>; i += </span><span style="color:#d08770;">8 </span><span>)
+</span></td></tr><tr><td>38</td><td><span>      {
+</span></td></tr><tr><td>39</td><td><span>        encrypted_byte = *encrypted_data;
+</span></td></tr><tr><td>40</td><td><span>        inflated_data[i] = (</span><span style="color:#b48ead;">unsigned </span><span>__int8)*encrypted_data &gt;&gt; </span><span style="color:#d08770;">7</span><span>;
+</span></td></tr><tr><td>41</td><td><span>        inflated_data[i + </span><span style="color:#d08770;">1</span><span>] = (encrypted_byte &amp; </span><span style="color:#d08770;">0x40</span><span>) != </span><span style="color:#d08770;">0</span><span>;
+</span></td></tr><tr><td>42</td><td><span>        inflated_data[i + </span><span style="color:#d08770;">2</span><span>] = (encrypted_byte &amp; </span><span style="color:#d08770;">0x20</span><span>) != </span><span style="color:#d08770;">0</span><span>;
+</span></td></tr><tr><td>43</td><td><span>        inflated_data[i + </span><span style="color:#d08770;">3</span><span>] = (encrypted_byte &amp; </span><span style="color:#d08770;">0x10</span><span>) != </span><span style="color:#d08770;">0</span><span>;
+</span></td></tr><tr><td>44</td><td><span>        inflated_data[i + </span><span style="color:#d08770;">4</span><span>] = (encrypted_byte &amp; </span><span style="color:#d08770;">8</span><span>) != </span><span style="color:#d08770;">0</span><span>;
+</span></td></tr><tr><td>45</td><td><span>        inflated_data[i + </span><span style="color:#d08770;">5</span><span>] = (encrypted_byte &amp; </span><span style="color:#d08770;">4</span><span>) != </span><span style="color:#d08770;">0</span><span>;
+</span></td></tr><tr><td>46</td><td><span>        inflated_data[i + </span><span style="color:#d08770;">6</span><span>] = (encrypted_byte &amp; </span><span style="color:#d08770;">2</span><span>) != </span><span style="color:#d08770;">0</span><span>;
+</span></td></tr><tr><td>47</td><td><span>        inflated_data[i + </span><span style="color:#d08770;">7</span><span>] = encrypted_byte &amp; </span><span style="color:#d08770;">1</span><span>;
+</span></td></tr><tr><td>48</td><td><span>        ++encrypted_data;
+</span></td></tr><tr><td>49</td><td><span>      }
+</span></td></tr><tr><td>50</td><td><span>      </span><span style="color:#65737e;">// do something with the inflated data
+</span></td></tr><tr><td>51</td><td><span>      </span><span style="color:#bf616a;">sub_407980</span><span>(this, inflated_data, </span><span style="color:#d08770;">0</span><span>);
+</span></td></tr><tr><td>52</td><td><span>      </span><span style="color:#b48ead;">if </span><span>( block_size )
+</span></td></tr><tr><td>53</td><td><span>        </span><span style="color:#b48ead;">break</span><span>;
+</span></td></tr><tr><td>54</td><td><span>LABEL_12:
+</span></td></tr><tr><td>55</td><td><span>      </span><span style="color:#b48ead;">if </span><span>( remaining_data &lt;= </span><span style="color:#d08770;">0 </span><span>)
+</span></td></tr><tr><td>56</td><td><span>        </span><span style="color:#b48ead;">goto</span><span> LABEL_13;
+</span></td></tr><tr><td>57</td><td><span>      data_len = remaining_data;
+</span></td></tr><tr><td>58</td><td><span>    }
+</span></td></tr><tr><td>59</td><td><span>    </span><span style="color:#65737e;">// deflate the data back to bytes
+</span></td></tr><tr><td>60</td><td><span>    idata = &amp;inflated_data[</span><span style="color:#d08770;">1</span><span>];
+</span></td></tr><tr><td>61</td><td><span>    </span><span style="color:#b48ead;">while </span><span>( </span><span style="color:#d08770;">1 </span><span>)
+</span></td></tr><tr><td>62</td><td><span>    {
+</span></td></tr><tr><td>63</td><td><span>      --block_size;
+</span></td></tr><tr><td>64</td><td><span>      </span><span style="color:#b48ead;">if </span><span>( output_index &gt;= output_data_len )
+</span></td></tr><tr><td>65</td><td><span>        </span><span style="color:#b48ead;">return </span><span>-</span><span style="color:#d08770;">101</span><span>;
+</span></td></tr><tr><td>66</td><td><span>      output_data[output_index++] = idata[</span><span style="color:#d08770;">6</span><span>] | (</span><span style="color:#d08770;">2
+</span></td></tr><tr><td>67</td><td><span>                                              * (idata[</span><span style="color:#d08770;">5</span><span>] | (</span><span style="color:#d08770;">2
+</span></td></tr><tr><td>68</td><td><span>                                                           * (idata[</span><span style="color:#d08770;">4</span><span>] | (</span><span style="color:#d08770;">2
+</span></td></tr><tr><td>69</td><td><span>                                                                        * (idata[</span><span style="color:#d08770;">3</span><span>] | (</span><span style="color:#d08770;">2
+</span></td></tr><tr><td>70</td><td><span>                                                                                     * (idata[</span><span style="color:#d08770;">2</span><span>] | (</span><span style="color:#d08770;">2
+</span></td></tr><tr><td>71</td><td><span>                                                                                                  * (idata[</span><span style="color:#d08770;">1</span><span>] | (</span><span style="color:#d08770;">2 </span><span>* (*idata | (</span><span style="color:#d08770;">2 </span><span>* *(idata - </span><span style="color:#d08770;">1</span><span>))))))))))))));
+</span></td></tr><tr><td>72</td><td><span>      idata += </span><span style="color:#d08770;">8</span><span>;
+</span></td></tr><tr><td>73</td><td><span>      </span><span style="color:#b48ead;">if </span><span>( !block_size )
+</span></td></tr><tr><td>74</td><td><span>        </span><span style="color:#b48ead;">goto</span><span> LABEL_12;
+</span></td></tr><tr><td>75</td><td><span>    }
+</span></td></tr><tr><td>76</td><td><span>  }
+</span></td></tr><tr><td>77</td><td><span>}
+</span></td></tr></tbody></table></code></pre>
 <p>At a high level this routine:</p>
 <ol>
 <li>Allocates a 64-byte scratch buffer</li>
@@ -455,322 +453,322 @@
 <p>This routine does this process over 8 bytes at a time and completely fills the 64-byte scratch buffer with 1s and 0s just like the table above.</p>
 <p>Now let's look at step #4 and see what's going on in <code>sub_407980</code>:</p>
 <pre data-linenos data-lang="c" style="background-color:#2b303b;color:#c0c5ce;" class="language-c "><code class="language-c" data-lang="c"><table><tbody><tr><td>1</td><td><span>_BYTE *__thiscall </span><span style="color:#8fa1b3;">sub_407980</span><span>(</span><span style="color:#b48ead;">void </span><span>*</span><span style="color:#bf616a;">this</span><span>, _BYTE *</span><span style="color:#bf616a;">a2</span><span>, </span><span style="color:#b48ead;">int </span><span style="color:#bf616a;">a3</span><span>)
-</span><tr><td>2</td><td><span>{
-</span><tr><td>3</td><td><span>  </span><span style="color:#65737e;">// long list of stack vars removed for clarity
-</span><tr><td>4</td><td><span>
-</span><tr><td>5</td><td><span>  v3 = (</span><span style="color:#b48ead;">int</span><span>)this;
-</span><tr><td>6</td><td><span>  v4 = </span><span style="color:#d08770;">15</span><span>;
-</span><tr><td>7</td><td><span>  v5 = a3;
-</span><tr><td>8</td><td><span>  v32[</span><span style="color:#d08770;">0</span><span>] = (</span><span style="color:#b48ead;">int</span><span>)this;
-</span><tr><td>9</td><td><span>  v28 = </span><span style="color:#d08770;">0</span><span>;
-</span><tr><td>10</td><td><span>  v31 = </span><span style="color:#d08770;">15</span><span>;
-</span><tr><td>11</td><td><span>  </span><span style="color:#b48ead;">do
-</span><tr><td>12</td><td><span>  {
-</span><tr><td>13</td><td><span>    </span><span style="color:#b48ead;">for </span><span>( i = </span><span style="color:#d08770;">0</span><span>; i &lt; </span><span style="color:#d08770;">48</span><span>; *((_BYTE *)&amp;v33 + i + </span><span style="color:#d08770;">3</span><span>) = v18 )
-</span><tr><td>14</td><td><span>    {
-</span><tr><td>15</td><td><span>      v7 = v28;
-</span><tr><td>16</td><td><span>      </span><span style="color:#b48ead;">if </span><span>( !v5 )
-</span><tr><td>17</td><td><span>        v7 = v4;
-</span><tr><td>18</td><td><span>      v8 = *(_BYTE *)(i + </span><span style="color:#d08770;">48 </span><span>* v7 + v3 + </span><span style="color:#d08770;">4</span><span>) ^ a2[(</span><span style="color:#b48ead;">unsigned </span><span>__int8)byte_424E50[i] + </span><span style="color:#d08770;">31</span><span>];
-</span><tr><td>19</td><td><span>      v9 = v28;
-</span><tr><td>20</td><td><span>      *(&amp;v34 + i) = v8;
-</span><tr><td>21</td><td><span>      </span><span style="color:#b48ead;">if </span><span>( !v5 )
-</span><tr><td>22</td><td><span>        v9 = v4;
-</span><tr><td>23</td><td><span>      v10 = *(_BYTE *)(i + </span><span style="color:#d08770;">48 </span><span>* v9 + v3 + </span><span style="color:#d08770;">5</span><span>) ^ a2[(</span><span style="color:#b48ead;">unsigned </span><span>__int8)byte_424E51[i] + </span><span style="color:#d08770;">31</span><span>];
-</span><tr><td>24</td><td><span>      v11 = v28;
-</span><tr><td>25</td><td><span>      *(&amp;v35 + i) = v10;
-</span><tr><td>26</td><td><span>      </span><span style="color:#b48ead;">if </span><span>( !v5 )
-</span><tr><td>27</td><td><span>        v11 = v4;
-</span><tr><td>28</td><td><span>      v12 = *(_BYTE *)(i + </span><span style="color:#d08770;">48 </span><span>* v11 + v3 + </span><span style="color:#d08770;">6</span><span>) ^ a2[(</span><span style="color:#b48ead;">unsigned </span><span>__int8)byte_424E52[i] + </span><span style="color:#d08770;">31</span><span>];
-</span><tr><td>29</td><td><span>      v13 = v28;
-</span><tr><td>30</td><td><span>      *(&amp;v36 + i) = v12;
-</span><tr><td>31</td><td><span>      </span><span style="color:#b48ead;">if </span><span>( !v5 )
-</span><tr><td>32</td><td><span>        v13 = v4;
-</span><tr><td>33</td><td><span>      v14 = *(_BYTE *)(i + </span><span style="color:#d08770;">48 </span><span>* v13 + v3 + </span><span style="color:#d08770;">7</span><span>) ^ a2[(</span><span style="color:#b48ead;">unsigned </span><span>__int8)byte_424E53[i] + </span><span style="color:#d08770;">31</span><span>];
-</span><tr><td>34</td><td><span>      v15 = v28;
-</span><tr><td>35</td><td><span>      v38[i - </span><span style="color:#d08770;">1</span><span>] = v14;
-</span><tr><td>36</td><td><span>      </span><span style="color:#b48ead;">if </span><span>( !v5 )
-</span><tr><td>37</td><td><span>        v15 = v4;
-</span><tr><td>38</td><td><span>      v16 = *(_BYTE *)(i + </span><span style="color:#d08770;">48 </span><span>* v15 + v3 + </span><span style="color:#d08770;">8</span><span>) ^ a2[(</span><span style="color:#b48ead;">unsigned </span><span>__int8)byte_424E54[i] + </span><span style="color:#d08770;">31</span><span>];
-</span><tr><td>39</td><td><span>      v17 = v28;
-</span><tr><td>40</td><td><span>      v38[i] = v16;
-</span><tr><td>41</td><td><span>      </span><span style="color:#b48ead;">if </span><span>( !v5 )
-</span><tr><td>42</td><td><span>        v17 = v4;
-</span><tr><td>43</td><td><span>      v18 = *(_BYTE *)(i + </span><span style="color:#d08770;">48 </span><span>* v17 + v3 + </span><span style="color:#d08770;">9</span><span>) ^ a2[(</span><span style="color:#b48ead;">unsigned </span><span>__int8)byte_424E55[i] + </span><span style="color:#d08770;">31</span><span>];
-</span><tr><td>44</td><td><span>      i += </span><span style="color:#d08770;">6</span><span>;
-</span><tr><td>45</td><td><span>    }
-</span><tr><td>46</td><td><span>    v32[</span><span style="color:#d08770;">1</span><span>] = *(</span><span style="color:#b48ead;">int </span><span>*)((</span><span style="color:#b48ead;">char </span><span>*)&amp;dword_424E80
-</span><tr><td>47</td><td><span>                    + (((</span><span style="color:#b48ead;">unsigned </span><span>__int8)v38[</span><span style="color:#d08770;">0</span><span>] + </span><span style="color:#d08770;">2</span><span>) | (</span><span style="color:#d08770;">32 </span><span>* v34 + </span><span style="color:#d08770;">2</span><span>) | (</span><span style="color:#d08770;">16 </span><span>* (</span><span style="color:#b48ead;">unsigned </span><span>__int8)v38[</span><span style="color:#d08770;">1</span><span>] + </span><span style="color:#d08770;">2</span><span>) | (</span><span style="color:#d08770;">8 </span><span>* v35 + </span><span style="color:#d08770;">2</span><span>) | (</span><span style="color:#d08770;">4 </span><span>* v36 + </span><span style="color:#d08770;">2</span><span>) | (</span><span style="color:#d08770;">2 </span><span>* v37 + </span><span style="color:#d08770;">2</span><span>)));
-</span><tr><td>48</td><td><span>    v32[</span><span style="color:#d08770;">2</span><span>] = *(</span><span style="color:#b48ead;">int </span><span>*)((</span><span style="color:#b48ead;">char </span><span>*)&amp;dword_424F80
-</span><tr><td>49</td><td><span>                    + (((</span><span style="color:#b48ead;">unsigned </span><span>__int8)v38[</span><span style="color:#d08770;">6</span><span>] + </span><span style="color:#d08770;">2</span><span>) | (</span><span style="color:#d08770;">32 </span><span>* (</span><span style="color:#b48ead;">unsigned </span><span>__int8)v38[</span><span style="color:#d08770;">2</span><span>] + </span><span style="color:#d08770;">2</span><span>) | (</span><span style="color:#d08770;">16
-</span><tr><td>50</td><td><span>                                                                                           * (</span><span style="color:#b48ead;">unsigned </span><span>__int8)v38[</span><span style="color:#d08770;">7</span><span>]
-</span><tr><td>51</td><td><span>                                                                                           + </span><span style="color:#d08770;">2</span><span>) | (</span><span style="color:#d08770;">8
-</span><tr><td>52</td><td><span>                                                                                                 * (</span><span style="color:#b48ead;">unsigned </span><span>__int8)v38[</span><span style="color:#d08770;">3</span><span>]
-</span><tr><td>53</td><td><span>                                                                                                 + </span><span style="color:#d08770;">2</span><span>) | (</span><span style="color:#d08770;">4 </span><span>* (</span><span style="color:#b48ead;">unsigned </span><span>__int8)v38[</span><span style="color:#d08770;">4</span><span>] + </span><span style="color:#d08770;">2</span><span>) | (</span><span style="color:#d08770;">2 </span><span>* (</span><span style="color:#b48ead;">unsigned </span><span>__int8)v38[</span><span style="color:#d08770;">5</span><span>] + </span><span style="color:#d08770;">2</span><span>)));
-</span><tr><td>54</td><td><span>    v32[</span><span style="color:#d08770;">3</span><span>] = *(</span><span style="color:#b48ead;">int </span><span>*)((</span><span style="color:#b48ead;">char </span><span>*)&amp;dword_425080
-</span><tr><td>55</td><td><span>                    + (((</span><span style="color:#b48ead;">unsigned </span><span>__int8)v38[</span><span style="color:#d08770;">12</span><span>] + </span><span style="color:#d08770;">2</span><span>) | (</span><span style="color:#d08770;">32 </span><span>* (</span><span style="color:#b48ead;">unsigned </span><span>__int8)v38[</span><span style="color:#d08770;">8</span><span>] + </span><span style="color:#d08770;">2</span><span>) | (</span><span style="color:#d08770;">16
-</span><tr><td>56</td><td><span>                                                                                            * (</span><span style="color:#b48ead;">unsigned </span><span>__int8)v38[</span><span style="color:#d08770;">13</span><span>]
-</span><tr><td>57</td><td><span>                                                                                            + </span><span style="color:#d08770;">2</span><span>) | (</span><span style="color:#d08770;">8 </span><span>* (</span><span style="color:#b48ead;">unsigned </span><span>__int8)v38[</span><span style="color:#d08770;">9</span><span>]
-</span><tr><td>58</td><td><span>                                                                                                  + </span><span style="color:#d08770;">2</span><span>) | (</span><span style="color:#d08770;">4 </span><span>* (</span><span style="color:#b48ead;">unsigned </span><span>__int8)v38[</span><span style="color:#d08770;">10</span><span>] + </span><span style="color:#d08770;">2</span><span>) | (</span><span style="color:#d08770;">2 </span><span>* (</span><span style="color:#b48ead;">unsigned </span><span>__int8)v38[</span><span style="color:#d08770;">11</span><span>] + </span><span style="color:#d08770;">2</span><span>)));
-</span><tr><td>59</td><td><span>    v32[</span><span style="color:#d08770;">4</span><span>] = *(</span><span style="color:#b48ead;">int </span><span>*)((</span><span style="color:#b48ead;">char </span><span>*)&amp;dword_425180
-</span><tr><td>60</td><td><span>                    + (((</span><span style="color:#b48ead;">unsigned </span><span>__int8)v38[</span><span style="color:#d08770;">18</span><span>] + </span><span style="color:#d08770;">2</span><span>) | (</span><span style="color:#d08770;">32 </span><span>* (</span><span style="color:#b48ead;">unsigned </span><span>__int8)v38[</span><span style="color:#d08770;">14</span><span>] + </span><span style="color:#d08770;">2</span><span>) | (</span><span style="color:#d08770;">16
-</span><tr><td>61</td><td><span>                                                                                             * (</span><span style="color:#b48ead;">unsigned </span><span>__int8)v38[</span><span style="color:#d08770;">19</span><span>]
-</span><tr><td>62</td><td><span>                                                                                             + </span><span style="color:#d08770;">2</span><span>) | (</span><span style="color:#d08770;">8 </span><span>* (</span><span style="color:#b48ead;">unsigned </span><span>__int8)v38[</span><span style="color:#d08770;">15</span><span>] + </span><span style="color:#d08770;">2</span><span>) | (</span><span style="color:#d08770;">4 </span><span>* (</span><span style="color:#b48ead;">unsigned </span><span>__int8)v38[</span><span style="color:#d08770;">16</span><span>] + </span><span style="color:#d08770;">2</span><span>) | (</span><span style="color:#d08770;">2 </span><span>* (</span><span style="color:#b48ead;">unsigned </span><span>__int8)v38[</span><span style="color:#d08770;">17</span><span>] + </span><span style="color:#d08770;">2</span><span>)));
-</span><tr><td>63</td><td><span>    v32[</span><span style="color:#d08770;">5</span><span>] = *(</span><span style="color:#b48ead;">int </span><span>*)((</span><span style="color:#b48ead;">char </span><span>*)&amp;dword_425280
-</span><tr><td>64</td><td><span>                    + (((</span><span style="color:#b48ead;">unsigned </span><span>__int8)v38[</span><span style="color:#d08770;">24</span><span>] + </span><span style="color:#d08770;">2</span><span>) | (</span><span style="color:#d08770;">32 </span><span>* (</span><span style="color:#b48ead;">unsigned </span><span>__int8)v38[</span><span style="color:#d08770;">20</span><span>] + </span><span style="color:#d08770;">2</span><span>) | (</span><span style="color:#d08770;">16
-</span><tr><td>65</td><td><span>                                                                                             * (</span><span style="color:#b48ead;">unsigned </span><span>__int8)v38[</span><span style="color:#d08770;">25</span><span>]
-</span><tr><td>66</td><td><span>                                                                                             + </span><span style="color:#d08770;">2</span><span>) | (</span><span style="color:#d08770;">8 </span><span>* (</span><span style="color:#b48ead;">unsigned </span><span>__int8)v38[</span><span style="color:#d08770;">21</span><span>] + </span><span style="color:#d08770;">2</span><span>) | (</span><span style="color:#d08770;">4 </span><span>* (</span><span style="color:#b48ead;">unsigned </span><span>__int8)v38[</span><span style="color:#d08770;">22</span><span>] + </span><span style="color:#d08770;">2</span><span>) | (</span><span style="color:#d08770;">2 </span><span>* (</span><span style="color:#b48ead;">unsigned </span><span>__int8)v38[</span><span style="color:#d08770;">23</span><span>] + </span><span style="color:#d08770;">2</span><span>)));
-</span><tr><td>67</td><td><span>    v32[</span><span style="color:#d08770;">6</span><span>] = *(</span><span style="color:#b48ead;">int </span><span>*)((</span><span style="color:#b48ead;">char </span><span>*)&amp;dword_425380
-</span><tr><td>68</td><td><span>                    + (((</span><span style="color:#b48ead;">unsigned </span><span>__int8)v38[</span><span style="color:#d08770;">30</span><span>] + </span><span style="color:#d08770;">2</span><span>) | (</span><span style="color:#d08770;">32 </span><span>* (</span><span style="color:#b48ead;">unsigned </span><span>__int8)v38[</span><span style="color:#d08770;">26</span><span>] + </span><span style="color:#d08770;">2</span><span>) | (</span><span style="color:#d08770;">16
-</span><tr><td>69</td><td><span>                                                                                             * (</span><span style="color:#b48ead;">unsigned </span><span>__int8)v38[</span><span style="color:#d08770;">31</span><span>]
-</span><tr><td>70</td><td><span>                                                                                             + </span><span style="color:#d08770;">2</span><span>) | (</span><span style="color:#d08770;">8 </span><span>* (</span><span style="color:#b48ead;">unsigned </span><span>__int8)v38[</span><span style="color:#d08770;">27</span><span>] + </span><span style="color:#d08770;">2</span><span>) | (</span><span style="color:#d08770;">4 </span><span>* (</span><span style="color:#b48ead;">unsigned </span><span>__int8)v38[</span><span style="color:#d08770;">28</span><span>] + </span><span style="color:#d08770;">2</span><span>) | (</span><span style="color:#d08770;">2 </span><span>* (</span><span style="color:#b48ead;">unsigned </span><span>__int8)v38[</span><span style="color:#d08770;">29</span><span>] + </span><span style="color:#d08770;">2</span><span>)));
-</span><tr><td>71</td><td><span>    v32[</span><span style="color:#d08770;">7</span><span>] = *(</span><span style="color:#b48ead;">int </span><span>*)((</span><span style="color:#b48ead;">char </span><span>*)&amp;dword_425480
-</span><tr><td>72</td><td><span>                    + (((</span><span style="color:#b48ead;">unsigned </span><span>__int8)v38[</span><span style="color:#d08770;">36</span><span>] + </span><span style="color:#d08770;">2</span><span>) | (</span><span style="color:#d08770;">32 </span><span>* (</span><span style="color:#b48ead;">unsigned </span><span>__int8)v38[</span><span style="color:#d08770;">32</span><span>] + </span><span style="color:#d08770;">2</span><span>) | (</span><span style="color:#d08770;">16
-</span><tr><td>73</td><td><span>                                                                                             * (</span><span style="color:#b48ead;">unsigned </span><span>__int8)v38[</span><span style="color:#d08770;">37</span><span>]
-</span><tr><td>74</td><td><span>                                                                                             + </span><span style="color:#d08770;">2</span><span>) | (</span><span style="color:#d08770;">8 </span><span>* (</span><span style="color:#b48ead;">unsigned </span><span>__int8)v38[</span><span style="color:#d08770;">33</span><span>] + </span><span style="color:#d08770;">2</span><span>) | (</span><span style="color:#d08770;">4 </span><span>* (</span><span style="color:#b48ead;">unsigned </span><span>__int8)v38[</span><span style="color:#d08770;">34</span><span>] + </span><span style="color:#d08770;">2</span><span>) | (</span><span style="color:#d08770;">2 </span><span>* (</span><span style="color:#b48ead;">unsigned </span><span>__int8)v38[</span><span style="color:#d08770;">35</span><span>] + </span><span style="color:#d08770;">2</span><span>)));
-</span><tr><td>75</td><td><span>    v19 = (</span><span style="color:#b48ead;">char </span><span>*)(&amp;unk_425681 - (_UNKNOWN *)a2);
-</span><tr><td>76</td><td><span>    v20 = &amp;unk_425680 - (_UNKNOWN *)a2;
-</span><tr><td>77</td><td><span>    v33 = *(</span><span style="color:#b48ead;">int </span><span>*)((</span><span style="color:#b48ead;">char </span><span>*)&amp;dword_425580
-</span><tr><td>78</td><td><span>                 + (((</span><span style="color:#b48ead;">unsigned </span><span>__int8)v38[</span><span style="color:#d08770;">42</span><span>] + </span><span style="color:#d08770;">2</span><span>) | (</span><span style="color:#d08770;">32 </span><span>* (</span><span style="color:#b48ead;">unsigned </span><span>__int8)v38[</span><span style="color:#d08770;">38</span><span>] + </span><span style="color:#d08770;">2</span><span>) | (</span><span style="color:#d08770;">16
-</span><tr><td>79</td><td><span>                                                                                          * (</span><span style="color:#b48ead;">unsigned </span><span>__int8)v38[</span><span style="color:#d08770;">43</span><span>]
-</span><tr><td>80</td><td><span>                                                                                          + </span><span style="color:#d08770;">2</span><span>) | (</span><span style="color:#d08770;">8
-</span><tr><td>81</td><td><span>                                                                                                * (</span><span style="color:#b48ead;">unsigned </span><span>__int8)v38[</span><span style="color:#d08770;">39</span><span>]
-</span><tr><td>82</td><td><span>                                                                                                + </span><span style="color:#d08770;">2</span><span>) | (</span><span style="color:#d08770;">4 </span><span>* (</span><span style="color:#b48ead;">unsigned </span><span>__int8)v38[</span><span style="color:#d08770;">40</span><span>] + </span><span style="color:#d08770;">2</span><span>) | (</span><span style="color:#d08770;">2 </span><span>* (</span><span style="color:#b48ead;">unsigned </span><span>__int8)v38[</span><span style="color:#d08770;">41</span><span>] + </span><span style="color:#d08770;">2</span><span>)));
-</span><tr><td>83</td><td><span>    result = a2;
-</span><tr><td>84</td><td><span>    </span><span style="color:#b48ead;">if </span><span>( v4 &lt;= </span><span style="color:#d08770;">0 </span><span>)
-</span><tr><td>85</td><td><span>    {
-</span><tr><td>86</td><td><span>      v30 = </span><span style="color:#d08770;">8</span><span>;
-</span><tr><td>87</td><td><span>      </span><span style="color:#b48ead;">do
-</span><tr><td>88</td><td><span>      {
-</span><tr><td>89</td><td><span>        *result ^= *((_BYTE *)v32 + (</span><span style="color:#b48ead;">unsigned </span><span>__int8)result[v20] + </span><span style="color:#d08770;">3</span><span>);
-</span><tr><td>90</td><td><span>        result[</span><span style="color:#d08770;">1</span><span>] ^= *((_BYTE *)v32 + (</span><span style="color:#b48ead;">unsigned </span><span>__int8)v19[(_DWORD)result] + </span><span style="color:#d08770;">3</span><span>);
-</span><tr><td>91</td><td><span>        result[</span><span style="color:#d08770;">2</span><span>] ^= *((_BYTE *)v32 + (</span><span style="color:#b48ead;">unsigned </span><span>__int8)result[&amp;unk_425682 - (_UNKNOWN *)a2] + </span><span style="color:#d08770;">3</span><span>);
-</span><tr><td>92</td><td><span>        result[</span><span style="color:#d08770;">3</span><span>] ^= *((_BYTE *)v32 + (</span><span style="color:#b48ead;">unsigned </span><span>__int8)result[byte_425683 - a2] + </span><span style="color:#d08770;">3</span><span>);
-</span><tr><td>93</td><td><span>        result += </span><span style="color:#d08770;">4</span><span>;
-</span><tr><td>94</td><td><span>        --v30;
-</span><tr><td>95</td><td><span>      }
-</span><tr><td>96</td><td><span>      </span><span style="color:#b48ead;">while </span><span>( v30 );
-</span><tr><td>97</td><td><span>    }
-</span><tr><td>98</td><td><span>    </span><span style="color:#b48ead;">else
-</span><tr><td>99</td><td><span>    {
-</span><tr><td>100</td><td><span>      v29 = </span><span style="color:#d08770;">8</span><span>;
-</span><tr><td>101</td><td><span>      </span><span style="color:#b48ead;">do
-</span><tr><td>102</td><td><span>      {
-</span><tr><td>103</td><td><span>        v24 = result[</span><span style="color:#d08770;">32</span><span>];
-</span><tr><td>104</td><td><span>        v22 = *result ^ *((_BYTE *)v32 + (</span><span style="color:#b48ead;">unsigned </span><span>__int8)result[v20] + </span><span style="color:#d08770;">3</span><span>);
-</span><tr><td>105</td><td><span>        result += </span><span style="color:#d08770;">4</span><span>;
-</span><tr><td>106</td><td><span>        result[</span><span style="color:#d08770;">28</span><span>] = v22;
-</span><tr><td>107</td><td><span>        *(result - </span><span style="color:#d08770;">4</span><span>) = v24;
-</span><tr><td>108</td><td><span>        v25 = result[</span><span style="color:#d08770;">29</span><span>];
-</span><tr><td>109</td><td><span>        result[</span><span style="color:#d08770;">29</span><span>] = *(result - </span><span style="color:#d08770;">3</span><span>) ^ *((_BYTE *)v32 + (</span><span style="color:#b48ead;">unsigned </span><span>__int8)result[(_DWORD)v19 - </span><span style="color:#d08770;">4</span><span>] + </span><span style="color:#d08770;">3</span><span>);
-</span><tr><td>110</td><td><span>        *(result - </span><span style="color:#d08770;">3</span><span>) = v25;
-</span><tr><td>111</td><td><span>        v26 = result[</span><span style="color:#d08770;">30</span><span>];
-</span><tr><td>112</td><td><span>        result[</span><span style="color:#d08770;">30</span><span>] = *(result - </span><span style="color:#d08770;">2</span><span>) ^ *((_BYTE *)v32 + (</span><span style="color:#b48ead;">unsigned </span><span>__int8)result[&amp;unk_425682 - (_UNKNOWN *)a2 - </span><span style="color:#d08770;">4</span><span>] + </span><span style="color:#d08770;">3</span><span>);
-</span><tr><td>113</td><td><span>        *(result - </span><span style="color:#d08770;">2</span><span>) = v26;
-</span><tr><td>114</td><td><span>        v27 = result[</span><span style="color:#d08770;">31</span><span>];
-</span><tr><td>115</td><td><span>        result[</span><span style="color:#d08770;">31</span><span>] = *(result - </span><span style="color:#d08770;">1</span><span>) ^ *((_BYTE *)v32 + (</span><span style="color:#b48ead;">unsigned </span><span>__int8)result[byte_425683 - a2 - </span><span style="color:#d08770;">4</span><span>] + </span><span style="color:#d08770;">3</span><span>);
-</span><tr><td>116</td><td><span>        *(result - </span><span style="color:#d08770;">1</span><span>) = v27;
-</span><tr><td>117</td><td><span>        --v29;
-</span><tr><td>118</td><td><span>      }
-</span><tr><td>119</td><td><span>      </span><span style="color:#b48ead;">while </span><span>( v29 );
-</span><tr><td>120</td><td><span>    }
-</span><tr><td>121</td><td><span>    v5 = a3;
-</span><tr><td>122</td><td><span>    v3 = v32[</span><span style="color:#d08770;">0</span><span>];
-</span><tr><td>123</td><td><span>    v4 = v31 - </span><span style="color:#d08770;">1</span><span>;
-</span><tr><td>124</td><td><span>    v23 = v31 - </span><span style="color:#d08770;">1 </span><span>&lt;= -</span><span style="color:#d08770;">1</span><span>;
-</span><tr><td>125</td><td><span>    ++v28;
-</span><tr><td>126</td><td><span>    --v31;
-</span><tr><td>127</td><td><span>  }
-</span><tr><td>128</td><td><span>  </span><span style="color:#b48ead;">while </span><span>( !v23 );
-</span><tr><td>129</td><td><span>  </span><span style="color:#b48ead;">return</span><span> result;
-</span><tr><td>130</td><td><span>}
-</span></tr></tbody></table></code></pre>
+</span></td></tr><tr><td>2</td><td><span>{
+</span></td></tr><tr><td>3</td><td><span>  </span><span style="color:#65737e;">// long list of stack vars removed for clarity
+</span></td></tr><tr><td>4</td><td><span>
+</span></td></tr><tr><td>5</td><td><span>  v3 = (</span><span style="color:#b48ead;">int</span><span>)this;
+</span></td></tr><tr><td>6</td><td><span>  v4 = </span><span style="color:#d08770;">15</span><span>;
+</span></td></tr><tr><td>7</td><td><span>  v5 = a3;
+</span></td></tr><tr><td>8</td><td><span>  v32[</span><span style="color:#d08770;">0</span><span>] = (</span><span style="color:#b48ead;">int</span><span>)this;
+</span></td></tr><tr><td>9</td><td><span>  v28 = </span><span style="color:#d08770;">0</span><span>;
+</span></td></tr><tr><td>10</td><td><span>  v31 = </span><span style="color:#d08770;">15</span><span>;
+</span></td></tr><tr><td>11</td><td><span>  </span><span style="color:#b48ead;">do
+</span></td></tr><tr><td>12</td><td><span>  {
+</span></td></tr><tr><td>13</td><td><span>    </span><span style="color:#b48ead;">for </span><span>( i = </span><span style="color:#d08770;">0</span><span>; i &lt; </span><span style="color:#d08770;">48</span><span>; *((_BYTE *)&amp;v33 + i + </span><span style="color:#d08770;">3</span><span>) = v18 )
+</span></td></tr><tr><td>14</td><td><span>    {
+</span></td></tr><tr><td>15</td><td><span>      v7 = v28;
+</span></td></tr><tr><td>16</td><td><span>      </span><span style="color:#b48ead;">if </span><span>( !v5 )
+</span></td></tr><tr><td>17</td><td><span>        v7 = v4;
+</span></td></tr><tr><td>18</td><td><span>      v8 = *(_BYTE *)(i + </span><span style="color:#d08770;">48 </span><span>* v7 + v3 + </span><span style="color:#d08770;">4</span><span>) ^ a2[(</span><span style="color:#b48ead;">unsigned </span><span>__int8)byte_424E50[i] + </span><span style="color:#d08770;">31</span><span>];
+</span></td></tr><tr><td>19</td><td><span>      v9 = v28;
+</span></td></tr><tr><td>20</td><td><span>      *(&amp;v34 + i) = v8;
+</span></td></tr><tr><td>21</td><td><span>      </span><span style="color:#b48ead;">if </span><span>( !v5 )
+</span></td></tr><tr><td>22</td><td><span>        v9 = v4;
+</span></td></tr><tr><td>23</td><td><span>      v10 = *(_BYTE *)(i + </span><span style="color:#d08770;">48 </span><span>* v9 + v3 + </span><span style="color:#d08770;">5</span><span>) ^ a2[(</span><span style="color:#b48ead;">unsigned </span><span>__int8)byte_424E51[i] + </span><span style="color:#d08770;">31</span><span>];
+</span></td></tr><tr><td>24</td><td><span>      v11 = v28;
+</span></td></tr><tr><td>25</td><td><span>      *(&amp;v35 + i) = v10;
+</span></td></tr><tr><td>26</td><td><span>      </span><span style="color:#b48ead;">if </span><span>( !v5 )
+</span></td></tr><tr><td>27</td><td><span>        v11 = v4;
+</span></td></tr><tr><td>28</td><td><span>      v12 = *(_BYTE *)(i + </span><span style="color:#d08770;">48 </span><span>* v11 + v3 + </span><span style="color:#d08770;">6</span><span>) ^ a2[(</span><span style="color:#b48ead;">unsigned </span><span>__int8)byte_424E52[i] + </span><span style="color:#d08770;">31</span><span>];
+</span></td></tr><tr><td>29</td><td><span>      v13 = v28;
+</span></td></tr><tr><td>30</td><td><span>      *(&amp;v36 + i) = v12;
+</span></td></tr><tr><td>31</td><td><span>      </span><span style="color:#b48ead;">if </span><span>( !v5 )
+</span></td></tr><tr><td>32</td><td><span>        v13 = v4;
+</span></td></tr><tr><td>33</td><td><span>      v14 = *(_BYTE *)(i + </span><span style="color:#d08770;">48 </span><span>* v13 + v3 + </span><span style="color:#d08770;">7</span><span>) ^ a2[(</span><span style="color:#b48ead;">unsigned </span><span>__int8)byte_424E53[i] + </span><span style="color:#d08770;">31</span><span>];
+</span></td></tr><tr><td>34</td><td><span>      v15 = v28;
+</span></td></tr><tr><td>35</td><td><span>      v38[i - </span><span style="color:#d08770;">1</span><span>] = v14;
+</span></td></tr><tr><td>36</td><td><span>      </span><span style="color:#b48ead;">if </span><span>( !v5 )
+</span></td></tr><tr><td>37</td><td><span>        v15 = v4;
+</span></td></tr><tr><td>38</td><td><span>      v16 = *(_BYTE *)(i + </span><span style="color:#d08770;">48 </span><span>* v15 + v3 + </span><span style="color:#d08770;">8</span><span>) ^ a2[(</span><span style="color:#b48ead;">unsigned </span><span>__int8)byte_424E54[i] + </span><span style="color:#d08770;">31</span><span>];
+</span></td></tr><tr><td>39</td><td><span>      v17 = v28;
+</span></td></tr><tr><td>40</td><td><span>      v38[i] = v16;
+</span></td></tr><tr><td>41</td><td><span>      </span><span style="color:#b48ead;">if </span><span>( !v5 )
+</span></td></tr><tr><td>42</td><td><span>        v17 = v4;
+</span></td></tr><tr><td>43</td><td><span>      v18 = *(_BYTE *)(i + </span><span style="color:#d08770;">48 </span><span>* v17 + v3 + </span><span style="color:#d08770;">9</span><span>) ^ a2[(</span><span style="color:#b48ead;">unsigned </span><span>__int8)byte_424E55[i] + </span><span style="color:#d08770;">31</span><span>];
+</span></td></tr><tr><td>44</td><td><span>      i += </span><span style="color:#d08770;">6</span><span>;
+</span></td></tr><tr><td>45</td><td><span>    }
+</span></td></tr><tr><td>46</td><td><span>    v32[</span><span style="color:#d08770;">1</span><span>] = *(</span><span style="color:#b48ead;">int </span><span>*)((</span><span style="color:#b48ead;">char </span><span>*)&amp;dword_424E80
+</span></td></tr><tr><td>47</td><td><span>                    + (((</span><span style="color:#b48ead;">unsigned </span><span>__int8)v38[</span><span style="color:#d08770;">0</span><span>] + </span><span style="color:#d08770;">2</span><span>) | (</span><span style="color:#d08770;">32 </span><span>* v34 + </span><span style="color:#d08770;">2</span><span>) | (</span><span style="color:#d08770;">16 </span><span>* (</span><span style="color:#b48ead;">unsigned </span><span>__int8)v38[</span><span style="color:#d08770;">1</span><span>] + </span><span style="color:#d08770;">2</span><span>) | (</span><span style="color:#d08770;">8 </span><span>* v35 + </span><span style="color:#d08770;">2</span><span>) | (</span><span style="color:#d08770;">4 </span><span>* v36 + </span><span style="color:#d08770;">2</span><span>) | (</span><span style="color:#d08770;">2 </span><span>* v37 + </span><span style="color:#d08770;">2</span><span>)));
+</span></td></tr><tr><td>48</td><td><span>    v32[</span><span style="color:#d08770;">2</span><span>] = *(</span><span style="color:#b48ead;">int </span><span>*)((</span><span style="color:#b48ead;">char </span><span>*)&amp;dword_424F80
+</span></td></tr><tr><td>49</td><td><span>                    + (((</span><span style="color:#b48ead;">unsigned </span><span>__int8)v38[</span><span style="color:#d08770;">6</span><span>] + </span><span style="color:#d08770;">2</span><span>) | (</span><span style="color:#d08770;">32 </span><span>* (</span><span style="color:#b48ead;">unsigned </span><span>__int8)v38[</span><span style="color:#d08770;">2</span><span>] + </span><span style="color:#d08770;">2</span><span>) | (</span><span style="color:#d08770;">16
+</span></td></tr><tr><td>50</td><td><span>                                                                                           * (</span><span style="color:#b48ead;">unsigned </span><span>__int8)v38[</span><span style="color:#d08770;">7</span><span>]
+</span></td></tr><tr><td>51</td><td><span>                                                                                           + </span><span style="color:#d08770;">2</span><span>) | (</span><span style="color:#d08770;">8
+</span></td></tr><tr><td>52</td><td><span>                                                                                                 * (</span><span style="color:#b48ead;">unsigned </span><span>__int8)v38[</span><span style="color:#d08770;">3</span><span>]
+</span></td></tr><tr><td>53</td><td><span>                                                                                                 + </span><span style="color:#d08770;">2</span><span>) | (</span><span style="color:#d08770;">4 </span><span>* (</span><span style="color:#b48ead;">unsigned </span><span>__int8)v38[</span><span style="color:#d08770;">4</span><span>] + </span><span style="color:#d08770;">2</span><span>) | (</span><span style="color:#d08770;">2 </span><span>* (</span><span style="color:#b48ead;">unsigned </span><span>__int8)v38[</span><span style="color:#d08770;">5</span><span>] + </span><span style="color:#d08770;">2</span><span>)));
+</span></td></tr><tr><td>54</td><td><span>    v32[</span><span style="color:#d08770;">3</span><span>] = *(</span><span style="color:#b48ead;">int </span><span>*)((</span><span style="color:#b48ead;">char </span><span>*)&amp;dword_425080
+</span></td></tr><tr><td>55</td><td><span>                    + (((</span><span style="color:#b48ead;">unsigned </span><span>__int8)v38[</span><span style="color:#d08770;">12</span><span>] + </span><span style="color:#d08770;">2</span><span>) | (</span><span style="color:#d08770;">32 </span><span>* (</span><span style="color:#b48ead;">unsigned </span><span>__int8)v38[</span><span style="color:#d08770;">8</span><span>] + </span><span style="color:#d08770;">2</span><span>) | (</span><span style="color:#d08770;">16
+</span></td></tr><tr><td>56</td><td><span>                                                                                            * (</span><span style="color:#b48ead;">unsigned </span><span>__int8)v38[</span><span style="color:#d08770;">13</span><span>]
+</span></td></tr><tr><td>57</td><td><span>                                                                                            + </span><span style="color:#d08770;">2</span><span>) | (</span><span style="color:#d08770;">8 </span><span>* (</span><span style="color:#b48ead;">unsigned </span><span>__int8)v38[</span><span style="color:#d08770;">9</span><span>]
+</span></td></tr><tr><td>58</td><td><span>                                                                                                  + </span><span style="color:#d08770;">2</span><span>) | (</span><span style="color:#d08770;">4 </span><span>* (</span><span style="color:#b48ead;">unsigned </span><span>__int8)v38[</span><span style="color:#d08770;">10</span><span>] + </span><span style="color:#d08770;">2</span><span>) | (</span><span style="color:#d08770;">2 </span><span>* (</span><span style="color:#b48ead;">unsigned </span><span>__int8)v38[</span><span style="color:#d08770;">11</span><span>] + </span><span style="color:#d08770;">2</span><span>)));
+</span></td></tr><tr><td>59</td><td><span>    v32[</span><span style="color:#d08770;">4</span><span>] = *(</span><span style="color:#b48ead;">int </span><span>*)((</span><span style="color:#b48ead;">char </span><span>*)&amp;dword_425180
+</span></td></tr><tr><td>60</td><td><span>                    + (((</span><span style="color:#b48ead;">unsigned </span><span>__int8)v38[</span><span style="color:#d08770;">18</span><span>] + </span><span style="color:#d08770;">2</span><span>) | (</span><span style="color:#d08770;">32 </span><span>* (</span><span style="color:#b48ead;">unsigned </span><span>__int8)v38[</span><span style="color:#d08770;">14</span><span>] + </span><span style="color:#d08770;">2</span><span>) | (</span><span style="color:#d08770;">16
+</span></td></tr><tr><td>61</td><td><span>                                                                                             * (</span><span style="color:#b48ead;">unsigned </span><span>__int8)v38[</span><span style="color:#d08770;">19</span><span>]
+</span></td></tr><tr><td>62</td><td><span>                                                                                             + </span><span style="color:#d08770;">2</span><span>) | (</span><span style="color:#d08770;">8 </span><span>* (</span><span style="color:#b48ead;">unsigned </span><span>__int8)v38[</span><span style="color:#d08770;">15</span><span>] + </span><span style="color:#d08770;">2</span><span>) | (</span><span style="color:#d08770;">4 </span><span>* (</span><span style="color:#b48ead;">unsigned </span><span>__int8)v38[</span><span style="color:#d08770;">16</span><span>] + </span><span style="color:#d08770;">2</span><span>) | (</span><span style="color:#d08770;">2 </span><span>* (</span><span style="color:#b48ead;">unsigned </span><span>__int8)v38[</span><span style="color:#d08770;">17</span><span>] + </span><span style="color:#d08770;">2</span><span>)));
+</span></td></tr><tr><td>63</td><td><span>    v32[</span><span style="color:#d08770;">5</span><span>] = *(</span><span style="color:#b48ead;">int </span><span>*)((</span><span style="color:#b48ead;">char </span><span>*)&amp;dword_425280
+</span></td></tr><tr><td>64</td><td><span>                    + (((</span><span style="color:#b48ead;">unsigned </span><span>__int8)v38[</span><span style="color:#d08770;">24</span><span>] + </span><span style="color:#d08770;">2</span><span>) | (</span><span style="color:#d08770;">32 </span><span>* (</span><span style="color:#b48ead;">unsigned </span><span>__int8)v38[</span><span style="color:#d08770;">20</span><span>] + </span><span style="color:#d08770;">2</span><span>) | (</span><span style="color:#d08770;">16
+</span></td></tr><tr><td>65</td><td><span>                                                                                             * (</span><span style="color:#b48ead;">unsigned </span><span>__int8)v38[</span><span style="color:#d08770;">25</span><span>]
+</span></td></tr><tr><td>66</td><td><span>                                                                                             + </span><span style="color:#d08770;">2</span><span>) | (</span><span style="color:#d08770;">8 </span><span>* (</span><span style="color:#b48ead;">unsigned </span><span>__int8)v38[</span><span style="color:#d08770;">21</span><span>] + </span><span style="color:#d08770;">2</span><span>) | (</span><span style="color:#d08770;">4 </span><span>* (</span><span style="color:#b48ead;">unsigned </span><span>__int8)v38[</span><span style="color:#d08770;">22</span><span>] + </span><span style="color:#d08770;">2</span><span>) | (</span><span style="color:#d08770;">2 </span><span>* (</span><span style="color:#b48ead;">unsigned </span><span>__int8)v38[</span><span style="color:#d08770;">23</span><span>] + </span><span style="color:#d08770;">2</span><span>)));
+</span></td></tr><tr><td>67</td><td><span>    v32[</span><span style="color:#d08770;">6</span><span>] = *(</span><span style="color:#b48ead;">int </span><span>*)((</span><span style="color:#b48ead;">char </span><span>*)&amp;dword_425380
+</span></td></tr><tr><td>68</td><td><span>                    + (((</span><span style="color:#b48ead;">unsigned </span><span>__int8)v38[</span><span style="color:#d08770;">30</span><span>] + </span><span style="color:#d08770;">2</span><span>) | (</span><span style="color:#d08770;">32 </span><span>* (</span><span style="color:#b48ead;">unsigned </span><span>__int8)v38[</span><span style="color:#d08770;">26</span><span>] + </span><span style="color:#d08770;">2</span><span>) | (</span><span style="color:#d08770;">16
+</span></td></tr><tr><td>69</td><td><span>                                                                                             * (</span><span style="color:#b48ead;">unsigned </span><span>__int8)v38[</span><span style="color:#d08770;">31</span><span>]
+</span></td></tr><tr><td>70</td><td><span>                                                                                             + </span><span style="color:#d08770;">2</span><span>) | (</span><span style="color:#d08770;">8 </span><span>* (</span><span style="color:#b48ead;">unsigned </span><span>__int8)v38[</span><span style="color:#d08770;">27</span><span>] + </span><span style="color:#d08770;">2</span><span>) | (</span><span style="color:#d08770;">4 </span><span>* (</span><span style="color:#b48ead;">unsigned </span><span>__int8)v38[</span><span style="color:#d08770;">28</span><span>] + </span><span style="color:#d08770;">2</span><span>) | (</span><span style="color:#d08770;">2 </span><span>* (</span><span style="color:#b48ead;">unsigned </span><span>__int8)v38[</span><span style="color:#d08770;">29</span><span>] + </span><span style="color:#d08770;">2</span><span>)));
+</span></td></tr><tr><td>71</td><td><span>    v32[</span><span style="color:#d08770;">7</span><span>] = *(</span><span style="color:#b48ead;">int </span><span>*)((</span><span style="color:#b48ead;">char </span><span>*)&amp;dword_425480
+</span></td></tr><tr><td>72</td><td><span>                    + (((</span><span style="color:#b48ead;">unsigned </span><span>__int8)v38[</span><span style="color:#d08770;">36</span><span>] + </span><span style="color:#d08770;">2</span><span>) | (</span><span style="color:#d08770;">32 </span><span>* (</span><span style="color:#b48ead;">unsigned </span><span>__int8)v38[</span><span style="color:#d08770;">32</span><span>] + </span><span style="color:#d08770;">2</span><span>) | (</span><span style="color:#d08770;">16
+</span></td></tr><tr><td>73</td><td><span>                                                                                             * (</span><span style="color:#b48ead;">unsigned </span><span>__int8)v38[</span><span style="color:#d08770;">37</span><span>]
+</span></td></tr><tr><td>74</td><td><span>                                                                                             + </span><span style="color:#d08770;">2</span><span>) | (</span><span style="color:#d08770;">8 </span><span>* (</span><span style="color:#b48ead;">unsigned </span><span>__int8)v38[</span><span style="color:#d08770;">33</span><span>] + </span><span style="color:#d08770;">2</span><span>) | (</span><span style="color:#d08770;">4 </span><span>* (</span><span style="color:#b48ead;">unsigned </span><span>__int8)v38[</span><span style="color:#d08770;">34</span><span>] + </span><span style="color:#d08770;">2</span><span>) | (</span><span style="color:#d08770;">2 </span><span>* (</span><span style="color:#b48ead;">unsigned </span><span>__int8)v38[</span><span style="color:#d08770;">35</span><span>] + </span><span style="color:#d08770;">2</span><span>)));
+</span></td></tr><tr><td>75</td><td><span>    v19 = (</span><span style="color:#b48ead;">char </span><span>*)(&amp;unk_425681 - (_UNKNOWN *)a2);
+</span></td></tr><tr><td>76</td><td><span>    v20 = &amp;unk_425680 - (_UNKNOWN *)a2;
+</span></td></tr><tr><td>77</td><td><span>    v33 = *(</span><span style="color:#b48ead;">int </span><span>*)((</span><span style="color:#b48ead;">char </span><span>*)&amp;dword_425580
+</span></td></tr><tr><td>78</td><td><span>                 + (((</span><span style="color:#b48ead;">unsigned </span><span>__int8)v38[</span><span style="color:#d08770;">42</span><span>] + </span><span style="color:#d08770;">2</span><span>) | (</span><span style="color:#d08770;">32 </span><span>* (</span><span style="color:#b48ead;">unsigned </span><span>__int8)v38[</span><span style="color:#d08770;">38</span><span>] + </span><span style="color:#d08770;">2</span><span>) | (</span><span style="color:#d08770;">16
+</span></td></tr><tr><td>79</td><td><span>                                                                                          * (</span><span style="color:#b48ead;">unsigned </span><span>__int8)v38[</span><span style="color:#d08770;">43</span><span>]
+</span></td></tr><tr><td>80</td><td><span>                                                                                          + </span><span style="color:#d08770;">2</span><span>) | (</span><span style="color:#d08770;">8
+</span></td></tr><tr><td>81</td><td><span>                                                                                                * (</span><span style="color:#b48ead;">unsigned </span><span>__int8)v38[</span><span style="color:#d08770;">39</span><span>]
+</span></td></tr><tr><td>82</td><td><span>                                                                                                + </span><span style="color:#d08770;">2</span><span>) | (</span><span style="color:#d08770;">4 </span><span>* (</span><span style="color:#b48ead;">unsigned </span><span>__int8)v38[</span><span style="color:#d08770;">40</span><span>] + </span><span style="color:#d08770;">2</span><span>) | (</span><span style="color:#d08770;">2 </span><span>* (</span><span style="color:#b48ead;">unsigned </span><span>__int8)v38[</span><span style="color:#d08770;">41</span><span>] + </span><span style="color:#d08770;">2</span><span>)));
+</span></td></tr><tr><td>83</td><td><span>    result = a2;
+</span></td></tr><tr><td>84</td><td><span>    </span><span style="color:#b48ead;">if </span><span>( v4 &lt;= </span><span style="color:#d08770;">0 </span><span>)
+</span></td></tr><tr><td>85</td><td><span>    {
+</span></td></tr><tr><td>86</td><td><span>      v30 = </span><span style="color:#d08770;">8</span><span>;
+</span></td></tr><tr><td>87</td><td><span>      </span><span style="color:#b48ead;">do
+</span></td></tr><tr><td>88</td><td><span>      {
+</span></td></tr><tr><td>89</td><td><span>        *result ^= *((_BYTE *)v32 + (</span><span style="color:#b48ead;">unsigned </span><span>__int8)result[v20] + </span><span style="color:#d08770;">3</span><span>);
+</span></td></tr><tr><td>90</td><td><span>        result[</span><span style="color:#d08770;">1</span><span>] ^= *((_BYTE *)v32 + (</span><span style="color:#b48ead;">unsigned </span><span>__int8)v19[(_DWORD)result] + </span><span style="color:#d08770;">3</span><span>);
+</span></td></tr><tr><td>91</td><td><span>        result[</span><span style="color:#d08770;">2</span><span>] ^= *((_BYTE *)v32 + (</span><span style="color:#b48ead;">unsigned </span><span>__int8)result[&amp;unk_425682 - (_UNKNOWN *)a2] + </span><span style="color:#d08770;">3</span><span>);
+</span></td></tr><tr><td>92</td><td><span>        result[</span><span style="color:#d08770;">3</span><span>] ^= *((_BYTE *)v32 + (</span><span style="color:#b48ead;">unsigned </span><span>__int8)result[byte_425683 - a2] + </span><span style="color:#d08770;">3</span><span>);
+</span></td></tr><tr><td>93</td><td><span>        result += </span><span style="color:#d08770;">4</span><span>;
+</span></td></tr><tr><td>94</td><td><span>        --v30;
+</span></td></tr><tr><td>95</td><td><span>      }
+</span></td></tr><tr><td>96</td><td><span>      </span><span style="color:#b48ead;">while </span><span>( v30 );
+</span></td></tr><tr><td>97</td><td><span>    }
+</span></td></tr><tr><td>98</td><td><span>    </span><span style="color:#b48ead;">else
+</span></td></tr><tr><td>99</td><td><span>    {
+</span></td></tr><tr><td>100</td><td><span>      v29 = </span><span style="color:#d08770;">8</span><span>;
+</span></td></tr><tr><td>101</td><td><span>      </span><span style="color:#b48ead;">do
+</span></td></tr><tr><td>102</td><td><span>      {
+</span></td></tr><tr><td>103</td><td><span>        v24 = result[</span><span style="color:#d08770;">32</span><span>];
+</span></td></tr><tr><td>104</td><td><span>        v22 = *result ^ *((_BYTE *)v32 + (</span><span style="color:#b48ead;">unsigned </span><span>__int8)result[v20] + </span><span style="color:#d08770;">3</span><span>);
+</span></td></tr><tr><td>105</td><td><span>        result += </span><span style="color:#d08770;">4</span><span>;
+</span></td></tr><tr><td>106</td><td><span>        result[</span><span style="color:#d08770;">28</span><span>] = v22;
+</span></td></tr><tr><td>107</td><td><span>        *(result - </span><span style="color:#d08770;">4</span><span>) = v24;
+</span></td></tr><tr><td>108</td><td><span>        v25 = result[</span><span style="color:#d08770;">29</span><span>];
+</span></td></tr><tr><td>109</td><td><span>        result[</span><span style="color:#d08770;">29</span><span>] = *(result - </span><span style="color:#d08770;">3</span><span>) ^ *((_BYTE *)v32 + (</span><span style="color:#b48ead;">unsigned </span><span>__int8)result[(_DWORD)v19 - </span><span style="color:#d08770;">4</span><span>] + </span><span style="color:#d08770;">3</span><span>);
+</span></td></tr><tr><td>110</td><td><span>        *(result - </span><span style="color:#d08770;">3</span><span>) = v25;
+</span></td></tr><tr><td>111</td><td><span>        v26 = result[</span><span style="color:#d08770;">30</span><span>];
+</span></td></tr><tr><td>112</td><td><span>        result[</span><span style="color:#d08770;">30</span><span>] = *(result - </span><span style="color:#d08770;">2</span><span>) ^ *((_BYTE *)v32 + (</span><span style="color:#b48ead;">unsigned </span><span>__int8)result[&amp;unk_425682 - (_UNKNOWN *)a2 - </span><span style="color:#d08770;">4</span><span>] + </span><span style="color:#d08770;">3</span><span>);
+</span></td></tr><tr><td>113</td><td><span>        *(result - </span><span style="color:#d08770;">2</span><span>) = v26;
+</span></td></tr><tr><td>114</td><td><span>        v27 = result[</span><span style="color:#d08770;">31</span><span>];
+</span></td></tr><tr><td>115</td><td><span>        result[</span><span style="color:#d08770;">31</span><span>] = *(result - </span><span style="color:#d08770;">1</span><span>) ^ *((_BYTE *)v32 + (</span><span style="color:#b48ead;">unsigned </span><span>__int8)result[byte_425683 - a2 - </span><span style="color:#d08770;">4</span><span>] + </span><span style="color:#d08770;">3</span><span>);
+</span></td></tr><tr><td>116</td><td><span>        *(result - </span><span style="color:#d08770;">1</span><span>) = v27;
+</span></td></tr><tr><td>117</td><td><span>        --v29;
+</span></td></tr><tr><td>118</td><td><span>      }
+</span></td></tr><tr><td>119</td><td><span>      </span><span style="color:#b48ead;">while </span><span>( v29 );
+</span></td></tr><tr><td>120</td><td><span>    }
+</span></td></tr><tr><td>121</td><td><span>    v5 = a3;
+</span></td></tr><tr><td>122</td><td><span>    v3 = v32[</span><span style="color:#d08770;">0</span><span>];
+</span></td></tr><tr><td>123</td><td><span>    v4 = v31 - </span><span style="color:#d08770;">1</span><span>;
+</span></td></tr><tr><td>124</td><td><span>    v23 = v31 - </span><span style="color:#d08770;">1 </span><span>&lt;= -</span><span style="color:#d08770;">1</span><span>;
+</span></td></tr><tr><td>125</td><td><span>    ++v28;
+</span></td></tr><tr><td>126</td><td><span>    --v31;
+</span></td></tr><tr><td>127</td><td><span>  }
+</span></td></tr><tr><td>128</td><td><span>  </span><span style="color:#b48ead;">while </span><span>( !v23 );
+</span></td></tr><tr><td>129</td><td><span>  </span><span style="color:#b48ead;">return</span><span> result;
+</span></td></tr><tr><td>130</td><td><span>}
+</span></td></tr></tbody></table></code></pre>
 <p>Oof. This is substantially more complicated but looks like the meat of the decryption algorithm. We'll refer to this function, <code>sub_407980</code>, as <code>decrypt_data</code> from here on out. We can see what may be an immediate roadblock: this function takes in a C++ <code>this</code> pointer (line 5) and performs bitwise operations on one of its members (line 18, 23, etc.). For now let's call this class member <code>key</code> and come back to it later.</p>
 <p>This function is the perfect example of decompilers emitting less than ideal code as a result of compiler optimizations/code reordering. For me, TTD was essential for following how data flows through this function. It took a few hours of banging my head against IDA and WinDbg to understand, but this function can be broken up into 3 high-level phases:</p>
 <ol>
 <li>Building a 48-byte buffer containing our key material XOR'd with data from a static table.</li>
 </ol>
 <pre data-linenos data-lang="c" style="background-color:#2b303b;color:#c0c5ce;" class="language-c "><code class="language-c" data-lang="c"><table><tbody><tr><td>1</td><td><span>  </span><span style="color:#b48ead;">int</span><span> v33;
-</span><tr><td>2</td><td><span>  </span><span style="color:#b48ead;">unsigned </span><span>__int8 v34; </span><span style="color:#65737e;">// [esp+44h] [ebp-34h]
-</span><tr><td>3</td><td><span>  </span><span style="color:#b48ead;">unsigned </span><span>__int8 v35; </span><span style="color:#65737e;">// [esp+45h] [ebp-33h]
-</span><tr><td>4</td><td><span>  </span><span style="color:#b48ead;">unsigned </span><span>__int8 v36; </span><span style="color:#65737e;">// [esp+46h] [ebp-32h]
-</span><tr><td>5</td><td><span>  </span><span style="color:#b48ead;">unsigned </span><span>__int8 v37; </span><span style="color:#65737e;">// [esp+47h] [ebp-31h]
-</span><tr><td>6</td><td><span>  </span><span style="color:#b48ead;">char</span><span> v38[</span><span style="color:#d08770;">44</span><span>]; </span><span style="color:#65737e;">// [esp+48h] [ebp-30h]
-</span><tr><td>7</td><td><span>
-</span><tr><td>8</td><td><span>  v3 = (</span><span style="color:#b48ead;">int</span><span>)this;
-</span><tr><td>9</td><td><span>  v4 = </span><span style="color:#d08770;">15</span><span>;
-</span><tr><td>10</td><td><span>  v5 = a3;
-</span><tr><td>11</td><td><span>  v32[</span><span style="color:#d08770;">0</span><span>] = (</span><span style="color:#b48ead;">int</span><span>)this;
-</span><tr><td>12</td><td><span>  v28 = </span><span style="color:#d08770;">0</span><span>;
-</span><tr><td>13</td><td><span>  v31 = </span><span style="color:#d08770;">15</span><span>;
-</span><tr><td>14</td><td><span>  </span><span style="color:#b48ead;">do
-</span><tr><td>15</td><td><span>  {
-</span><tr><td>16</td><td><span>    </span><span style="color:#65737e;">// The end statement of this loop is strange -- it&#39;s writing a byte somewhere? come back
-</span><tr><td>17</td><td><span>    </span><span style="color:#65737e;">// to this later
-</span><tr><td>18</td><td><span>    </span><span style="color:#b48ead;">for </span><span>( i = </span><span style="color:#d08770;">0</span><span>; i &lt; </span><span style="color:#d08770;">48</span><span>; *((_BYTE *)&amp;v33 + i + </span><span style="color:#d08770;">3</span><span>) = v18 )
-</span><tr><td>19</td><td><span>    {
-</span><tr><td>20</td><td><span>    </span><span style="color:#65737e;">// v28 Starts at 0 but is incremented by 1 during each iteration of the outer `while` loop
-</span><tr><td>21</td><td><span>      v7 = v28;
-</span><tr><td>22</td><td><span>      </span><span style="color:#65737e;">// v5 is our last argument which was 0
-</span><tr><td>23</td><td><span>      </span><span style="color:#b48ead;">if </span><span>( !v5 )
-</span><tr><td>24</td><td><span>        </span><span style="color:#65737e;">// overwrite v7 with v4, which begins at 15 but is decremented by 1 during each iteration
-</span><tr><td>25</td><td><span>        </span><span style="color:#65737e;">// of the outer `while` loop
-</span><tr><td>26</td><td><span>        v7 = v4;
-</span><tr><td>27</td><td><span>      </span><span style="color:#65737e;">// left-hand side of the xor, *(_BYTE *)(i + 48 * v7 + v3 + 4)
-</span><tr><td>28</td><td><span>      </span><span style="color:#65737e;">//     v3 in this context is our `this` pointer + 4, giving us *(_BYTE *)(i + (48 * v7) + this-&gt;maybe_key)
-</span><tr><td>29</td><td><span>      </span><span style="color:#65737e;">//     so the left-hand side of the xor is likely indexing into our key material:
-</span><tr><td>30</td><td><span>      </span><span style="color:#65737e;">//     this-&gt;maybe_key[i + 48 * loop_multiplier]
-</span><tr><td>31</td><td><span>      </span><span style="color:#65737e;">//
-</span><tr><td>32</td><td><span>      </span><span style="color:#65737e;">// right-hand side of the xor, a2[(unsigned __int8)byte_424E50[i] + 31]
-</span><tr><td>33</td><td><span>      </span><span style="color:#65737e;">//     a2 is our input encrypted data, and byte_424E50 is some static data
-</span><tr><td>34</td><td><span>      </span><span style="color:#65737e;">//
-</span><tr><td>35</td><td><span>      </span><span style="color:#65737e;">// this full statement can be rewritten as:
-</span><tr><td>36</td><td><span>      </span><span style="color:#65737e;">//     v8 = this-&gt;maybe_key[i + 48 * loop_multiplier] ^ encrypted_data[byte_424E50[i] + 31]
-</span><tr><td>37</td><td><span>      v8 = *(_BYTE *)(i + </span><span style="color:#d08770;">48 </span><span>* v7 + v3 + </span><span style="color:#d08770;">4</span><span>) ^ a2[(</span><span style="color:#b48ead;">unsigned </span><span>__int8)byte_424E50[i] + </span><span style="color:#d08770;">31</span><span>];
-</span><tr><td>38</td><td><span>
-</span><tr><td>39</td><td><span>      v9 = v28;
-</span><tr><td>40</td><td><span>
-</span><tr><td>41</td><td><span>      </span><span style="color:#65737e;">// write the result of `key_data ^ input_data` to a scratch buffer (v34)
-</span><tr><td>42</td><td><span>      </span><span style="color:#65737e;">// v34 looks to be declared as the wrong type. v33 is actually a 52-byte buffer
-</span><tr><td>43</td><td><span>      *(&amp;v34 + i) = v8;
-</span><tr><td>44</td><td><span>
-</span><tr><td>45</td><td><span>      </span><span style="color:#65737e;">// repeat the above 5 more times
-</span><tr><td>46</td><td><span>      </span><span style="color:#b48ead;">if </span><span>( !v5 )
-</span><tr><td>47</td><td><span>        v9 = v4;
-</span><tr><td>48</td><td><span>      v10 = *(_BYTE *)(i + </span><span style="color:#d08770;">48 </span><span>* v9 + v3 + </span><span style="color:#d08770;">5</span><span>) ^ a2[(</span><span style="color:#b48ead;">unsigned </span><span>__int8)byte_424E51[i] + </span><span style="color:#d08770;">31</span><span>];
-</span><tr><td>49</td><td><span>      v11 = v28;
-</span><tr><td>50</td><td><span>      *(&amp;v35 + i) = v10;
-</span><tr><td>51</td><td><span>
-</span><tr><td>52</td><td><span>      </span><span style="color:#65737e;">// snip
-</span><tr><td>53</td><td><span>
-</span><tr><td>54</td><td><span>      </span><span style="color:#65737e;">// v18 gets written to the scratch buffer at the end of the loop...
-</span><tr><td>55</td><td><span>      v18 = *(_BYTE *)(i + </span><span style="color:#d08770;">48 </span><span>* v17 + v3 + </span><span style="color:#d08770;">9</span><span>) ^ a2[(</span><span style="color:#b48ead;">unsigned </span><span>__int8)byte_424E55[i] + </span><span style="color:#d08770;">31</span><span>];
-</span><tr><td>56</td><td><span>
-</span><tr><td>57</td><td><span>      </span><span style="color:#65737e;">// this was probably the *real* last statement of the for-loop
-</span><tr><td>58</td><td><span>      </span><span style="color:#65737e;">// i.e. for (int i = 0; i &lt; 48; i += 6)
-</span><tr><td>59</td><td><span>      i += </span><span style="color:#d08770;">6</span><span>;
-</span><tr><td>60</td><td><span>    }
-</span></tr></tbody></table></code></pre>
+</span></td></tr><tr><td>2</td><td><span>  </span><span style="color:#b48ead;">unsigned </span><span>__int8 v34; </span><span style="color:#65737e;">// [esp+44h] [ebp-34h]
+</span></td></tr><tr><td>3</td><td><span>  </span><span style="color:#b48ead;">unsigned </span><span>__int8 v35; </span><span style="color:#65737e;">// [esp+45h] [ebp-33h]
+</span></td></tr><tr><td>4</td><td><span>  </span><span style="color:#b48ead;">unsigned </span><span>__int8 v36; </span><span style="color:#65737e;">// [esp+46h] [ebp-32h]
+</span></td></tr><tr><td>5</td><td><span>  </span><span style="color:#b48ead;">unsigned </span><span>__int8 v37; </span><span style="color:#65737e;">// [esp+47h] [ebp-31h]
+</span></td></tr><tr><td>6</td><td><span>  </span><span style="color:#b48ead;">char</span><span> v38[</span><span style="color:#d08770;">44</span><span>]; </span><span style="color:#65737e;">// [esp+48h] [ebp-30h]
+</span></td></tr><tr><td>7</td><td><span>
+</span></td></tr><tr><td>8</td><td><span>  v3 = (</span><span style="color:#b48ead;">int</span><span>)this;
+</span></td></tr><tr><td>9</td><td><span>  v4 = </span><span style="color:#d08770;">15</span><span>;
+</span></td></tr><tr><td>10</td><td><span>  v5 = a3;
+</span></td></tr><tr><td>11</td><td><span>  v32[</span><span style="color:#d08770;">0</span><span>] = (</span><span style="color:#b48ead;">int</span><span>)this;
+</span></td></tr><tr><td>12</td><td><span>  v28 = </span><span style="color:#d08770;">0</span><span>;
+</span></td></tr><tr><td>13</td><td><span>  v31 = </span><span style="color:#d08770;">15</span><span>;
+</span></td></tr><tr><td>14</td><td><span>  </span><span style="color:#b48ead;">do
+</span></td></tr><tr><td>15</td><td><span>  {
+</span></td></tr><tr><td>16</td><td><span>    </span><span style="color:#65737e;">// The end statement of this loop is strange -- it&#39;s writing a byte somewhere? come back
+</span></td></tr><tr><td>17</td><td><span>    </span><span style="color:#65737e;">// to this later
+</span></td></tr><tr><td>18</td><td><span>    </span><span style="color:#b48ead;">for </span><span>( i = </span><span style="color:#d08770;">0</span><span>; i &lt; </span><span style="color:#d08770;">48</span><span>; *((_BYTE *)&amp;v33 + i + </span><span style="color:#d08770;">3</span><span>) = v18 )
+</span></td></tr><tr><td>19</td><td><span>    {
+</span></td></tr><tr><td>20</td><td><span>    </span><span style="color:#65737e;">// v28 Starts at 0 but is incremented by 1 during each iteration of the outer `while` loop
+</span></td></tr><tr><td>21</td><td><span>      v7 = v28;
+</span></td></tr><tr><td>22</td><td><span>      </span><span style="color:#65737e;">// v5 is our last argument which was 0
+</span></td></tr><tr><td>23</td><td><span>      </span><span style="color:#b48ead;">if </span><span>( !v5 )
+</span></td></tr><tr><td>24</td><td><span>        </span><span style="color:#65737e;">// overwrite v7 with v4, which begins at 15 but is decremented by 1 during each iteration
+</span></td></tr><tr><td>25</td><td><span>        </span><span style="color:#65737e;">// of the outer `while` loop
+</span></td></tr><tr><td>26</td><td><span>        v7 = v4;
+</span></td></tr><tr><td>27</td><td><span>      </span><span style="color:#65737e;">// left-hand side of the xor, *(_BYTE *)(i + 48 * v7 + v3 + 4)
+</span></td></tr><tr><td>28</td><td><span>      </span><span style="color:#65737e;">//     v3 in this context is our `this` pointer + 4, giving us *(_BYTE *)(i + (48 * v7) + this-&gt;maybe_key)
+</span></td></tr><tr><td>29</td><td><span>      </span><span style="color:#65737e;">//     so the left-hand side of the xor is likely indexing into our key material:
+</span></td></tr><tr><td>30</td><td><span>      </span><span style="color:#65737e;">//     this-&gt;maybe_key[i + 48 * loop_multiplier]
+</span></td></tr><tr><td>31</td><td><span>      </span><span style="color:#65737e;">//
+</span></td></tr><tr><td>32</td><td><span>      </span><span style="color:#65737e;">// right-hand side of the xor, a2[(unsigned __int8)byte_424E50[i] + 31]
+</span></td></tr><tr><td>33</td><td><span>      </span><span style="color:#65737e;">//     a2 is our input encrypted data, and byte_424E50 is some static data
+</span></td></tr><tr><td>34</td><td><span>      </span><span style="color:#65737e;">//
+</span></td></tr><tr><td>35</td><td><span>      </span><span style="color:#65737e;">// this full statement can be rewritten as:
+</span></td></tr><tr><td>36</td><td><span>      </span><span style="color:#65737e;">//     v8 = this-&gt;maybe_key[i + 48 * loop_multiplier] ^ encrypted_data[byte_424E50[i] + 31]
+</span></td></tr><tr><td>37</td><td><span>      v8 = *(_BYTE *)(i + </span><span style="color:#d08770;">48 </span><span>* v7 + v3 + </span><span style="color:#d08770;">4</span><span>) ^ a2[(</span><span style="color:#b48ead;">unsigned </span><span>__int8)byte_424E50[i] + </span><span style="color:#d08770;">31</span><span>];
+</span></td></tr><tr><td>38</td><td><span>
+</span></td></tr><tr><td>39</td><td><span>      v9 = v28;
+</span></td></tr><tr><td>40</td><td><span>
+</span></td></tr><tr><td>41</td><td><span>      </span><span style="color:#65737e;">// write the result of `key_data ^ input_data` to a scratch buffer (v34)
+</span></td></tr><tr><td>42</td><td><span>      </span><span style="color:#65737e;">// v34 looks to be declared as the wrong type. v33 is actually a 52-byte buffer
+</span></td></tr><tr><td>43</td><td><span>      *(&amp;v34 + i) = v8;
+</span></td></tr><tr><td>44</td><td><span>
+</span></td></tr><tr><td>45</td><td><span>      </span><span style="color:#65737e;">// repeat the above 5 more times
+</span></td></tr><tr><td>46</td><td><span>      </span><span style="color:#b48ead;">if </span><span>( !v5 )
+</span></td></tr><tr><td>47</td><td><span>        v9 = v4;
+</span></td></tr><tr><td>48</td><td><span>      v10 = *(_BYTE *)(i + </span><span style="color:#d08770;">48 </span><span>* v9 + v3 + </span><span style="color:#d08770;">5</span><span>) ^ a2[(</span><span style="color:#b48ead;">unsigned </span><span>__int8)byte_424E51[i] + </span><span style="color:#d08770;">31</span><span>];
+</span></td></tr><tr><td>49</td><td><span>      v11 = v28;
+</span></td></tr><tr><td>50</td><td><span>      *(&amp;v35 + i) = v10;
+</span></td></tr><tr><td>51</td><td><span>
+</span></td></tr><tr><td>52</td><td><span>      </span><span style="color:#65737e;">// snip
+</span></td></tr><tr><td>53</td><td><span>
+</span></td></tr><tr><td>54</td><td><span>      </span><span style="color:#65737e;">// v18 gets written to the scratch buffer at the end of the loop...
+</span></td></tr><tr><td>55</td><td><span>      v18 = *(_BYTE *)(i + </span><span style="color:#d08770;">48 </span><span>* v17 + v3 + </span><span style="color:#d08770;">9</span><span>) ^ a2[(</span><span style="color:#b48ead;">unsigned </span><span>__int8)byte_424E55[i] + </span><span style="color:#d08770;">31</span><span>];
+</span></td></tr><tr><td>56</td><td><span>
+</span></td></tr><tr><td>57</td><td><span>      </span><span style="color:#65737e;">// this was probably the *real* last statement of the for-loop
+</span></td></tr><tr><td>58</td><td><span>      </span><span style="color:#65737e;">// i.e. for (int i = 0; i &lt; 48; i += 6)
+</span></td></tr><tr><td>59</td><td><span>      i += </span><span style="color:#d08770;">6</span><span>;
+</span></td></tr><tr><td>60</td><td><span>    }
+</span></td></tr></tbody></table></code></pre>
 <ol start="2">
 <li>Build a 32-byte buffer containing data from an 0x800-byte static table, with indexes into this table originating from indices built from the buffer in step #1. Combine this 32-byte buffer with the 48-byte buffer in step #1.</li>
 </ol>
 <pre data-linenos data-lang="c" style="background-color:#2b303b;color:#c0c5ce;" class="language-c "><code class="language-c" data-lang="c"><table><tbody><tr><td>1</td><td><span>    </span><span style="color:#65737e;">// dword_424E80 -- some static data
-</span><tr><td>2</td><td><span>    </span><span style="color:#65737e;">// (unsigned __int8)v38[0] + 2) -- the original decompiler output has this wrong.
-</span><tr><td>3</td><td><span>    </span><span style="color:#65737e;">//     v33 should be a 52-byte buffer which consumes v38, so v38 is actually data set up in
-</span><tr><td>4</td><td><span>    </span><span style="color:#65737e;">//     the loop above.
-</span><tr><td>5</td><td><span>    </span><span style="color:#65737e;">// (32 * v34 + 2) -- v34 should be some data from the above loop as well. This looks like
-</span><tr><td>6</td><td><span>    </span><span style="color:#65737e;">//     a binary shift optimization
-</span><tr><td>7</td><td><span>    </span><span style="color:#65737e;">// repeat with different multipliers...
-</span><tr><td>8</td><td><span>    </span><span style="color:#65737e;">//
-</span><tr><td>9</td><td><span>    </span><span style="color:#65737e;">// This can be simplified as:
-</span><tr><td>10</td><td><span>    </span><span style="color:#65737e;">//     size_t index  = ((v34 &lt;&lt; 5) + 2)
-</span><tr><td>11</td><td><span>    </span><span style="color:#65737e;">//                     | ((v37[1] &lt;&lt; 4) + 2)
-</span><tr><td>12</td><td><span>    </span><span style="color:#65737e;">//                     | ((v35 &lt;&lt; 3) + 2)
-</span><tr><td>13</td><td><span>    </span><span style="color:#65737e;">//                     | ((v36 &lt;&lt; 2) + 2)
-</span><tr><td>14</td><td><span>    </span><span style="color:#65737e;">//                     | ((v37 &lt;&lt; 1) + 2)
-</span><tr><td>15</td><td><span>    </span><span style="color:#65737e;">//                     | v38[0]
-</span><tr><td>16</td><td><span>    </span><span style="color:#65737e;">//     v32[1] = *(int*)(((char*)&amp;dword_424e80)[index])
-</span><tr><td>17</td><td><span>    v32[</span><span style="color:#d08770;">1</span><span>] = *(</span><span style="color:#b48ead;">int </span><span>*)((</span><span style="color:#b48ead;">char </span><span>*)&amp;dword_424E80
-</span><tr><td>18</td><td><span>                    + (((</span><span style="color:#b48ead;">unsigned </span><span>__int8)v38[</span><span style="color:#d08770;">0</span><span>] + </span><span style="color:#d08770;">2</span><span>) | (</span><span style="color:#d08770;">32 </span><span>* v34 + </span><span style="color:#d08770;">2</span><span>) | (</span><span style="color:#d08770;">16 </span><span>* (</span><span style="color:#b48ead;">unsigned </span><span>__int8)v38[</span><span style="color:#d08770;">1</span><span>] + </span><span style="color:#d08770;">2</span><span>) | (</span><span style="color:#d08770;">8 </span><span>* v35 + </span><span style="color:#d08770;">2</span><span>) | (</span><span style="color:#d08770;">4 </span><span>* v36 + </span><span style="color:#d08770;">2</span><span>) | (</span><span style="color:#d08770;">2 </span><span>* v37 + </span><span style="color:#d08770;">2</span><span>)));
-</span><tr><td>19</td><td><span>    </span><span style="color:#65737e;">// repeat 7 times. each time the reference to dword_424e80 is shifted forward by 0x100.
-</span><tr><td>20</td><td><span>    </span><span style="color:#65737e;">// note: if you do the math, the next line uses dword_424e80[64]. We shift by 0x100 instead of
-</span><tr><td>21</td><td><span>    </span><span style="color:#65737e;">// 64 because is misleading because dword_424e80 is declared as an int array -- not a char array.
-</span></tr></tbody></table></code></pre>
+</span></td></tr><tr><td>2</td><td><span>    </span><span style="color:#65737e;">// (unsigned __int8)v38[0] + 2) -- the original decompiler output has this wrong.
+</span></td></tr><tr><td>3</td><td><span>    </span><span style="color:#65737e;">//     v33 should be a 52-byte buffer which consumes v38, so v38 is actually data set up in
+</span></td></tr><tr><td>4</td><td><span>    </span><span style="color:#65737e;">//     the loop above.
+</span></td></tr><tr><td>5</td><td><span>    </span><span style="color:#65737e;">// (32 * v34 + 2) -- v34 should be some data from the above loop as well. This looks like
+</span></td></tr><tr><td>6</td><td><span>    </span><span style="color:#65737e;">//     a binary shift optimization
+</span></td></tr><tr><td>7</td><td><span>    </span><span style="color:#65737e;">// repeat with different multipliers...
+</span></td></tr><tr><td>8</td><td><span>    </span><span style="color:#65737e;">//
+</span></td></tr><tr><td>9</td><td><span>    </span><span style="color:#65737e;">// This can be simplified as:
+</span></td></tr><tr><td>10</td><td><span>    </span><span style="color:#65737e;">//     size_t index  = ((v34 &lt;&lt; 5) + 2)
+</span></td></tr><tr><td>11</td><td><span>    </span><span style="color:#65737e;">//                     | ((v37[1] &lt;&lt; 4) + 2)
+</span></td></tr><tr><td>12</td><td><span>    </span><span style="color:#65737e;">//                     | ((v35 &lt;&lt; 3) + 2)
+</span></td></tr><tr><td>13</td><td><span>    </span><span style="color:#65737e;">//                     | ((v36 &lt;&lt; 2) + 2)
+</span></td></tr><tr><td>14</td><td><span>    </span><span style="color:#65737e;">//                     | ((v37 &lt;&lt; 1) + 2)
+</span></td></tr><tr><td>15</td><td><span>    </span><span style="color:#65737e;">//                     | v38[0]
+</span></td></tr><tr><td>16</td><td><span>    </span><span style="color:#65737e;">//     v32[1] = *(int*)(((char*)&amp;dword_424e80)[index])
+</span></td></tr><tr><td>17</td><td><span>    v32[</span><span style="color:#d08770;">1</span><span>] = *(</span><span style="color:#b48ead;">int </span><span>*)((</span><span style="color:#b48ead;">char </span><span>*)&amp;dword_424E80
+</span></td></tr><tr><td>18</td><td><span>                    + (((</span><span style="color:#b48ead;">unsigned </span><span>__int8)v38[</span><span style="color:#d08770;">0</span><span>] + </span><span style="color:#d08770;">2</span><span>) | (</span><span style="color:#d08770;">32 </span><span>* v34 + </span><span style="color:#d08770;">2</span><span>) | (</span><span style="color:#d08770;">16 </span><span>* (</span><span style="color:#b48ead;">unsigned </span><span>__int8)v38[</span><span style="color:#d08770;">1</span><span>] + </span><span style="color:#d08770;">2</span><span>) | (</span><span style="color:#d08770;">8 </span><span>* v35 + </span><span style="color:#d08770;">2</span><span>) | (</span><span style="color:#d08770;">4 </span><span>* v36 + </span><span style="color:#d08770;">2</span><span>) | (</span><span style="color:#d08770;">2 </span><span>* v37 + </span><span style="color:#d08770;">2</span><span>)));
+</span></td></tr><tr><td>19</td><td><span>    </span><span style="color:#65737e;">// repeat 7 times. each time the reference to dword_424e80 is shifted forward by 0x100.
+</span></td></tr><tr><td>20</td><td><span>    </span><span style="color:#65737e;">// note: if you do the math, the next line uses dword_424e80[64]. We shift by 0x100 instead of
+</span></td></tr><tr><td>21</td><td><span>    </span><span style="color:#65737e;">// 64 because is misleading because dword_424e80 is declared as an int array -- not a char array.
+</span></td></tr></tbody></table></code></pre>
 <ol start="3">
 <li>Iterate over the next 8 bytes of the output buffer. For each byte index of the output buffer, index into yet <em>another</em> static 32-byte buffer and use that as the index into the table from step #2. XOR this value with the value at the current index of the output buffer.</li>
 </ol>
 <pre data-linenos data-lang="c" style="background-color:#2b303b;color:#c0c5ce;" class="language-c "><code class="language-c" data-lang="c"><table><tbody><tr><td>1</td><td><span style="color:#65737e;">// Not really sure why this calculation works like this. It ends up just being `unk_425681`&#39;s address
-</span><tr><td>2</td><td><span style="color:#65737e;">// when it&#39;s used.
-</span><tr><td>3</td><td><span>    v19 = (</span><span style="color:#b48ead;">char </span><span>*)(&amp;unk_425681 - (_UNKNOWN *)a2);
-</span><tr><td>4</td><td><span>    v20 = &amp;unk_425680 - (_UNKNOWN *)a2;
-</span><tr><td>5</td><td><span>
-</span><tr><td>6</td><td><span style="color:#65737e;">// v4 is a number that&#39;s decremented on every iteration -- possibly bytes remaining?
-</span><tr><td>7</td><td><span>    </span><span style="color:#b48ead;">if </span><span>( v4 &lt;= </span><span style="color:#d08770;">0 </span><span>)
-</span><tr><td>8</td><td><span>    {
-</span><tr><td>9</td><td><span>        </span><span style="color:#65737e;">// Loop over 8 bytes
-</span><tr><td>10</td><td><span>      v30 = </span><span style="color:#d08770;">8</span><span>;
-</span><tr><td>11</td><td><span>      </span><span style="color:#b48ead;">do
-</span><tr><td>12</td><td><span>      {
-</span><tr><td>13</td><td><span>        </span><span style="color:#65737e;">// Start XORing the output bytes with some of the data generated in step 2.
-</span><tr><td>14</td><td><span>        </span><span style="color:#65737e;">//
-</span><tr><td>15</td><td><span>        </span><span style="color:#65737e;">// Cheating here and doing the &quot;draw the rest of the owl&quot;, but if you observe that
-</span><tr><td>16</td><td><span>        </span><span style="color:#65737e;">// we use `unk_425680` (v20), `unk_425681` (v19), `unk_425682`, and byte_425683, the
-</span><tr><td>17</td><td><span>        </span><span style="color:#65737e;">// the decompiler generated suboptimal code. We can simplify to be relative to just
-</span><tr><td>18</td><td><span>        </span><span style="color:#65737e;">// `unk_425680`
-</span><tr><td>19</td><td><span>        </span><span style="color:#65737e;">//
-</span><tr><td>20</td><td><span>        </span><span style="color:#65737e;">// *result ^= step2_bytes[unk_425680[output_index] - 1]
-</span><tr><td>21</td><td><span>        *result ^= *((_BYTE *)v32 + (</span><span style="color:#b48ead;">unsigned </span><span>__int8)result[v20] + </span><span style="color:#d08770;">3</span><span>);
-</span><tr><td>22</td><td><span>
-</span><tr><td>23</td><td><span>        </span><span style="color:#65737e;">// result[1] ^= step2_bytes[unk_425680[output_index] + 1]
-</span><tr><td>24</td><td><span>        result[</span><span style="color:#d08770;">1</span><span>] ^= *((_BYTE *)v32 + (</span><span style="color:#b48ead;">unsigned </span><span>__int8)v19[(_DWORD)result] + </span><span style="color:#d08770;">3</span><span>);
-</span><tr><td>25</td><td><span>
-</span><tr><td>26</td><td><span>        </span><span style="color:#65737e;">// result[2] ^= step2_bytes[unk_425680[output_index] + 2]
-</span><tr><td>27</td><td><span>        result[</span><span style="color:#d08770;">2</span><span>] ^= *((_BYTE *)v32 + (</span><span style="color:#b48ead;">unsigned </span><span>__int8)result[&amp;unk_425682 - (_UNKNOWN *)a2] + </span><span style="color:#d08770;">3</span><span>);
-</span><tr><td>28</td><td><span>
-</span><tr><td>29</td><td><span>        </span><span style="color:#65737e;">// result[3] ^= step2_bytes[unk_425680[output_index] + 3]
-</span><tr><td>30</td><td><span>        result[</span><span style="color:#d08770;">3</span><span>] ^= *((_BYTE *)v32 + (</span><span style="color:#b48ead;">unsigned </span><span>__int8)result[byte_425683 - a2] + </span><span style="color:#d08770;">3</span><span>);
-</span><tr><td>31</td><td><span>        </span><span style="color:#65737e;">// Move our our pointer to the output buffer forward by 4 bytes
-</span><tr><td>32</td><td><span>        result += </span><span style="color:#d08770;">4</span><span>;
-</span><tr><td>33</td><td><span>        --v30;
-</span><tr><td>34</td><td><span>      }
-</span><tr><td>35</td><td><span>      </span><span style="color:#b48ead;">while </span><span>( v30 );
-</span><tr><td>36</td><td><span>    }
-</span><tr><td>37</td><td><span>    </span><span style="color:#b48ead;">else
-</span><tr><td>38</td><td><span>    {
-</span><tr><td>39</td><td><span>        </span><span style="color:#65737e;">// loop over 8 bytes
-</span><tr><td>40</td><td><span>      v29 = </span><span style="color:#d08770;">8</span><span>;
-</span><tr><td>41</td><td><span>      </span><span style="color:#b48ead;">do
-</span><tr><td>42</td><td><span>      {
-</span><tr><td>43</td><td><span>        </span><span style="color:#65737e;">// grab the byte at 0x20, we&#39;re swapping this later
-</span><tr><td>44</td><td><span>        v24 = result[</span><span style="color:#d08770;">32</span><span>];
-</span><tr><td>45</td><td><span>
-</span><tr><td>46</td><td><span>        </span><span style="color:#65737e;">// v22 = *result ^ step2_bytes[unk_425680[output_index] - 1]
-</span><tr><td>47</td><td><span>        v22 = *result ^ *((_BYTE *)v32 + (</span><span style="color:#b48ead;">unsigned </span><span>__int8)result[v20] + </span><span style="color:#d08770;">3</span><span>);
-</span><tr><td>48</td><td><span>
-</span><tr><td>49</td><td><span>        </span><span style="color:#65737e;">// I&#39;m not sure why the output buffer pointer is incremented here, but
-</span><tr><td>50</td><td><span>        </span><span style="color:#65737e;">// this really makes the code ugly
-</span><tr><td>51</td><td><span>        result += </span><span style="color:#d08770;">4</span><span>;
-</span><tr><td>52</td><td><span>
-</span><tr><td>53</td><td><span>        </span><span style="color:#65737e;">// Write the byte generated above to offset 0x1c
-</span><tr><td>54</td><td><span>        result[</span><span style="color:#d08770;">28</span><span>] = v22;
-</span><tr><td>55</td><td><span>        </span><span style="color:#65737e;">// Write the byte at 0x20 to offset 0
-</span><tr><td>56</td><td><span>        *(result - </span><span style="color:#d08770;">4</span><span>) = v24;
-</span><tr><td>57</td><td><span>
-</span><tr><td>58</td><td><span>        </span><span style="color:#65737e;">// rinse, repeat with slightly different offsets each time...
-</span><tr><td>59</td><td><span>        v25 = result[</span><span style="color:#d08770;">29</span><span>];
-</span><tr><td>60</td><td><span>        result[</span><span style="color:#d08770;">29</span><span>] = *(result - </span><span style="color:#d08770;">3</span><span>) ^ *((_BYTE *)v32 + (</span><span style="color:#b48ead;">unsigned </span><span>__int8)result[(_DWORD)v19 - </span><span style="color:#d08770;">4</span><span>] + </span><span style="color:#d08770;">3</span><span>);
-</span><tr><td>61</td><td><span>        *(result - </span><span style="color:#d08770;">3</span><span>) = v25;
-</span><tr><td>62</td><td><span>        v26 = result[</span><span style="color:#d08770;">30</span><span>];
-</span><tr><td>63</td><td><span>        result[</span><span style="color:#d08770;">30</span><span>] = *(result - </span><span style="color:#d08770;">2</span><span>) ^ *((_BYTE *)v32 + (</span><span style="color:#b48ead;">unsigned </span><span>__int8)result[&amp;unk_425682 - (_UNKNOWN *)a2 - </span><span style="color:#d08770;">4</span><span>] + </span><span style="color:#d08770;">3</span><span>);
-</span><tr><td>64</td><td><span>        *(result - </span><span style="color:#d08770;">2</span><span>) = v26;
-</span><tr><td>65</td><td><span>        v27 = result[</span><span style="color:#d08770;">31</span><span>];
-</span><tr><td>66</td><td><span>        result[</span><span style="color:#d08770;">31</span><span>] = *(result - </span><span style="color:#d08770;">1</span><span>) ^ *((_BYTE *)v32 + (</span><span style="color:#b48ead;">unsigned </span><span>__int8)result[byte_425683 - a2 - </span><span style="color:#d08770;">4</span><span>] + </span><span style="color:#d08770;">3</span><span>);
-</span><tr><td>67</td><td><span>        *(result - </span><span style="color:#d08770;">1</span><span>) = v27;
-</span><tr><td>68</td><td><span>        --v29;
-</span><tr><td>69</td><td><span>      }
-</span><tr><td>70</td><td><span>      </span><span style="color:#b48ead;">while </span><span>( v29 );
-</span><tr><td>71</td><td><span>    }
-</span></tr></tbody></table></code></pre>
+</span></td></tr><tr><td>2</td><td><span style="color:#65737e;">// when it&#39;s used.
+</span></td></tr><tr><td>3</td><td><span>    v19 = (</span><span style="color:#b48ead;">char </span><span>*)(&amp;unk_425681 - (_UNKNOWN *)a2);
+</span></td></tr><tr><td>4</td><td><span>    v20 = &amp;unk_425680 - (_UNKNOWN *)a2;
+</span></td></tr><tr><td>5</td><td><span>
+</span></td></tr><tr><td>6</td><td><span style="color:#65737e;">// v4 is a number that&#39;s decremented on every iteration -- possibly bytes remaining?
+</span></td></tr><tr><td>7</td><td><span>    </span><span style="color:#b48ead;">if </span><span>( v4 &lt;= </span><span style="color:#d08770;">0 </span><span>)
+</span></td></tr><tr><td>8</td><td><span>    {
+</span></td></tr><tr><td>9</td><td><span>        </span><span style="color:#65737e;">// Loop over 8 bytes
+</span></td></tr><tr><td>10</td><td><span>      v30 = </span><span style="color:#d08770;">8</span><span>;
+</span></td></tr><tr><td>11</td><td><span>      </span><span style="color:#b48ead;">do
+</span></td></tr><tr><td>12</td><td><span>      {
+</span></td></tr><tr><td>13</td><td><span>        </span><span style="color:#65737e;">// Start XORing the output bytes with some of the data generated in step 2.
+</span></td></tr><tr><td>14</td><td><span>        </span><span style="color:#65737e;">//
+</span></td></tr><tr><td>15</td><td><span>        </span><span style="color:#65737e;">// Cheating here and doing the &quot;draw the rest of the owl&quot;, but if you observe that
+</span></td></tr><tr><td>16</td><td><span>        </span><span style="color:#65737e;">// we use `unk_425680` (v20), `unk_425681` (v19), `unk_425682`, and byte_425683, the
+</span></td></tr><tr><td>17</td><td><span>        </span><span style="color:#65737e;">// the decompiler generated suboptimal code. We can simplify to be relative to just
+</span></td></tr><tr><td>18</td><td><span>        </span><span style="color:#65737e;">// `unk_425680`
+</span></td></tr><tr><td>19</td><td><span>        </span><span style="color:#65737e;">//
+</span></td></tr><tr><td>20</td><td><span>        </span><span style="color:#65737e;">// *result ^= step2_bytes[unk_425680[output_index] - 1]
+</span></td></tr><tr><td>21</td><td><span>        *result ^= *((_BYTE *)v32 + (</span><span style="color:#b48ead;">unsigned </span><span>__int8)result[v20] + </span><span style="color:#d08770;">3</span><span>);
+</span></td></tr><tr><td>22</td><td><span>
+</span></td></tr><tr><td>23</td><td><span>        </span><span style="color:#65737e;">// result[1] ^= step2_bytes[unk_425680[output_index] + 1]
+</span></td></tr><tr><td>24</td><td><span>        result[</span><span style="color:#d08770;">1</span><span>] ^= *((_BYTE *)v32 + (</span><span style="color:#b48ead;">unsigned </span><span>__int8)v19[(_DWORD)result] + </span><span style="color:#d08770;">3</span><span>);
+</span></td></tr><tr><td>25</td><td><span>
+</span></td></tr><tr><td>26</td><td><span>        </span><span style="color:#65737e;">// result[2] ^= step2_bytes[unk_425680[output_index] + 2]
+</span></td></tr><tr><td>27</td><td><span>        result[</span><span style="color:#d08770;">2</span><span>] ^= *((_BYTE *)v32 + (</span><span style="color:#b48ead;">unsigned </span><span>__int8)result[&amp;unk_425682 - (_UNKNOWN *)a2] + </span><span style="color:#d08770;">3</span><span>);
+</span></td></tr><tr><td>28</td><td><span>
+</span></td></tr><tr><td>29</td><td><span>        </span><span style="color:#65737e;">// result[3] ^= step2_bytes[unk_425680[output_index] + 3]
+</span></td></tr><tr><td>30</td><td><span>        result[</span><span style="color:#d08770;">3</span><span>] ^= *((_BYTE *)v32 + (</span><span style="color:#b48ead;">unsigned </span><span>__int8)result[byte_425683 - a2] + </span><span style="color:#d08770;">3</span><span>);
+</span></td></tr><tr><td>31</td><td><span>        </span><span style="color:#65737e;">// Move our our pointer to the output buffer forward by 4 bytes
+</span></td></tr><tr><td>32</td><td><span>        result += </span><span style="color:#d08770;">4</span><span>;
+</span></td></tr><tr><td>33</td><td><span>        --v30;
+</span></td></tr><tr><td>34</td><td><span>      }
+</span></td></tr><tr><td>35</td><td><span>      </span><span style="color:#b48ead;">while </span><span>( v30 );
+</span></td></tr><tr><td>36</td><td><span>    }
+</span></td></tr><tr><td>37</td><td><span>    </span><span style="color:#b48ead;">else
+</span></td></tr><tr><td>38</td><td><span>    {
+</span></td></tr><tr><td>39</td><td><span>        </span><span style="color:#65737e;">// loop over 8 bytes
+</span></td></tr><tr><td>40</td><td><span>      v29 = </span><span style="color:#d08770;">8</span><span>;
+</span></td></tr><tr><td>41</td><td><span>      </span><span style="color:#b48ead;">do
+</span></td></tr><tr><td>42</td><td><span>      {
+</span></td></tr><tr><td>43</td><td><span>        </span><span style="color:#65737e;">// grab the byte at 0x20, we&#39;re swapping this later
+</span></td></tr><tr><td>44</td><td><span>        v24 = result[</span><span style="color:#d08770;">32</span><span>];
+</span></td></tr><tr><td>45</td><td><span>
+</span></td></tr><tr><td>46</td><td><span>        </span><span style="color:#65737e;">// v22 = *result ^ step2_bytes[unk_425680[output_index] - 1]
+</span></td></tr><tr><td>47</td><td><span>        v22 = *result ^ *((_BYTE *)v32 + (</span><span style="color:#b48ead;">unsigned </span><span>__int8)result[v20] + </span><span style="color:#d08770;">3</span><span>);
+</span></td></tr><tr><td>48</td><td><span>
+</span></td></tr><tr><td>49</td><td><span>        </span><span style="color:#65737e;">// I&#39;m not sure why the output buffer pointer is incremented here, but
+</span></td></tr><tr><td>50</td><td><span>        </span><span style="color:#65737e;">// this really makes the code ugly
+</span></td></tr><tr><td>51</td><td><span>        result += </span><span style="color:#d08770;">4</span><span>;
+</span></td></tr><tr><td>52</td><td><span>
+</span></td></tr><tr><td>53</td><td><span>        </span><span style="color:#65737e;">// Write the byte generated above to offset 0x1c
+</span></td></tr><tr><td>54</td><td><span>        result[</span><span style="color:#d08770;">28</span><span>] = v22;
+</span></td></tr><tr><td>55</td><td><span>        </span><span style="color:#65737e;">// Write the byte at 0x20 to offset 0
+</span></td></tr><tr><td>56</td><td><span>        *(result - </span><span style="color:#d08770;">4</span><span>) = v24;
+</span></td></tr><tr><td>57</td><td><span>
+</span></td></tr><tr><td>58</td><td><span>        </span><span style="color:#65737e;">// rinse, repeat with slightly different offsets each time...
+</span></td></tr><tr><td>59</td><td><span>        v25 = result[</span><span style="color:#d08770;">29</span><span>];
+</span></td></tr><tr><td>60</td><td><span>        result[</span><span style="color:#d08770;">29</span><span>] = *(result - </span><span style="color:#d08770;">3</span><span>) ^ *((_BYTE *)v32 + (</span><span style="color:#b48ead;">unsigned </span><span>__int8)result[(_DWORD)v19 - </span><span style="color:#d08770;">4</span><span>] + </span><span style="color:#d08770;">3</span><span>);
+</span></td></tr><tr><td>61</td><td><span>        *(result - </span><span style="color:#d08770;">3</span><span>) = v25;
+</span></td></tr><tr><td>62</td><td><span>        v26 = result[</span><span style="color:#d08770;">30</span><span>];
+</span></td></tr><tr><td>63</td><td><span>        result[</span><span style="color:#d08770;">30</span><span>] = *(result - </span><span style="color:#d08770;">2</span><span>) ^ *((_BYTE *)v32 + (</span><span style="color:#b48ead;">unsigned </span><span>__int8)result[&amp;unk_425682 - (_UNKNOWN *)a2 - </span><span style="color:#d08770;">4</span><span>] + </span><span style="color:#d08770;">3</span><span>);
+</span></td></tr><tr><td>64</td><td><span>        *(result - </span><span style="color:#d08770;">2</span><span>) = v26;
+</span></td></tr><tr><td>65</td><td><span>        v27 = result[</span><span style="color:#d08770;">31</span><span>];
+</span></td></tr><tr><td>66</td><td><span>        result[</span><span style="color:#d08770;">31</span><span>] = *(result - </span><span style="color:#d08770;">1</span><span>) ^ *((_BYTE *)v32 + (</span><span style="color:#b48ead;">unsigned </span><span>__int8)result[byte_425683 - a2 - </span><span style="color:#d08770;">4</span><span>] + </span><span style="color:#d08770;">3</span><span>);
+</span></td></tr><tr><td>67</td><td><span>        *(result - </span><span style="color:#d08770;">1</span><span>) = v27;
+</span></td></tr><tr><td>68</td><td><span>        --v29;
+</span></td></tr><tr><td>69</td><td><span>      }
+</span></td></tr><tr><td>70</td><td><span>      </span><span style="color:#b48ead;">while </span><span>( v29 );
+</span></td></tr><tr><td>71</td><td><span>    }
+</span></td></tr></tbody></table></code></pre>
 <p>The inner loop in the <code>else</code> branch above I think is kind of nasty, so here it is reimplemented in Rust:</p>
 <pre data-linenos data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><table><tbody><tr><td>1</td><td><span style="color:#b48ead;">for </span><span>_ in </span><span style="color:#d08770;">0</span><span>..</span><span style="color:#d08770;">8 </span><span>{
-</span><tr><td>2</td><td><span>    </span><span style="color:#65737e;">// we swap the `first` index with the `second`
-</span><tr><td>3</td><td><span>    </span><span style="color:#b48ead;">for </span><span>(first, second) in (</span><span style="color:#d08770;">0x1c</span><span>..=</span><span style="color:#d08770;">0x1f</span><span>).</span><span style="color:#96b5b4;">zip</span><span>(</span><span style="color:#d08770;">0</span><span>..</span><span style="color:#d08770;">4</span><span>) {
-</span><tr><td>4</td><td><span>        </span><span style="color:#b48ead;">let</span><span> original_byte_idx = first + output_offset + </span><span style="color:#d08770;">4</span><span>;
-</span><tr><td>5</td><td><span>
-</span><tr><td>6</td><td><span>        </span><span style="color:#b48ead;">let</span><span> original_byte = outbuf[original_byte_idx];
-</span><tr><td>7</td><td><span>
-</span><tr><td>8</td><td><span>        </span><span style="color:#b48ead;">let</span><span> constant = unk_425680[output_offset + second] as </span><span style="color:#b48ead;">usize</span><span>;
-</span><tr><td>9</td><td><span>
-</span><tr><td>10</td><td><span>        </span><span style="color:#b48ead;">let</span><span> new_byte = outbuf[output_offset + second] ^ generated_bytes_from_step2[constant - </span><span style="color:#d08770;">1</span><span>];
-</span><tr><td>11</td><td><span>
-</span><tr><td>12</td><td><span>        </span><span style="color:#b48ead;">let</span><span> new_idx = original_byte_idx;
-</span><tr><td>13</td><td><span>        outbuf[new_idx] = new_byte;
-</span><tr><td>14</td><td><span>        outbuf[output_offset + second] = original_byte;
-</span><tr><td>15</td><td><span>    }
-</span><tr><td>16</td><td><span>
-</span><tr><td>17</td><td><span>    output_offset += </span><span style="color:#d08770;">4</span><span>;
-</span><tr><td>18</td><td><span>}
-</span></tr></tbody></table></code></pre>
+</span></td></tr><tr><td>2</td><td><span>    </span><span style="color:#65737e;">// we swap the `first` index with the `second`
+</span></td></tr><tr><td>3</td><td><span>    </span><span style="color:#b48ead;">for </span><span>(first, second) in (</span><span style="color:#d08770;">0x1c</span><span>..=</span><span style="color:#d08770;">0x1f</span><span>).</span><span style="color:#96b5b4;">zip</span><span>(</span><span style="color:#d08770;">0</span><span>..</span><span style="color:#d08770;">4</span><span>) {
+</span></td></tr><tr><td>4</td><td><span>        </span><span style="color:#b48ead;">let</span><span> original_byte_idx = first + output_offset + </span><span style="color:#d08770;">4</span><span>;
+</span></td></tr><tr><td>5</td><td><span>
+</span></td></tr><tr><td>6</td><td><span>        </span><span style="color:#b48ead;">let</span><span> original_byte = outbuf[original_byte_idx];
+</span></td></tr><tr><td>7</td><td><span>
+</span></td></tr><tr><td>8</td><td><span>        </span><span style="color:#b48ead;">let</span><span> constant = unk_425680[output_offset + second] as </span><span style="color:#b48ead;">usize</span><span>;
+</span></td></tr><tr><td>9</td><td><span>
+</span></td></tr><tr><td>10</td><td><span>        </span><span style="color:#b48ead;">let</span><span> new_byte = outbuf[output_offset + second] ^ generated_bytes_from_step2[constant - </span><span style="color:#d08770;">1</span><span>];
+</span></td></tr><tr><td>11</td><td><span>
+</span></td></tr><tr><td>12</td><td><span>        </span><span style="color:#b48ead;">let</span><span> new_idx = original_byte_idx;
+</span></td></tr><tr><td>13</td><td><span>        outbuf[new_idx] = new_byte;
+</span></td></tr><tr><td>14</td><td><span>        outbuf[output_offset + second] = original_byte;
+</span></td></tr><tr><td>15</td><td><span>    }
+</span></td></tr><tr><td>16</td><td><span>
+</span></td></tr><tr><td>17</td><td><span>    output_offset += </span><span style="color:#d08770;">4</span><span>;
+</span></td></tr><tr><td>18</td><td><span>}
+</span></td></tr></tbody></table></code></pre>
 <h3 id="key-setup">Key Setup</h3>
 <p>We now need to figure out how our key is set up for usage in the <code>decrypt_data</code> function above. My approach here is to set a breakpoint at the first instruction to use the key data in <code>decrypt_data</code>, which happens to be <code>xor bl, [ecx + esi + 4]</code> at <code>0x4079d3</code>. I know this is where we should break because in the decompiler output the left-hand side of the XOR operation, the key material, will be the <em>second</em> operand in the <code>xor</code> instruction. As a reminder, the decompiler shows the XOR as:</p>
 <pre data-lang="c" style="background-color:#2b303b;color:#c0c5ce;" class="language-c "><code class="language-c" data-lang="c"><span>v8 = *(_BYTE *)(i + </span><span style="color:#d08770;">48 </span><span>* v7 + v3 + </span><span style="color:#d08770;">4</span><span>) ^ a2[(</span><span style="color:#b48ead;">unsigned </span><span>__int8)byte_424E50[i] + </span><span style="color:#d08770;">31</span><span>];
@@ -790,116 +788,116 @@
 <a href="&#x2F;img&#x2F;yaesu&#x2F;inflate_timestamp.png"><img src="https:&#x2F;&#x2F;landaire.net&#x2F;processed_images&#x2F;3c575f1a77f1e7c500.png" /></a>
 <p>The bitwise operations that look supsiciously similar to the byte to bit inflation we saw above with the firmware data. After renaming things and performing some loop unrolling, things look like this:</p>
 <pre data-linenos data-lang="c" style="background-color:#2b303b;color:#c0c5ce;" class="language-c "><code class="language-c" data-lang="c"><table><tbody><tr><td>1</td><td><span style="color:#65737e;">// sub_407850
-</span><tr><td>2</td><td><span style="color:#b48ead;">int </span><span style="color:#8fa1b3;">inflate_timestamp</span><span>(</span><span style="color:#b48ead;">void </span><span>*</span><span style="color:#bf616a;">this</span><span>, </span><span style="color:#b48ead;">char </span><span>*</span><span style="color:#bf616a;">timestamp_str</span><span>, </span><span style="color:#b48ead;">char </span><span>*</span><span style="color:#bf616a;">output</span><span>, uint8_t *</span><span style="color:#bf616a;">key</span><span>) {
-</span><tr><td>3</td><td><span>    </span><span style="color:#b48ead;">for </span><span>(size_t output_idx = </span><span style="color:#d08770;">0</span><span>; output_idx &lt; </span><span style="color:#d08770;">8</span><span>; output_idx++) {
-</span><tr><td>4</td><td><span>        uint8_t ts_byte = *timestamp_str;
-</span><tr><td>5</td><td><span>        </span><span style="color:#b48ead;">if </span><span>(ts_byte) {
-</span><tr><td>6</td><td><span>            timestamp_str += </span><span style="color:#d08770;">1</span><span>;
-</span><tr><td>7</td><td><span>        }
-</span><tr><td>8</td><td><span>
-</span><tr><td>9</td><td><span>        </span><span style="color:#b48ead;">for </span><span>(</span><span style="color:#b48ead;">int</span><span> bit_idx = </span><span style="color:#d08770;">0</span><span>; bit_idx &lt; </span><span style="color:#d08770;">8</span><span>; bit_idx++) {
-</span><tr><td>10</td><td><span>            uint8_t bit_value = (ts_byte &gt;&gt; (</span><span style="color:#d08770;">7 </span><span>- bit_idx)) &amp; </span><span style="color:#d08770;">1</span><span>;
-</span><tr><td>11</td><td><span>            output[(output_idx * </span><span style="color:#d08770;">8</span><span>) + bit_idx] ^= bit_value;
-</span><tr><td>12</td><td><span>        }
-</span><tr><td>13</td><td><span>    }
-</span><tr><td>14</td><td><span>
-</span><tr><td>15</td><td><span>    </span><span style="color:#bf616a;">set_key</span><span>(this, key);
-</span><tr><td>16</td><td><span>    </span><span style="color:#bf616a;">decrypt_data</span><span>(this, output, </span><span style="color:#d08770;">1</span><span>);
-</span><tr><td>17</td><td><span>
-</span><tr><td>18</td><td><span>    </span><span style="color:#b48ead;">return</span><span> timestamp_str;
-</span><tr><td>19</td><td><span>}
-</span><tr><td>20</td><td><span>
-</span><tr><td>21</td><td><span style="color:#65737e;">// sub_4082c0
-</span><tr><td>22</td><td><span style="color:#b48ead;">int </span><span style="color:#8fa1b3;">set_key_to_timestamp</span><span>(</span><span style="color:#b48ead;">void </span><span>*</span><span style="color:#bf616a;">this</span><span>, </span><span style="color:#b48ead;">char </span><span>*</span><span style="color:#bf616a;">timestamp_str</span><span>) {
-</span><tr><td>23</td><td><span>    uint8_t key_buf[</span><span style="color:#d08770;">64</span><span>];
-</span><tr><td>24</td><td><span>    </span><span style="color:#96b5b4;">memset</span><span>(&amp;key_buf, </span><span style="color:#d08770;">0</span><span>, sizeof(key_buf));
-</span><tr><td>25</td><td><span>
-</span><tr><td>26</td><td><span>    </span><span style="color:#b48ead;">char </span><span>*str_ptr = </span><span style="color:#bf616a;">inflate_timestamp</span><span>(this, timestamp_str, &amp;key_buf, &amp;static_key_1);
-</span><tr><td>27</td><td><span>    str_ptr = </span><span style="color:#bf616a;">inflate_timestamp</span><span>(this, str_ptr, &amp;key_buf, &amp;static_key_2);
-</span><tr><td>28</td><td><span>    str_ptr = </span><span style="color:#bf616a;">inflate_timestamp</span><span>(this, str_ptr, &amp;key_buf, &amp;static_key_3);
-</span><tr><td>29</td><td><span>    </span><span style="color:#bf616a;">inflate_timestamp</span><span>(this, str_ptr, &amp;key_buf, &amp;static_key_4);
-</span><tr><td>30</td><td><span>
-</span><tr><td>31</td><td><span>    </span><span style="color:#bf616a;">set_key</span><span>(this, &amp;key_buf);
-</span><tr><td>32</td><td><span>}
-</span></tr></tbody></table></code></pre>
+</span></td></tr><tr><td>2</td><td><span style="color:#b48ead;">int </span><span style="color:#8fa1b3;">inflate_timestamp</span><span>(</span><span style="color:#b48ead;">void </span><span>*</span><span style="color:#bf616a;">this</span><span>, </span><span style="color:#b48ead;">char </span><span>*</span><span style="color:#bf616a;">timestamp_str</span><span>, </span><span style="color:#b48ead;">char </span><span>*</span><span style="color:#bf616a;">output</span><span>, uint8_t *</span><span style="color:#bf616a;">key</span><span>) {
+</span></td></tr><tr><td>3</td><td><span>    </span><span style="color:#b48ead;">for </span><span>(size_t output_idx = </span><span style="color:#d08770;">0</span><span>; output_idx &lt; </span><span style="color:#d08770;">8</span><span>; output_idx++) {
+</span></td></tr><tr><td>4</td><td><span>        uint8_t ts_byte = *timestamp_str;
+</span></td></tr><tr><td>5</td><td><span>        </span><span style="color:#b48ead;">if </span><span>(ts_byte) {
+</span></td></tr><tr><td>6</td><td><span>            timestamp_str += </span><span style="color:#d08770;">1</span><span>;
+</span></td></tr><tr><td>7</td><td><span>        }
+</span></td></tr><tr><td>8</td><td><span>
+</span></td></tr><tr><td>9</td><td><span>        </span><span style="color:#b48ead;">for </span><span>(</span><span style="color:#b48ead;">int</span><span> bit_idx = </span><span style="color:#d08770;">0</span><span>; bit_idx &lt; </span><span style="color:#d08770;">8</span><span>; bit_idx++) {
+</span></td></tr><tr><td>10</td><td><span>            uint8_t bit_value = (ts_byte &gt;&gt; (</span><span style="color:#d08770;">7 </span><span>- bit_idx)) &amp; </span><span style="color:#d08770;">1</span><span>;
+</span></td></tr><tr><td>11</td><td><span>            output[(output_idx * </span><span style="color:#d08770;">8</span><span>) + bit_idx] ^= bit_value;
+</span></td></tr><tr><td>12</td><td><span>        }
+</span></td></tr><tr><td>13</td><td><span>    }
+</span></td></tr><tr><td>14</td><td><span>
+</span></td></tr><tr><td>15</td><td><span>    </span><span style="color:#bf616a;">set_key</span><span>(this, key);
+</span></td></tr><tr><td>16</td><td><span>    </span><span style="color:#bf616a;">decrypt_data</span><span>(this, output, </span><span style="color:#d08770;">1</span><span>);
+</span></td></tr><tr><td>17</td><td><span>
+</span></td></tr><tr><td>18</td><td><span>    </span><span style="color:#b48ead;">return</span><span> timestamp_str;
+</span></td></tr><tr><td>19</td><td><span>}
+</span></td></tr><tr><td>20</td><td><span>
+</span></td></tr><tr><td>21</td><td><span style="color:#65737e;">// sub_4082c0
+</span></td></tr><tr><td>22</td><td><span style="color:#b48ead;">int </span><span style="color:#8fa1b3;">set_key_to_timestamp</span><span>(</span><span style="color:#b48ead;">void </span><span>*</span><span style="color:#bf616a;">this</span><span>, </span><span style="color:#b48ead;">char </span><span>*</span><span style="color:#bf616a;">timestamp_str</span><span>) {
+</span></td></tr><tr><td>23</td><td><span>    uint8_t key_buf[</span><span style="color:#d08770;">64</span><span>];
+</span></td></tr><tr><td>24</td><td><span>    </span><span style="color:#96b5b4;">memset</span><span>(&amp;key_buf, </span><span style="color:#d08770;">0</span><span>, sizeof(key_buf));
+</span></td></tr><tr><td>25</td><td><span>
+</span></td></tr><tr><td>26</td><td><span>    </span><span style="color:#b48ead;">char </span><span>*str_ptr = </span><span style="color:#bf616a;">inflate_timestamp</span><span>(this, timestamp_str, &amp;key_buf, &amp;static_key_1);
+</span></td></tr><tr><td>27</td><td><span>    str_ptr = </span><span style="color:#bf616a;">inflate_timestamp</span><span>(this, str_ptr, &amp;key_buf, &amp;static_key_2);
+</span></td></tr><tr><td>28</td><td><span>    str_ptr = </span><span style="color:#bf616a;">inflate_timestamp</span><span>(this, str_ptr, &amp;key_buf, &amp;static_key_3);
+</span></td></tr><tr><td>29</td><td><span>    </span><span style="color:#bf616a;">inflate_timestamp</span><span>(this, str_ptr, &amp;key_buf, &amp;static_key_4);
+</span></td></tr><tr><td>30</td><td><span>
+</span></td></tr><tr><td>31</td><td><span>    </span><span style="color:#bf616a;">set_key</span><span>(this, &amp;key_buf);
+</span></td></tr><tr><td>32</td><td><span>}
+</span></td></tr></tbody></table></code></pre>
 <p>The only mystery now is the <code>set_key</code> routine:</p>
 <pre data-linenos data-lang="c" style="background-color:#2b303b;color:#c0c5ce;" class="language-c "><code class="language-c" data-lang="c"><table><tbody><tr><td>1</td><td><span style="color:#b48ead;">int</span><span> __thiscall </span><span style="color:#8fa1b3;">set_key</span><span>(</span><span style="color:#b48ead;">char </span><span>*</span><span style="color:#bf616a;">this</span><span>, </span><span style="color:#b48ead;">const void </span><span>*</span><span style="color:#bf616a;">a2</span><span>)
-</span><tr><td>2</td><td><span>{
-</span><tr><td>3</td><td><span>  _DWORD *v2; </span><span style="color:#65737e;">// ebp
-</span><tr><td>4</td><td><span>  </span><span style="color:#b48ead;">char </span><span>*v3; </span><span style="color:#65737e;">// edx
-</span><tr><td>5</td><td><span>  </span><span style="color:#b48ead;">char</span><span> v4; </span><span style="color:#65737e;">// al
-</span><tr><td>6</td><td><span>  </span><span style="color:#b48ead;">char</span><span> v5; </span><span style="color:#65737e;">// al
-</span><tr><td>7</td><td><span>  </span><span style="color:#b48ead;">char</span><span> v6; </span><span style="color:#65737e;">// al
-</span><tr><td>8</td><td><span>  </span><span style="color:#b48ead;">char</span><span> v7; </span><span style="color:#65737e;">// al
-</span><tr><td>9</td><td><span>  </span><span style="color:#b48ead;">int</span><span> result; </span><span style="color:#65737e;">// eax
-</span><tr><td>10</td><td><span>  </span><span style="color:#b48ead;">char</span><span> v10[</span><span style="color:#d08770;">56</span><span>]; </span><span style="color:#65737e;">// [esp+Ch] [ebp-3Ch] BYREF
-</span><tr><td>11</td><td><span>
-</span><tr><td>12</td><td><span>  </span><span style="color:#bf616a;">qmemcpy</span><span>(v10, a2, sizeof(v10));
-</span><tr><td>13</td><td><span>  v2 = &amp;unk_424DE0;
-</span><tr><td>14</td><td><span>  v3 = this + </span><span style="color:#d08770;">5</span><span>;
-</span><tr><td>15</td><td><span>  </span><span style="color:#b48ead;">do
-</span><tr><td>16</td><td><span>  {
-</span><tr><td>17</td><td><span>    v4 = v10[</span><span style="color:#d08770;">0</span><span>];
-</span><tr><td>18</td><td><span>    </span><span style="color:#bf616a;">qmemcpy</span><span>(v10, &amp;v10[</span><span style="color:#d08770;">1</span><span>], </span><span style="color:#d08770;">0x1B</span><span style="color:#b48ead;">u</span><span>);
-</span><tr><td>19</td><td><span>    v10[</span><span style="color:#d08770;">27</span><span>] = v4;
-</span><tr><td>20</td><td><span>    v5 = v10[</span><span style="color:#d08770;">28</span><span>];
-</span><tr><td>21</td><td><span>    </span><span style="color:#bf616a;">qmemcpy</span><span>(&amp;v10[</span><span style="color:#d08770;">28</span><span>], &amp;v10[</span><span style="color:#d08770;">29</span><span>], </span><span style="color:#d08770;">0x1B</span><span style="color:#b48ead;">u</span><span>);
-</span><tr><td>22</td><td><span>    v10[</span><span style="color:#d08770;">55</span><span>] = v5;
-</span><tr><td>23</td><td><span>    </span><span style="color:#b48ead;">if </span><span>( *v2 == </span><span style="color:#d08770;">2 </span><span>)
-</span><tr><td>24</td><td><span>    {
-</span><tr><td>25</td><td><span>      v6 = v10[</span><span style="color:#d08770;">0</span><span>];
-</span><tr><td>26</td><td><span>      </span><span style="color:#bf616a;">qmemcpy</span><span>(v10, &amp;v10[</span><span style="color:#d08770;">1</span><span>], </span><span style="color:#d08770;">0x1B</span><span style="color:#b48ead;">u</span><span>);
-</span><tr><td>27</td><td><span>      v10[</span><span style="color:#d08770;">27</span><span>] = v6;
-</span><tr><td>28</td><td><span>      v7 = v10[</span><span style="color:#d08770;">28</span><span>];
-</span><tr><td>29</td><td><span>      </span><span style="color:#bf616a;">qmemcpy</span><span>(&amp;v10[</span><span style="color:#d08770;">28</span><span>], &amp;v10[</span><span style="color:#d08770;">29</span><span>], </span><span style="color:#d08770;">0x1B</span><span style="color:#b48ead;">u</span><span>);
-</span><tr><td>30</td><td><span>      v10[</span><span style="color:#d08770;">55</span><span>] = v7;
-</span><tr><td>31</td><td><span>    }
-</span><tr><td>32</td><td><span>    </span><span style="color:#b48ead;">for </span><span>( result = </span><span style="color:#d08770;">0</span><span>; result &lt; </span><span style="color:#d08770;">48</span><span>; result += </span><span style="color:#d08770;">6 </span><span>)
-</span><tr><td>33</td><td><span>    {
-</span><tr><td>34</td><td><span>      v3[result - </span><span style="color:#d08770;">1</span><span>] = v10[(</span><span style="color:#b48ead;">unsigned </span><span>__int8)byte_424E20[result] - </span><span style="color:#d08770;">1</span><span>];
-</span><tr><td>35</td><td><span>      v3[result] = v10[(</span><span style="color:#b48ead;">unsigned </span><span>__int8)byte_424E21[result] - </span><span style="color:#d08770;">1</span><span>];
-</span><tr><td>36</td><td><span>      v3[result + </span><span style="color:#d08770;">1</span><span>] = v10[(</span><span style="color:#b48ead;">unsigned </span><span>__int8)byte_424E22[result] - </span><span style="color:#d08770;">1</span><span>];
-</span><tr><td>37</td><td><span>      v3[result + </span><span style="color:#d08770;">2</span><span>] = v10[(</span><span style="color:#b48ead;">unsigned </span><span>__int8)byte_424E23[result] - </span><span style="color:#d08770;">1</span><span>];
-</span><tr><td>38</td><td><span>      v3[result + </span><span style="color:#d08770;">3</span><span>] = v10[(</span><span style="color:#b48ead;">unsigned </span><span>__int8)byte_424E24[result] - </span><span style="color:#d08770;">1</span><span>];
-</span><tr><td>39</td><td><span>      v3[result + </span><span style="color:#d08770;">4</span><span>] = v10[(</span><span style="color:#b48ead;">unsigned </span><span>__int8)byte_424E25[result] - </span><span style="color:#d08770;">1</span><span>];
-</span><tr><td>40</td><td><span>    }
-</span><tr><td>41</td><td><span>    ++v2;
-</span><tr><td>42</td><td><span>    v3 += </span><span style="color:#d08770;">48</span><span>;
-</span><tr><td>43</td><td><span>  }
-</span><tr><td>44</td><td><span>  </span><span style="color:#b48ead;">while </span><span>( (</span><span style="color:#b48ead;">int</span><span>)v2 &lt; (</span><span style="color:#b48ead;">int</span><span>)byte_424E20 );
-</span><tr><td>45</td><td><span>  </span><span style="color:#b48ead;">return</span><span> result;
-</span><tr><td>46</td><td><span>}
-</span></tr></tbody></table></code></pre>
+</span></td></tr><tr><td>2</td><td><span>{
+</span></td></tr><tr><td>3</td><td><span>  _DWORD *v2; </span><span style="color:#65737e;">// ebp
+</span></td></tr><tr><td>4</td><td><span>  </span><span style="color:#b48ead;">char </span><span>*v3; </span><span style="color:#65737e;">// edx
+</span></td></tr><tr><td>5</td><td><span>  </span><span style="color:#b48ead;">char</span><span> v4; </span><span style="color:#65737e;">// al
+</span></td></tr><tr><td>6</td><td><span>  </span><span style="color:#b48ead;">char</span><span> v5; </span><span style="color:#65737e;">// al
+</span></td></tr><tr><td>7</td><td><span>  </span><span style="color:#b48ead;">char</span><span> v6; </span><span style="color:#65737e;">// al
+</span></td></tr><tr><td>8</td><td><span>  </span><span style="color:#b48ead;">char</span><span> v7; </span><span style="color:#65737e;">// al
+</span></td></tr><tr><td>9</td><td><span>  </span><span style="color:#b48ead;">int</span><span> result; </span><span style="color:#65737e;">// eax
+</span></td></tr><tr><td>10</td><td><span>  </span><span style="color:#b48ead;">char</span><span> v10[</span><span style="color:#d08770;">56</span><span>]; </span><span style="color:#65737e;">// [esp+Ch] [ebp-3Ch] BYREF
+</span></td></tr><tr><td>11</td><td><span>
+</span></td></tr><tr><td>12</td><td><span>  </span><span style="color:#bf616a;">qmemcpy</span><span>(v10, a2, sizeof(v10));
+</span></td></tr><tr><td>13</td><td><span>  v2 = &amp;unk_424DE0;
+</span></td></tr><tr><td>14</td><td><span>  v3 = this + </span><span style="color:#d08770;">5</span><span>;
+</span></td></tr><tr><td>15</td><td><span>  </span><span style="color:#b48ead;">do
+</span></td></tr><tr><td>16</td><td><span>  {
+</span></td></tr><tr><td>17</td><td><span>    v4 = v10[</span><span style="color:#d08770;">0</span><span>];
+</span></td></tr><tr><td>18</td><td><span>    </span><span style="color:#bf616a;">qmemcpy</span><span>(v10, &amp;v10[</span><span style="color:#d08770;">1</span><span>], </span><span style="color:#d08770;">0x1B</span><span style="color:#b48ead;">u</span><span>);
+</span></td></tr><tr><td>19</td><td><span>    v10[</span><span style="color:#d08770;">27</span><span>] = v4;
+</span></td></tr><tr><td>20</td><td><span>    v5 = v10[</span><span style="color:#d08770;">28</span><span>];
+</span></td></tr><tr><td>21</td><td><span>    </span><span style="color:#bf616a;">qmemcpy</span><span>(&amp;v10[</span><span style="color:#d08770;">28</span><span>], &amp;v10[</span><span style="color:#d08770;">29</span><span>], </span><span style="color:#d08770;">0x1B</span><span style="color:#b48ead;">u</span><span>);
+</span></td></tr><tr><td>22</td><td><span>    v10[</span><span style="color:#d08770;">55</span><span>] = v5;
+</span></td></tr><tr><td>23</td><td><span>    </span><span style="color:#b48ead;">if </span><span>( *v2 == </span><span style="color:#d08770;">2 </span><span>)
+</span></td></tr><tr><td>24</td><td><span>    {
+</span></td></tr><tr><td>25</td><td><span>      v6 = v10[</span><span style="color:#d08770;">0</span><span>];
+</span></td></tr><tr><td>26</td><td><span>      </span><span style="color:#bf616a;">qmemcpy</span><span>(v10, &amp;v10[</span><span style="color:#d08770;">1</span><span>], </span><span style="color:#d08770;">0x1B</span><span style="color:#b48ead;">u</span><span>);
+</span></td></tr><tr><td>27</td><td><span>      v10[</span><span style="color:#d08770;">27</span><span>] = v6;
+</span></td></tr><tr><td>28</td><td><span>      v7 = v10[</span><span style="color:#d08770;">28</span><span>];
+</span></td></tr><tr><td>29</td><td><span>      </span><span style="color:#bf616a;">qmemcpy</span><span>(&amp;v10[</span><span style="color:#d08770;">28</span><span>], &amp;v10[</span><span style="color:#d08770;">29</span><span>], </span><span style="color:#d08770;">0x1B</span><span style="color:#b48ead;">u</span><span>);
+</span></td></tr><tr><td>30</td><td><span>      v10[</span><span style="color:#d08770;">55</span><span>] = v7;
+</span></td></tr><tr><td>31</td><td><span>    }
+</span></td></tr><tr><td>32</td><td><span>    </span><span style="color:#b48ead;">for </span><span>( result = </span><span style="color:#d08770;">0</span><span>; result &lt; </span><span style="color:#d08770;">48</span><span>; result += </span><span style="color:#d08770;">6 </span><span>)
+</span></td></tr><tr><td>33</td><td><span>    {
+</span></td></tr><tr><td>34</td><td><span>      v3[result - </span><span style="color:#d08770;">1</span><span>] = v10[(</span><span style="color:#b48ead;">unsigned </span><span>__int8)byte_424E20[result] - </span><span style="color:#d08770;">1</span><span>];
+</span></td></tr><tr><td>35</td><td><span>      v3[result] = v10[(</span><span style="color:#b48ead;">unsigned </span><span>__int8)byte_424E21[result] - </span><span style="color:#d08770;">1</span><span>];
+</span></td></tr><tr><td>36</td><td><span>      v3[result + </span><span style="color:#d08770;">1</span><span>] = v10[(</span><span style="color:#b48ead;">unsigned </span><span>__int8)byte_424E22[result] - </span><span style="color:#d08770;">1</span><span>];
+</span></td></tr><tr><td>37</td><td><span>      v3[result + </span><span style="color:#d08770;">2</span><span>] = v10[(</span><span style="color:#b48ead;">unsigned </span><span>__int8)byte_424E23[result] - </span><span style="color:#d08770;">1</span><span>];
+</span></td></tr><tr><td>38</td><td><span>      v3[result + </span><span style="color:#d08770;">3</span><span>] = v10[(</span><span style="color:#b48ead;">unsigned </span><span>__int8)byte_424E24[result] - </span><span style="color:#d08770;">1</span><span>];
+</span></td></tr><tr><td>39</td><td><span>      v3[result + </span><span style="color:#d08770;">4</span><span>] = v10[(</span><span style="color:#b48ead;">unsigned </span><span>__int8)byte_424E25[result] - </span><span style="color:#d08770;">1</span><span>];
+</span></td></tr><tr><td>40</td><td><span>    }
+</span></td></tr><tr><td>41</td><td><span>    ++v2;
+</span></td></tr><tr><td>42</td><td><span>    v3 += </span><span style="color:#d08770;">48</span><span>;
+</span></td></tr><tr><td>43</td><td><span>  }
+</span></td></tr><tr><td>44</td><td><span>  </span><span style="color:#b48ead;">while </span><span>( (</span><span style="color:#b48ead;">int</span><span>)v2 &lt; (</span><span style="color:#b48ead;">int</span><span>)byte_424E20 );
+</span></td></tr><tr><td>45</td><td><span>  </span><span style="color:#b48ead;">return</span><span> result;
+</span></td></tr><tr><td>46</td><td><span>}
+</span></td></tr></tbody></table></code></pre>
 <p>This function is a bit more straightforward to reimplement:</p>
 <pre data-linenos data-lang="c" style="background-color:#2b303b;color:#c0c5ce;" class="language-c "><code class="language-c" data-lang="c"><table><tbody><tr><td>1</td><td><span style="color:#b48ead;">void </span><span style="color:#8fa1b3;">set_key</span><span>(</span><span style="color:#b48ead;">void </span><span>*</span><span style="color:#bf616a;">this</span><span>, uint8_t *</span><span style="color:#bf616a;">key</span><span>) {
-</span><tr><td>2</td><td><span>    uint8_t scrambled_key[</span><span style="color:#d08770;">56</span><span>];
-</span><tr><td>3</td><td><span>    </span><span style="color:#96b5b4;">memcpy</span><span>(&amp;scrambled_key, key, sizeof(scrambled_key));
-</span><tr><td>4</td><td><span>
-</span><tr><td>5</td><td><span>    </span><span style="color:#b48ead;">for </span><span>(size_t i = </span><span style="color:#d08770;">0</span><span>; i &lt; </span><span style="color:#d08770;">16</span><span>; i++) {
-</span><tr><td>6</td><td><span>        size_t swap_rounds = </span><span style="color:#d08770;">1</span><span>;
-</span><tr><td>7</td><td><span>        </span><span style="color:#b48ead;">if </span><span>(((uint32_t*)GLOBAL_KEY_ROUNDS_CONFIG)[i] == </span><span style="color:#d08770;">2</span><span>) {
-</span><tr><td>8</td><td><span>            swap_rounds = </span><span style="color:#d08770;">2</span><span>;
-</span><tr><td>9</td><td><span>        }
-</span><tr><td>10</td><td><span>
-</span><tr><td>11</td><td><span>        </span><span style="color:#b48ead;">for </span><span>(</span><span style="color:#b48ead;">int</span><span> i = </span><span style="color:#d08770;">0</span><span>; i &lt; swap_rounds; i++) {
-</span><tr><td>12</td><td><span>            uint8_t temp = scrambled_key[</span><span style="color:#d08770;">0</span><span>];
-</span><tr><td>13</td><td><span>            </span><span style="color:#96b5b4;">memcpy</span><span>(&amp;scrambled_key, &amp;scrambled_key[</span><span style="color:#d08770;">1</span><span>], </span><span style="color:#d08770;">27</span><span>);
-</span><tr><td>14</td><td><span>            scrambled_key[</span><span style="color:#d08770;">27</span><span>] = temp;
-</span><tr><td>15</td><td><span>
-</span><tr><td>16</td><td><span>            temp = scrambled_key[</span><span style="color:#d08770;">28</span><span>];
-</span><tr><td>17</td><td><span>            </span><span style="color:#96b5b4;">memcpy</span><span>(&amp;scrambled_key[</span><span style="color:#d08770;">28</span><span>], &amp;scrambled_key[</span><span style="color:#d08770;">29</span><span>], </span><span style="color:#d08770;">27</span><span>);
-</span><tr><td>18</td><td><span>            scrambled_key[</span><span style="color:#d08770;">55</span><span>] = temp;
-</span><tr><td>19</td><td><span>        }
-</span><tr><td>20</td><td><span>
-</span><tr><td>21</td><td><span>        </span><span style="color:#b48ead;">for </span><span>(size_t swap_idx = </span><span style="color:#d08770;">0</span><span>; swap_idx &lt; </span><span style="color:#d08770;">48</span><span>; swap_idx++) {
-</span><tr><td>22</td><td><span>            size_t scrambled_key_idx = GLOBAL_KEY_SWAP_TABLE[swap_idx] - </span><span style="color:#d08770;">1</span><span>;
-</span><tr><td>23</td><td><span>
-</span><tr><td>24</td><td><span>            size_t persistent_key_idx = swap_idx + (i * </span><span style="color:#d08770;">48</span><span>);
-</span><tr><td>25</td><td><span>            this-&gt;key[persistent_key_idx] = scrambled_key[scrambled_key_idx];
-</span><tr><td>26</td><td><span>        }
-</span><tr><td>27</td><td><span>    }
-</span><tr><td>28</td><td><span>}
-</span></tr></tbody></table></code></pre>
+</span></td></tr><tr><td>2</td><td><span>    uint8_t scrambled_key[</span><span style="color:#d08770;">56</span><span>];
+</span></td></tr><tr><td>3</td><td><span>    </span><span style="color:#96b5b4;">memcpy</span><span>(&amp;scrambled_key, key, sizeof(scrambled_key));
+</span></td></tr><tr><td>4</td><td><span>
+</span></td></tr><tr><td>5</td><td><span>    </span><span style="color:#b48ead;">for </span><span>(size_t i = </span><span style="color:#d08770;">0</span><span>; i &lt; </span><span style="color:#d08770;">16</span><span>; i++) {
+</span></td></tr><tr><td>6</td><td><span>        size_t swap_rounds = </span><span style="color:#d08770;">1</span><span>;
+</span></td></tr><tr><td>7</td><td><span>        </span><span style="color:#b48ead;">if </span><span>(((uint32_t*)GLOBAL_KEY_ROUNDS_CONFIG)[i] == </span><span style="color:#d08770;">2</span><span>) {
+</span></td></tr><tr><td>8</td><td><span>            swap_rounds = </span><span style="color:#d08770;">2</span><span>;
+</span></td></tr><tr><td>9</td><td><span>        }
+</span></td></tr><tr><td>10</td><td><span>
+</span></td></tr><tr><td>11</td><td><span>        </span><span style="color:#b48ead;">for </span><span>(</span><span style="color:#b48ead;">int</span><span> i = </span><span style="color:#d08770;">0</span><span>; i &lt; swap_rounds; i++) {
+</span></td></tr><tr><td>12</td><td><span>            uint8_t temp = scrambled_key[</span><span style="color:#d08770;">0</span><span>];
+</span></td></tr><tr><td>13</td><td><span>            </span><span style="color:#96b5b4;">memcpy</span><span>(&amp;scrambled_key, &amp;scrambled_key[</span><span style="color:#d08770;">1</span><span>], </span><span style="color:#d08770;">27</span><span>);
+</span></td></tr><tr><td>14</td><td><span>            scrambled_key[</span><span style="color:#d08770;">27</span><span>] = temp;
+</span></td></tr><tr><td>15</td><td><span>
+</span></td></tr><tr><td>16</td><td><span>            temp = scrambled_key[</span><span style="color:#d08770;">28</span><span>];
+</span></td></tr><tr><td>17</td><td><span>            </span><span style="color:#96b5b4;">memcpy</span><span>(&amp;scrambled_key[</span><span style="color:#d08770;">28</span><span>], &amp;scrambled_key[</span><span style="color:#d08770;">29</span><span>], </span><span style="color:#d08770;">27</span><span>);
+</span></td></tr><tr><td>18</td><td><span>            scrambled_key[</span><span style="color:#d08770;">55</span><span>] = temp;
+</span></td></tr><tr><td>19</td><td><span>        }
+</span></td></tr><tr><td>20</td><td><span>
+</span></td></tr><tr><td>21</td><td><span>        </span><span style="color:#b48ead;">for </span><span>(size_t swap_idx = </span><span style="color:#d08770;">0</span><span>; swap_idx &lt; </span><span style="color:#d08770;">48</span><span>; swap_idx++) {
+</span></td></tr><tr><td>22</td><td><span>            size_t scrambled_key_idx = GLOBAL_KEY_SWAP_TABLE[swap_idx] - </span><span style="color:#d08770;">1</span><span>;
+</span></td></tr><tr><td>23</td><td><span>
+</span></td></tr><tr><td>24</td><td><span>            size_t persistent_key_idx = swap_idx + (i * </span><span style="color:#d08770;">48</span><span>);
+</span></td></tr><tr><td>25</td><td><span>            this-&gt;key[persistent_key_idx] = scrambled_key[scrambled_key_idx];
+</span></td></tr><tr><td>26</td><td><span>        }
+</span></td></tr><tr><td>27</td><td><span>    }
+</span></td></tr><tr><td>28</td><td><span>}
+</span></td></tr></tbody></table></code></pre>
 <h3 id="putting-everything-together">Putting Everything Together</h3>
 <ol>
 <li>Update data is read from resources</li>
@@ -926,7 +924,7 @@
   <div class="pagination">
   	
 		<a href="#" class="top">Top</a>
-		<a href="https://landaire.net/apple-imageio-dos/" class="right arrow">&#8594;</a>
+		
   </div>
 
   </main>

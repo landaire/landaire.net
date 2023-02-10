@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  
+<title>One Weird Trick to Improve Bug Finding With ASAN | lander&#x27;s posts</title>
+
+
+
+<meta property="og:title" content="One Weird Trick to Improve Bug Finding With ASAN">
+
+
+
+<meta name="author" content="@landaire">
+
+
+<meta property="og:locale" content="en-US">
+
+
+<meta name="description" content="nothing interesting">
+<meta property="og:description" content="nothing interesting">
+
+
+
+<link rel="canonical" href="https://landaire.net/asan-one-weird-trick/">
+<meta property="og:url" content="https://landaire.net/asan-one-weird-trick/">
+
+
+
+<meta property="og:site_name" content="lander&#x27;s posts" />
+
+
+
+  <meta property="twitter:image" content="https://landaire.net/img/asan/asan_header2.png">
+  <meta property="og:image" content="https://landaire.net/img/asan/asan_header2.png">
+  <meta property="og:image:height" content="500">
+  <meta property="og:image:width" content="1000">
+
+
+
+  <meta property="og:type" content="article" />
+  <meta property="article:published_time" content="2023-02-10T00:00:00+00:00">
+
+
+
+
+
+
+
+  <meta name="twitter:card" content="summary_large_image"">
+  <meta property="twitter:image" content="https://landaire.net/img/asan/asan_header2.png">
+
+
+
+  <meta property="twitter:title" content="One Weird Trick to Improve Bug Finding With ASAN">
+
+
+
+
+
+
+
+
+<script type="application/ld+json">
+{
+  "author": {
+    "@type":"Person",
+	  "name":"@landaire",
+  },
+  "description": "nothing interesting",
+  "url": "https://landaire.net/asan-one-weird-trick/",
+  "@context":"https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "One Weird Trick to Improve Bug Finding With ASAN"
+  
+    
+    
+      "datePublished":"2023-02-10T00:00:00+00:00",
+    
+    "mainEntityOfPage":{
+      "@type":"WebPage",
+      "@id":"https://landaire.net/asan-one-weird-trick/"
+    },
+  
+}
+</script>
+
+  <link rel="stylesheet" href="https://landaire.net/main.css">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Libre+Baskerville:400,400i,700">
+
+  <link rel="icon" type="image/png" sizes="32x32" href="https://landaire.net/assets/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="https://landaire.net/assets/favicon-16x16.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="https://landaire.net/assets/apple-touch-icon.png">
+
+  
+
+  
+
+  
+  
+</head>
+
+<body>
+  
+  <nav class="nav">
+    <div class="nav-container">
+      <a href="https://landaire.net">
+        <h2 class="nav-title">lander&#x27;s posts</h2>
+      </a>
+      <ul>
+        
+          
+            <li><a href="https://landaire.net"></a></li>
+          
+        
+      </ul>
+    </div>
+  </nav>
+  
+
+  <main>
+    
+  <div class="post">
+  	<div class="post-info">
+  		<span>Written by</span> @landaire<br>
+  		<span>on&nbsp;</span><time datetime="2023-02-10">February 10, 2023</time>
+  	</div>
+  	<h1 class="post-title">One Weird Trick to Improve Bug Finding With ASAN</h1>
+  	<div class="post-line"></div>
+	  
+    
+        
+        <a href="&#x2F;img&#x2F;asan&#x2F;asan_header2.png"><img src="https:&#x2F;&#x2F;landaire.net&#x2F;processed_images&#x2F;0d69f0dda2e61c0100.png" /></a>
+    
+
+    
+        <p><em>...ok, three weird tricks</em></p>
+
+    
+
+    
+        <ul>
+        
+            <li>
+                <a href="https://landaire.net/asan-one-weird-trick/#asan-primer">ASAN Primer</a>
+                
+                    <ul>
+                        
+                            <li>
+                                <a href="https://landaire.net/asan-one-weird-trick/#runtime-instrumentation">Runtime Instrumentation</a>
+                            </li>
+                        
+                            <li>
+                                <a href="https://landaire.net/asan-one-weird-trick/#compiler-instrumentation">Compiler Instrumentation</a>
+                            </li>
+                        
+                    </ul>
+                
+            </li>
+        
+            <li>
+                <a href="https://landaire.net/asan-one-weird-trick/#you-re-probably-missing-oobr-w">You&#x27;re Probably Missing OOBR&#x2F;W</a>
+                
+                    <ul>
+                        
+                            <li>
+                                <a href="https://landaire.net/asan-one-weird-trick/#the-problem-with-vectors">The Problem With Vectors</a>
+                            </li>
+                        
+                            <li>
+                                <a href="https://landaire.net/asan-one-weird-trick/#the-problem-with-strings">The Problem With Strings</a>
+                            </li>
+                        
+                    </ul>
+                
+            </li>
+        
+            <li>
+                <a href="https://landaire.net/asan-one-weird-trick/#fixes">Fixes</a>
+                
+                    <ul>
+                        
+                            <li>
+                                <a href="https://landaire.net/asan-one-weird-trick/#the-one-weird-trick">The &quot;One Weird Trick&quot;</a>
+                            </li>
+                        
+                            <li>
+                                <a href="https://landaire.net/asan-one-weird-trick/#generic-code-level-fix">Generic Code-Level Fix</a>
+                            </li>
+                        
+                    </ul>
+                
+            </li>
+        
+            <li>
+                <a href="https://landaire.net/asan-one-weird-trick/#some-other-tricks">Some Other Tricks</a>
+                
+                    <ul>
+                        
+                            <li>
+                                <a href="https://landaire.net/asan-one-weird-trick/#failfast">Failfast</a>
+                            </li>
+                        
+                    </ul>
+                
+            </li>
+        
+        </ul>
+    
+
+  	<h2 id="asan-primer">ASAN Primer</h2>
+<p><em>If you're already an ASAN expert, feel free to skip to the next section.</em></p>
+<p><a href="https://clang.llvm.org/docs/AddressSanitizer.html">AddressSanitizer</a> (ASAN) is an extremely useful tool in software testing, debugging, and security testing for finding memory safety issues in native applications. It's extremely straightforward to use on most platforms -- all you need to do is pass <code>-fsanitize=address</code> to clang/gcc and run the application.</p>
+<p>As your application runs it builds metadata about its memory state into what's called a <em>shadow memory</em>. The shadow memory is essentiallly a compressed representation of the application's address space and is used to look up memory ranges that are considered addressable. Memory ranges that are not addressable will be referred to as &quot;poisoned memory&quot;.</p>
+<p>When ASAN detects a memory safety issue it will print a report to the console and stop the application. The first bit of the report is as follows:</p>
+<pre style="background-color:#2b303b;color:#c0c5ce;"><code><span>=================================================================
+</span><span>==1==ERROR: AddressSanitizer: container-overflow on address 0x602000000010 at pc 0x560696424930 bp 0x7ffce1e0f150 sp 0x7ffce1e0f148
+</span><span>WRITE of size 4 at 0x602000000010 thread T0
+</span><span>    #0 0x56069642492f in main /app/example.cpp:14:15
+</span><span>    #1 0x7fecaaf9a082 in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x24082) (BuildId: 1878e6b475720c7c51969e69ab2d276fae6d1dee)
+</span><span>    #2 0x56069636335d in _start (/app/output.s+0x2135d)
+</span><span>
+</span><span>0x602000000010 is located 0 bytes inside of 12-byte region [0x602000000010,0x60200000001c)
+</span><span>allocated by thread T0 here:
+</span><span>    #0 0x56069642211d in operator new(unsigned long) /root/llvm-project/compiler-rt/lib/asan/asan_new_delete.cpp:95:3
+</span><span>    #1 0x560696427824 in void* std::__1::__libcpp_operator_new[abi:v15000]&lt;unsigned long&gt;(unsigned long) /opt/compiler-explorer/clang-15.0.0/bin/../include/c++/v1/new:246:10
+</span><span>    #2 0x560696427808 in std::__1::__libcpp_allocate[abi:v15000](unsigned long, unsigned long) /opt/compiler-explorer/clang-15.0.0/bin/../include/c++/v1/new:272:10
+</span><span>    #3 0x5606964277a9 in std::__1::allocator&lt;Foo&gt;::allocate[abi:v15000](unsigned long) /opt/compiler-explorer/clang-15.0.0/bin/../include/c++/v1/__memory/allocator.h:112:38
+</span><span>    #4 0x5606964275e0 in std::__1::__allocation_result&lt;std::__1::allocator_traits&lt;std::__1::allocator&lt;Foo&gt;&gt;::pointer&gt; std::__1::__allocate_at_least[abi:v15000]&lt;std::__1::allocator&lt;Foo&gt;&gt;(std::__1::allocator&lt;Foo&gt;&amp;, unsigned long) /opt/compiler-explorer/clang-15.0.0/bin/../include/c++/v1/__memory/allocate_at_least.h:54:19
+</span><span>    #5 0x560696426479 in std::__1::__split_buffer&lt;Foo, std::__1::allocator&lt;Foo&gt;&amp;&gt;::__split_buffer(unsigned long, unsigned long, std::__1::allocator&lt;Foo&gt;&amp;) /opt/compiler-explorer/clang-15.0.0/bin/../include/c++/v1/__split_buffer:316:29
+</span><span>    #6 0x560696425927 in void std::__1::vector&lt;Foo, std::__1::allocator&lt;Foo&gt;&gt;::__push_back_slow_path&lt;Foo&gt;(Foo&amp;&amp;) /opt/compiler-explorer/clang-15.0.0/bin/../include/c++/v1/vector:1535:49
+</span><span>    #7 0x560696424d3b in std::__1::vector&lt;Foo, std::__1::allocator&lt;Foo&gt;&gt;::push_back[abi:v15000](Foo&amp;&amp;) /opt/compiler-explorer/clang-15.0.0/bin/../include/c++/v1/vector:1567:9
+</span><span>    #8 0x5606964248d1 in main /app/example.cpp:11:10
+</span><span>    #9 0x7fecaaf9a082 in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x24082) (BuildId: 1878e6b475720c7c51969e69ab2d276fae6d1dee)
+</span></code></pre>
+<p>It tells us there's a <em>container-overflow</em>, what address the container overflow occurred at, the call stack of where the overflow occurred, and finally where the memory we're faulting on was originally allocated.</p>
+<p>The next bit of the report is the shadow memory that was mentioned above:</p>
+
+<a href="&#x2F;img&#x2F;asan&#x2F;asan_error_with_arrow.png"><img src="https:&#x2F;&#x2F;landaire.net&#x2F;processed_images&#x2F;5d69e2992f40e6d200.png" /></a>
+<p>The big arrow here is pointing into the shadow memory at <code>[06]</code>, which according to the legend at the bottom of the screenshot tells us there are six addressable bytes followed by a <em>global redzone</em> (represented by the red 0xf9 in the shadow bytes).</p>
+<h3 id="runtime-instrumentation">Runtime Instrumentation</h3>
+<p>ASAN builds its shadow memory at runtime with the help of its runtime library, <code>libclang_rt.asan_{target_platform}_dynamic.dylib</code>. The runtime library provides some of the following:</p>
+<ul>
+<li>Memory management hooks for <code>malloc()</code>, <code>free()</code>, <code>operator new()</code>, etc. Whenever a memory allocation/free occurs ASAN will update its shadow memory</li>
+<li>Functions for checking if memory is addressable or poisoned.</li>
+<li>Hooks for some common memory manipulation functions (<code>strncpy</code>, <code>strcpy</code>, <code>memcpy</code>, <code>memcmp</code>, etc.).</li>
+</ul>
+<p>For checking if memory is addressable, ASAN's runtime provides some simple APIs that are used by its compiler instrumentation such as:</p>
+<ul>
+<li><code>__asan_load1</code></li>
+<li><code>__asan_store1</code></li>
+<li><code>__asan_load2</code></li>
+<li><code>__asan_store2</code></li>
+<li><code>__asan_load8</code></li>
+<li><code>__asan_store8</code></li>
+<li>...</li>
+<li><code>__asan_loadN</code></li>
+</ul>
+<p><em>Note: This is certainly not a definitive list of APIs, but are relatively common</em>.</p>
+<p>These all essentially do the same thing under the hood:</p>
+<pre data-lang="c" style="background-color:#2b303b;color:#c0c5ce;" class="language-c "><code class="language-c" data-lang="c"><span style="color:#b48ead;">extern </span><span>&quot;</span><span style="color:#a3be8c;">C</span><span>&quot; NOINLINE INTERFACE_ATTRIBUTE </span><span style="color:#b48ead;">void </span><span style="color:#bf616a;">__asan_exp_loadN</span><span>(uptr addr, uptr size,
+</span><span>u32 exp) {
+</span><span>
+</span><span>    </span><span style="color:#b48ead;">if </span><span>(</span><span style="color:#bf616a;">__asan_region_is_poisoned</span><span>(addr, size)) {
+</span><span>        GET_CALLER_PC_BP_SP;
+</span><span>        </span><span style="color:#bf616a;">ReportGenericError</span><span>(pc, bp, sp, addr, </span><span style="color:#d08770;">false</span><span>, size, exp, </span><span style="color:#d08770;">true</span><span>, </span><span style="color:#d08770;">false</span><span>);
+</span><span>    }
+</span><span>
+</span><span>}
+</span></code></pre>
+<p>They take an address and size, check if memory in that range is poisoned, and reports a generic error if it is.</p>
+<h3 id="compiler-instrumentation">Compiler Instrumentation</h3>
+<p>The compiler instrumentation is primarily used for poisoning stack memory and inserting calls into the runtime library for &quot;interesting&quot; loads/stores. Of course, not <em>every</em> load/store will be instrumented by ASAN as that'd be a bit too heavy weight and a lot of things can be determined to be &quot;safe&quot; statically in the compiler.</p>
+<p>I'm not compiler expert and truthfully don't care to dive into the source code at this time to figure out how ASAN determines what an &quot;interesting&quot; load/store is, but when one is encountered the compiler pass will insert calls to the <code>__asan_{load,store}{size}</code> runtime functions to check the operation.</p>
+<h2 id="you-re-probably-missing-oobr-w">You're Probably Missing OOBR/W</h2>
+<p>With a basic understanding of ASAN out of the way, now on to the main point of this blog post: you're probably missing OOBR/W in your applications if you're using C++/Rust containers.</p>
+<h3 id="the-problem-with-vectors">The Problem With Vectors</h3>
+<p>Here is some example code that should raise an out-of-bounds access violation:</p>
+<pre data-lang="cpp" style="background-color:#2b303b;color:#c0c5ce;" class="language-cpp "><code class="language-cpp" data-lang="cpp"><span style="color:#b48ead;">#include </span><span>&lt;</span><span style="color:#a3be8c;">vector</span><span>&gt;
+</span><span style="color:#b48ead;">#include </span><span>&lt;</span><span style="color:#a3be8c;">stdio.h</span><span>&gt;
+</span><span style="color:#b48ead;">#include </span><span>&lt;</span><span style="color:#a3be8c;">string.h</span><span>&gt;
+</span><span>
+</span><span style="color:#b48ead;">int </span><span style="color:#8fa1b3;">main</span><span>() {
+</span><span>    </span><span style="color:#65737e;">// Allocate a vector to store some data generated by our fuzzer
+</span><span>    std::vector&lt;</span><span style="color:#b48ead;">char</span><span>&gt; fuzzed;
+</span><span>    </span><span style="color:#65737e;">// Fuzzer pushes 5 bytes to the vector
+</span><span>    fuzzed.</span><span style="color:#bf616a;">push_back</span><span>(</span><span style="color:#d08770;">0x41</span><span>);
+</span><span>    fuzzed.</span><span style="color:#bf616a;">push_back</span><span>(</span><span style="color:#d08770;">0x42</span><span>);
+</span><span>    fuzzed.</span><span style="color:#bf616a;">push_back</span><span>(</span><span style="color:#d08770;">0x43</span><span>);
+</span><span>    fuzzed.</span><span style="color:#bf616a;">push_back</span><span>(</span><span style="color:#d08770;">0x44</span><span>);
+</span><span>    fuzzed.</span><span style="color:#bf616a;">push_back</span><span>(</span><span style="color:#d08770;">0x45</span><span>);
+</span><span>
+</span><span>    </span><span style="color:#65737e;">// Copy 8 bytes from the vector to a test buffer
+</span><span>    </span><span style="color:#b48ead;">char</span><span> test[</span><span style="color:#d08770;">8</span><span>] = {</span><span style="color:#d08770;">0</span><span>};
+</span><span>    </span><span style="color:#96b5b4;">memcpy</span><span>(&amp;test, fuzzed.</span><span style="color:#bf616a;">data</span><span>(), sizeof(test));
+</span><span>    </span><span style="color:#b48ead;">for </span><span>(size_t i = </span><span style="color:#d08770;">0</span><span>; i &lt; sizeof(test); i++) {
+</span><span>        </span><span style="color:#96b5b4;">printf</span><span>(&quot;</span><span style="color:#d08770;">%02X</span><span>&quot;, test[i]);
+</span><span>    }
+</span><span>
+</span><span>    </span><span style="color:#96b5b4;">printf</span><span>(&quot;</span><span style="color:#96b5b4;">\n</span><span style="color:#a3be8c;">size(</span><span style="color:#d08770;">%zu</span><span style="color:#a3be8c;">), capacity(</span><span style="color:#d08770;">%zu</span><span style="color:#a3be8c;">)</span><span style="color:#96b5b4;">\n</span><span>&quot;, fuzzed.</span><span style="color:#bf616a;">size</span><span>(), fuzzed.</span><span style="color:#bf616a;">capacity</span><span>());
+</span><span>
+</span><span>    </span><span style="color:#b48ead;">return </span><span style="color:#d08770;">0</span><span>;
+</span><span>}
+</span></code></pre>
+<p>We have a vector with 5 bytes that we then try to copy 8 bytes from. Pretty standard out-of-bounds read. When we run this with ASAN however...</p>
+<pre style="background-color:#2b303b;color:#c0c5ce;"><code><span>Program returned: 0
+</span><span>Program stdout
+</span><span>
+</span><span>4142434445FFFFFFBEFFFFFFBEFFFFFFBE
+</span><span>size(5), capacity(8)
+</span></code></pre>
+<p><em><a href="https://godbolt.org/z/cecf6Pjz8">https://godbolt.org/z/cecf6Pjz8</a></em></p>
+<p>No crash! You might notice something interesting in the last line of the output though: the size of the vector is 5, but its capacity is <em>8</em>.</p>
+<p>Many readers probably know that when you <code>push_back()</code> or insert data into a <code>vector</code> that's at its capacity, it reallocates its buffer to be <em>double</em> its current size, copies the data to the newly allocated buffer, and frees the old one (or <code>realloc()</code>s). As a vector starts to grow from 0 elements up to N, its growth looks like the following:</p>
+<p>![/static/img/asan/vector_growth.png]</p>
+<p><em><a href="https://i.stack.imgur.com/w5VP7.png">Source</a></em></p>
+<p>This is problematic for us since we're not catching an out-of-bounds access because of some implementation detail. All ASAN knows is that someone requested a buffer with 8 bytes -- it doesn't know that 3 of those bytes (in our case) are unused memory that aren't safe for us to accidentally use.</p>
+<p>In the general case, any memory accesses in the range from <code>[vector.data() + vector.size(), vector.data() + vector.capacity()]</code> won't be detected as an out-of-bounds access!</p>
+<h3 id="the-problem-with-strings">The Problem With Strings</h3>
+<p>Here's an example that's basically the same as the vector example above -- except, we're now constructing a string with a static string.</p>
+<pre data-lang="cpp" style="background-color:#2b303b;color:#c0c5ce;" class="language-cpp "><code class="language-cpp" data-lang="cpp"><span style="color:#b48ead;">#include </span><span>&lt;</span><span style="color:#a3be8c;">stdio.h</span><span>&gt;
+</span><span style="color:#b48ead;">#include </span><span>&lt;</span><span style="color:#a3be8c;">string</span><span>&gt;
+</span><span style="color:#b48ead;">#include </span><span>&lt;</span><span style="color:#a3be8c;">string.h</span><span>&gt;
+</span><span>
+</span><span style="color:#b48ead;">int </span><span style="color:#8fa1b3;">main</span><span>() {
+</span><span>    std::string </span><span style="color:#bf616a;">test</span><span>(&quot;</span><span style="color:#a3be8c;">four</span><span>&quot;);
+</span><span>    </span><span style="color:#b48ead;">char</span><span> temp[</span><span style="color:#d08770;">10</span><span>] = {</span><span style="color:#d08770;">0</span><span>};
+</span><span>    </span><span style="color:#96b5b4;">memcpy</span><span>(&amp;temp, test.</span><span style="color:#bf616a;">data</span><span>(), sizeof(temp));
+</span><span>
+</span><span>    </span><span style="color:#b48ead;">for </span><span>(size_t i = </span><span style="color:#d08770;">0</span><span>; i &lt; sizeof(temp); i++) {
+</span><span>        </span><span style="color:#96b5b4;">printf</span><span>(&quot;</span><span style="color:#d08770;">%02X</span><span>&quot;, temp[i]);
+</span><span>    }
+</span><span>
+</span><span>    </span><span style="color:#96b5b4;">printf</span><span>(&quot;</span><span style="color:#96b5b4;">\n</span><span style="color:#a3be8c;">size(</span><span style="color:#d08770;">%lu</span><span style="color:#a3be8c;">), capacity(</span><span style="color:#d08770;">%lu</span><span style="color:#a3be8c;">)</span><span style="color:#96b5b4;">\n</span><span>&quot;, test.</span><span style="color:#bf616a;">size</span><span>(), test.</span><span style="color:#bf616a;">capacity</span><span>());
+</span><span>
+</span><span>    </span><span style="color:#b48ead;">return </span><span style="color:#d08770;">0</span><span>;
+</span><span>}
+</span><span>
+</span></code></pre>
+<p>Again, this doesn't trigger a crash:</p>
+<pre style="background-color:#2b303b;color:#c0c5ce;"><code><span>Program returned: 0
+</span><span>Program stdout
+</span><span>
+</span><span>666F7572000000000000
+</span><span>size(4), capacity(15)
+</span></code></pre>
+<p><em><a href="https://godbolt.org/z/hdjK1WoKo">https://godbolt.org/z/hdjK1WoKo</a></em></p>
+<p>So the four-character string actually has a total capacity of 15, i.e. the <code>std::string</code> has over-allocated memory. If you tried initializing an <code>std::vector</code> with an explicit initializer list it would allocate only the exact number of elements needed... why are strings different?</p>
+<p>Let's take a look at LLVM's libc++ source code (simplified version will follow):</p>
+<pre data-lang="cpp" style="background-color:#2b303b;color:#c0c5ce;" class="language-cpp "><code class="language-cpp" data-lang="cpp"><span style="color:#b48ead;">#ifdef</span><span> _LIBCPP_BIG_ENDIAN
+</span><span>    </span><span style="color:#b48ead;">static const</span><span> size_type __short_mask = </span><span style="color:#d08770;">0x01</span><span>;
+</span><span>    </span><span style="color:#b48ead;">static const</span><span> size_type __long_mask  = </span><span style="color:#d08770;">0x1</span><span style="color:#b48ead;">ul</span><span>;
+</span><span style="color:#b48ead;">#else  </span><span style="color:#65737e;">// _LIBCPP_BIG_ENDIAN
+</span><span>    </span><span style="color:#b48ead;">static const</span><span> size_type __short_mask = </span><span style="color:#d08770;">0x80</span><span>;
+</span><span>    </span><span style="color:#b48ead;">static const</span><span> size_type __long_mask  = ~(</span><span style="color:#bf616a;">size_type</span><span>(~</span><span style="color:#d08770;">0</span><span>) &gt;&gt; </span><span style="color:#d08770;">1</span><span>);
+</span><span style="color:#b48ead;">#endif </span><span style="color:#65737e;">// _LIBCPP_BIG_ENDIAN
+</span><span>
+</span><span>    </span><span style="color:#b48ead;">enum </span><span>{__min_cap = (sizeof(__long) - </span><span style="color:#d08770;">1</span><span>)/sizeof(value_type) &gt; </span><span style="color:#d08770;">2 </span><span>?
+</span><span>                      (sizeof(__long) - </span><span style="color:#d08770;">1</span><span>)/sizeof(value_type) : </span><span style="color:#d08770;">2</span><span>};
+</span><span>
+</span><span>    </span><span style="color:#b48ead;">struct </span><span>__short
+</span><span>    {
+</span><span>        value_type __data_[__min_cap];
+</span><span>        </span><span style="color:#b48ead;">struct
+</span><span>            : </span><span style="color:#a3be8c;">__padding</span><span>&lt;value_type&gt;
+</span><span>        {
+</span><span>            </span><span style="color:#b48ead;">unsigned char</span><span> __size_;
+</span><span>        };
+</span><span>    };
+</span><span>
+</span><span style="color:#b48ead;">#else
+</span><span>
+</span><span>    </span><span style="color:#b48ead;">struct </span><span>__long
+</span><span>    {
+</span><span>        size_type __cap_;
+</span><span>        size_type __size_;
+</span><span>        pointer   __data_;
+</span><span>    };
+</span><span>
+</span><span style="color:#b48ead;">#ifdef</span><span> _LIBCPP_BIG_ENDIAN
+</span><span>    </span><span style="color:#b48ead;">static const</span><span> size_type __short_mask = </span><span style="color:#d08770;">0x80</span><span>;
+</span><span>    </span><span style="color:#b48ead;">static const</span><span> size_type __long_mask  = ~(</span><span style="color:#bf616a;">size_type</span><span>(~</span><span style="color:#d08770;">0</span><span>) &gt;&gt; </span><span style="color:#d08770;">1</span><span>);
+</span><span style="color:#b48ead;">#else  </span><span style="color:#65737e;">// _LIBCPP_BIG_ENDIAN
+</span><span>    </span><span style="color:#b48ead;">static const</span><span> size_type __short_mask = </span><span style="color:#d08770;">0x01</span><span>;
+</span><span>    </span><span style="color:#b48ead;">static const</span><span> size_type __long_mask  = </span><span style="color:#d08770;">0x1</span><span style="color:#b48ead;">ul</span><span>;
+</span><span style="color:#b48ead;">#endif </span><span style="color:#65737e;">// _LIBCPP_BIG_ENDIAN
+</span><span>
+</span><span>    </span><span style="color:#b48ead;">enum </span><span>{__min_cap = (sizeof(__long) - </span><span style="color:#d08770;">1</span><span>)/sizeof(value_type) &gt; </span><span style="color:#d08770;">2 </span><span>?
+</span><span>                      (sizeof(__long) - </span><span style="color:#d08770;">1</span><span>)/sizeof(value_type) : </span><span style="color:#d08770;">2</span><span>};
+</span><span>
+</span><span>    </span><span style="color:#b48ead;">struct </span><span>__short
+</span><span>    {
+</span><span>        </span><span style="color:#b48ead;">union
+</span><span>        {
+</span><span>            </span><span style="color:#b48ead;">unsigned char</span><span> __size_;
+</span><span>            value_type __lx;
+</span><span>        };
+</span><span>        value_type __data_[__min_cap];
+</span><span>    };
+</span><span>
+</span><span style="color:#b48ead;">#endif </span><span style="color:#65737e;">// _LIBCPP_ABI_ALTERNATE_STRING_LAYOUT
+</span><span>
+</span><span>    </span><span style="color:#b48ead;">union </span><span>__ulx{__long __lx; __short __lxx;};
+</span><span>
+</span><span>    </span><span style="color:#b48ead;">enum </span><span>{__n_words = sizeof(__ulx) / sizeof(size_type)};
+</span><span>
+</span><span>    </span><span style="color:#b48ead;">struct </span><span>__raw
+</span><span>    {
+</span><span>        size_type __words[__n_words];
+</span><span>    };
+</span><span>
+</span><span>    </span><span style="color:#b48ead;">struct </span><span>__rep
+</span><span>    {
+</span><span>        </span><span style="color:#b48ead;">union
+</span><span>        {
+</span><span>            __long  __l;
+</span><span>            __short __s;
+</span><span>            __raw   __r;
+</span><span>        };
+</span><span>    };
+</span><span>
+</span><span>    __compressed_pair&lt;__rep, allocator_type&gt; __r_;
+</span></code></pre>
+<p><a href="https://github.com/landaire/llvm-project/blob/f860d2e78cca40e2b8697a22a92efebfea409256/libcxx/include/string#L731-L803">GitHub link.</a></p>
+<p><em>Yuck</em>. This is not simple to understand, but we can see that there's some interesting inline buffer stuff going on with the <code>__short</code> struct at least. I've rewritten this code to be <em>definitely not</em> the same layout as an <code>std::string</code> but to make what's going on easier to understand:</p>
+<pre data-lang="cpp" style="background-color:#2b303b;color:#c0c5ce;" class="language-cpp "><code class="language-cpp" data-lang="cpp"><span style="color:#b48ead;">class </span><span style="color:#ebcb8b;">string </span><span style="color:#eff1f5;">{
+</span><span style="color:#eff1f5;">	</span><span style="color:#b48ead;">char</span><span style="color:#eff1f5;"> short_optimization[</span><span style="color:#d08770;">15</span><span style="color:#eff1f5;">];
+</span><span style="color:#eff1f5;">	size_t len;
+</span><span style="color:#eff1f5;">	size_t capacity;
+</span><span style="color:#eff1f5;">	</span><span style="color:#b48ead;">char </span><span>*</span><span style="color:#eff1f5;">heap_longer_string;
+</span><span style="color:#eff1f5;">}
+</span></code></pre>
+<p><code>std::string</code> has an optimization for short strings that allows it to avoid a heap allocation. Unfortunately, this means that for small strings passed by <code>string.data()</code> pointer to other parts of the application, we won't detect small OOBR similar to the <code>std::vector</code> problem. And similar to the <code>std::vector</code> problem, heap-allocated strings grow in a way that over-allocates memory to reduce the number of allocations every time you push more data to it.</p>
+<h2 id="fixes">Fixes</h2>
+<h3 id="the-one-weird-trick">The &quot;One Weird Trick&quot;</h3>
+<p>This isn't really documented anywhere, but <code>std::vector</code> actually does have ASAN enlightenment to detect this exact problem we're talking about:</p>
+<pre data-lang="cpp" style="background-color:#2b303b;color:#c0c5ce;" class="language-cpp "><code class="language-cpp" data-lang="cpp"><span>    </span><span style="color:#65737e;">// The following functions are no-ops outside of AddressSanitizer mode.
+</span><span>    </span><span style="color:#65737e;">// We call annotatations only for the default Allocator because other allocators
+</span><span>    </span><span style="color:#65737e;">// may not meet the AddressSanitizer alignment constraints.
+</span><span>    </span><span style="color:#65737e;">// See the documentation for __sanitizer_annotate_contiguous_container for more details.
+</span><span style="color:#b48ead;">#ifndef</span><span> _LIBCPP_HAS_NO_ASAN
+</span><span>    _LIBCPP_CONSTEXPR_SINCE_CXX20
+</span><span>    </span><span style="color:#b48ead;">void </span><span style="color:#8fa1b3;">__annotate_contiguous_container</span><span>(</span><span style="color:#b48ead;">const void </span><span>*</span><span style="color:#bf616a;">__beg</span><span>, </span><span style="color:#b48ead;">const void </span><span>*</span><span style="color:#bf616a;">__end</span><span>,
+</span><span>                                         </span><span style="color:#b48ead;">const void </span><span>*</span><span style="color:#bf616a;">__old_mid</span><span>,
+</span><span>                                         </span><span style="color:#b48ead;">const void </span><span>*</span><span style="color:#bf616a;">__new_mid</span><span>) </span><span style="color:#b48ead;">const
+</span><span>    {
+</span><span>
+</span><span>      </span><span style="color:#b48ead;">if </span><span>(!</span><span style="color:#bf616a;">__libcpp_is_constant_evaluated</span><span>() &amp;&amp; __beg &amp;&amp; is_same&lt;allocator_type, __default_allocator_type&gt;::value)
+</span><span>        </span><span style="color:#bf616a;">__sanitizer_annotate_contiguous_container</span><span>(__beg, __end, __old_mid, __new_mid);
+</span><span>    }
+</span><span style="color:#b48ead;">#else
+</span><span>    _LIBCPP_CONSTEXPR_SINCE_CXX20 _LIBCPP_HIDE_FROM_ABI
+</span><span>    </span><span style="color:#b48ead;">void </span><span style="color:#8fa1b3;">__annotate_contiguous_container</span><span>(</span><span style="color:#b48ead;">const void</span><span>*, </span><span style="color:#b48ead;">const void</span><span>*, </span><span style="color:#b48ead;">const void</span><span>*,
+</span><span>                                         </span><span style="color:#b48ead;">const void</span><span>*) </span><span style="color:#b48ead;">const </span><span style="color:#bf616a;">_NOEXCEPT </span><span>{}
+</span><span style="color:#b48ead;">#endif
+</span></code></pre>
+<p><a href="https://github.com/llvm/llvm-project/blob/b7a2ff296352acacdc413d6f3f912e50f90ebb31/libcxx/include/vector#L740-L750">GitHub Link</a>.</p>
+<p>When the <code>_LIBCPP_HAS_NO_ASAN</code> preprocessor macro is not defined it has some logic for informing ASAN about the contiguous region of a vector, and the contiguous region that's allocated but yet-unused. The preprocessor macro is only defined when:</p>
+<pre style="background-color:#2b303b;color:#c0c5ce;"><code><span>#    if !__has_feature(address_sanitizer)
+</span><span>#      define _LIBCPP_HAS_NO_ASAN
+</span><span>#    endif
+</span></code></pre>
+<p><a href="https://github.com/llvm/llvm-project/blob/7ca3444fba7344b375f147b77252adbf71f464e0/libcxx/include/__config#LL479-L481C11">GitHub Link</a>.</p>
+<p>So why the hell aren't we getting this enlightenment?</p>
+<p>I don't even remember why I tried this, but it seems you need to explicitly pass <code>-stdlib=libc++</code> and just like magic, it works. Our example for an <code>std::vector</code> will now detect the small OOBR with this flag:</p>
+<pre style="background-color:#2b303b;color:#c0c5ce;"><code><span>=================================================================
+</span><span>==1==ERROR: AddressSanitizer: heap-buffer-overflow on address 0x602000000075 at pc 0x5640917cd227 bp 0x7ffe3ad2ee30 sp 0x7ffe3ad2e600
+</span><span>READ of size 8 at 0x602000000075 thread T0
+</span><span>    #0 0x5640917cd226 in __asan_memcpy /root/llvm-project/compiler-rt/lib/asan/asan_interceptors_memintrinsics.cpp:22:3
+</span><span>    #1 0x56409180aa25 in main /app/example.cpp:17:5
+</span><span>    #2 0x7f35ef2f1082 in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x24082) (BuildId: 1878e6b475720c7c51969e69ab2d276fae6d1dee)
+</span><span>    #3 0x56409174935d in _start (/app/output.s+0x2135d)
+</span></code></pre>
+<p><em><a href="https://godbolt.org/z/ao64GcT7f">https://godbolt.org/z/ao64GcT7f</a>.</em></p>
+<p>There are some downsides to this:</p>
+<ul>
+<li><code>std::vector</code> is the only container with this enlightenment. But it does automatically update the poisoned region whenever we insert, remove, or clear the elements which is very nice.</li>
+<li>Our <code>std::string</code> example still doesn't detect the OOBR with this compiler flag: <a href="https://godbolt.org/z/3bj6nnGxG">https://godbolt.org/z/3bj6nnGxG</a>.</li>
+<li>You may not want to enable this if you have modules you cannot compile with this flag that may share an <code>std::vector</code>. The module that's not enlightened would not poison memory correctly, leading to false-positives. There may be ABI compatability issues as well.</li>
+</ul>
+<h3 id="generic-code-level-fix">Generic Code-Level Fix</h3>
+<p><a href="https://github.com/google/sanitizers/wiki/AddressSanitizerManualPoisoning">Google's ASAN wiki</a> provides documentation for how to manually poison memory yourself using <code>ASAN_POISON_MEMORY_REGION(addr, size)</code> and <code>ASAN_UNPOISON_MEMORY_REGION(addr, size)</code>. We can use this as follows:</p>
+<pre data-lang="cpp" style="background-color:#2b303b;color:#c0c5ce;" class="language-cpp "><code class="language-cpp" data-lang="cpp"><span style="color:#b48ead;">#if</span><span> __has_feature(address_sanitizer) || </span><span style="color:#b48ead;">defined</span><span>(__SANITIZE_ADDRESS__)
+</span><span style="color:#b48ead;">#include </span><span>&lt;</span><span style="color:#a3be8c;">sanitizer/asan_interface.h</span><span>&gt;
+</span><span style="color:#b48ead;">#endif
+</span><span>
+</span><span style="color:#b48ead;">const </span><span>uint8_t *extra_start = fuzzed.</span><span style="color:#bf616a;">data</span><span>() + fuzzed.</span><span style="color:#bf616a;">size</span><span>();
+</span><span>size_t extra_len = fuzzed.</span><span style="color:#bf616a;">capacity</span><span>() - fuzzed.</span><span style="color:#bf616a;">size</span><span>();
+</span><span>
+</span><span>
+</span><span style="color:#b48ead;">#if</span><span> __has_feature(address_sanitizer) || </span><span style="color:#b48ead;">defined</span><span>(__SANITIZE_ADDRESS__)
+</span><span style="color:#bf616a;">ASAN_POISON_MEMORY_REGION</span><span>(extra_start, extra_len);
+</span><span style="color:#b48ead;">#endif
+</span></code></pre>
+<p>Or if for some reason you don't want to pull in the ASAN interface you could just copy data to a vector with the appropriate pre-allocated size:</p>
+<pre data-lang="cpp" style="background-color:#2b303b;color:#c0c5ce;" class="language-cpp "><code class="language-cpp" data-lang="cpp"><span>std::vector&lt;uint8_t&gt; </span><span style="color:#8fa1b3;">copied</span><span>(fuzzed.</span><span style="color:#bf616a;">size</span><span>());
+</span><span>std::</span><span style="color:#8fa1b3;">copy</span><span>(
+</span><span>    fuzzed.</span><span style="color:#bf616a;">begin</span><span>(),
+</span><span>    fuzzed.</span><span style="color:#bf616a;">end</span><span>(),
+</span><span>    std::</span><span style="color:#bf616a;">back_inserter</span><span>(copied)
+</span><span>);
+</span><span style="color:#bf616a;">assert_eq</span><span>(copied.</span><span style="color:#bf616a;">capacity</span><span>(), copied.</span><span style="color:#bf616a;">size</span><span>())
+</span></code></pre>
+<p>Copying data sucks, but do what works for you. <em>Note:</em> avoid using <code>std::vector::shrink_to_fit()</code>. Per <a href="https://en.cppreference.com/w/cpp/container/vector/shrink_to_fit">cppreference</a>, &quot;It depends on the implementation whether the request is fulfilled.&quot;</p>
+<h2 id="some-other-tricks">Some Other Tricks</h2>
+<p>While I have your attention I wanted to call out some other things you can do to improve your ability to find bugs.</p>
+<h3 id="failfast">Failfast</h3>
+
+  </div>
+
+	
+
+  <div class="pagination">
+  	
+		<a href="#" class="top">Top</a>
+		
+  </div>
+
+  </main>
+
+  
+  <footer>
+    <span>&copy; 2021 Lander Brandt. Made with <a href="https://www.getzola.org">Zola</a> using the <a
+          href="https://github.com/aaranxu/tale-zola">Tale-Zola</a> theme.</span>
+  </footer>
+  
+</body>
+</html>
