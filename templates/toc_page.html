@@ -1,6 +1,15 @@
 {% extends "page.html" %}
 
 {% block before_content %}
+    {% if page.extra.image %}
+        {% set image = resize_image(path=page.extra.image, width=page.extra.image_width, height=page.extra.image_height, op="fit") %}
+        <a href="{{ page.extra.image }}"><img src="{{ image.url }}" /></a>
+    {% endif %}
+
+    {% if page.extra.pretext %}
+        {{ page.extra.pretext|markdown|safe}}
+    {% endif %}
+
     {% if page.toc %}
         <ul>
         {% for h1 in page.toc %}

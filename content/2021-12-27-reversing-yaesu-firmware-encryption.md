@@ -3,22 +3,28 @@ title = "Reverse Engineering Yaesu FT-70D Firmware Encryption"
 summary = ""
 template = "toc_page.html"
 toc = true
-+++
 
-*This article dives into my full methodology for reverse engineering the tool mentioned in this article. It's a bit longer, but is intended to be accessible to folks who aren't necessarily advanced reverse-engineers.*
+[extra]
+image = "/img/yaesu/ft70d.jpg"
+image_width = 500
+image_height = 500
+pretext = """
+*This article dives into my full methodology for reverse engineering the tool mentioned in this article. It's a bit longer but is intended to be accessible to folks who aren't necessarily advanced reverse-engineers.*
 
 *Click on any of the images to view at its original resolution.*
+"""
++++
 
 
 ## Background
 
-Ham radios are a fun way of learning how the radio spectrum works, and more importantly: they're embedded devices that may run weird chips/firmware! Sometime last week I got curious how easy it'd be to hack my Yaesu FT-70D, so I started doing some research. The only resource I could find for Yaesu radios was [someone who posted about custom firmware for their Yaesu FT1DR](https://www.reddit.com/r/amateurradio/comments/cwoxvv/yaesu_ft1dr_custom_firmware/).
+Ham radios are a fun way of learning how the radio spectrum works, and more importantly: they're embedded devices that may run weird chips/firmware! I got curious how easy it'd be to hack my Yaesu FT-70D, so I started doing some research. The only existing resource I could find for Yaesu radios was [someone who posted about custom firmware for their Yaesu FT1DR](https://www.reddit.com/r/amateurradio/comments/cwoxvv/yaesu_ft1dr_custom_firmware/).
 
-The Reddit poster mentioned that if you go through the firmware update process via USB, the radio exposes its Renesas H8SX microcontroller and can have its flash modified using the Renesas SDK. This was a great start and looked promising, but the SDK wasn't trivial to configure and use to dump the firmware, so I didn't use it for very long.
+The Reddit poster mentioned that if you go through the firmware update process via USB, the radio exposes its Renesas H8SX microcontroller and can have its flash modified using the Renesas SDK. This was a great start and looked promising, but the SDK wasn't trivial to configure and I wasn't sure if it could even dump the firmware... so I didn't use it for very long.
 
-## Initial Recon
+## Other Avenues
 
-Yaesu provides a Windows application on their website that can be used to update a radio's firmware:
+Yaesu provides a Windows application on their website that can be used to update a radio's firmware over USB:
 
 {{ resize_image(path="/img/yaesu/firmware_page.png", width=500, height=500, op="fit") }}
 
@@ -34,7 +40,7 @@ The zip contains the following files:
 1.7 MB  Fri Mar 29 11:54:02 2013  vcredist_x86.exe
 ```
 
-I'm going to assume that the file specific to the FT-70D, "FT-70D_ver111(USA).exe", will likely contain our firmware image. An EXE file can contain binary resources in the `.rsrc` section -- let's see what this binary contains using [XPEViewer](https://github.com/horsicq/XPEViewer):
+I'm going to assume that the file specific to the FT-70D, "FT-70D_ver111(USA).exe", will likely contain our firmware image. A PE file (.exe) can contain binary resources in the `.rsrc` section -- let's see what this file contains using [XPEViewer](https://github.com/horsicq/XPEViewer):
 
 {{ resize_image(path="/img/yaesu/exe_resources.png", width=800, height=800, op="fit") }}
 
@@ -42,23 +48,23 @@ Resources fit into one of many different [resource types](https://docs.microsoft
 
 {{ resize_image(path="/img/yaesu/start_update.png", width=800, height=800, op="fit") }}
 
-`RES_START_DIALOG` is a custom string the updater shows when preparing to start an update, so we're in the right area!
+`RES_START_DIALOG` is a custom string the updater shows when preparing an update, so we're in the right area!
 
 {{ resize_image(path="/img/yaesu/res_update_info.png", width=800, height=800, op="fit") }}
 
-`RES_UPDATE_INFO` looks like just binary data -- perhaps this is our firmware image? Unfortunately looking at the "Strings" tab in XPEViewer or running the `strings` utility over this data yields nonsensical strings. The firmware image is likely encrypted.
+`RES_UPDATE_INFO` looks like just binary data -- perhaps this is our firmware image? Unfortunately looking at the "Strings" tab in XPEViewer or running the `strings` utility over this data doesn't yield anything legible. The firmware image is likely encrypted.
 
 ## Reverse Engineering the Binary
 
-Let's load the update utility into our disassembler of choice to figure out how the data is encrypted. I'll be using IDA Pro, but Ghidra, radare2, or Binary Ninja are all great alternatives. Where possible I'll try to show the cleaned up form of code in C since it'll be a closer match to the decompiler and machine code output.
+Let's load the update utility into our disassembler of choice to figure out how the data is encrypted. I'll be using IDA Pro, but Ghidra (free!), radare2 (free!), or Binary Ninja are all great alternatives. Where possible in this article I'll try to show my rewritten code in C since it'll be a closer match to the decompiler and machine code output.
 
 A good starting point is the the string we saw above, `RES_UPDATE_INFO`. Windows applications load resources by calling one of the [`FindResource*` APIs](https://docs.microsoft.com/en-us/windows/win32/api/winbase/nf-winbase-findresourcea). `FindResourceA` has the following parameters:
 
 1. `HMODULE`, a handle to the module to look for the resource in.
 2. `lpName`, the resource name.
-3. `lpType`, the reosurce type.
+3. `lpType`, the resource type.
 
-In our disassembler we can look for references to the `RES_UPDATE_INFO` string and look for calls to `FindResourceA` with this string as an argument in the `lpName` position.
+In our disassembler we can find references to the `RES_UPDATE_INFO` string and look for calls to `FindResourceA` with this string as an argument in the `lpName` position.
 
 {{ resize_image(path="/img/yaesu/update_info_xrefs.png", width=800, height=800, op="fit") }}
 
@@ -67,15 +73,15 @@ We find a match in a function which happens to find/load *all* of these custom r
 {{ resize_image(path="/img/yaesu/load_resource_decompiler_output.png", width=800, height=800, op="fit") }}
 
 
-We know where the data is loaded by the application, so now we need to see how it's used. Doing static analysis from this point may be more work than it's worth if the data is operated on later. To speed things up we're going to use a debugger's assistance. I used WinDbg's [Time Travel Debugging](https://docs.microsoft.com/en-us/windows-hardware/drivers/debugger/time-travel-debugging-overview) to record an execution trace of the updater while it updates my radio. TTD is an invaluable tool and I'd highly recommend using it when possible.
+We know where the data is loaded by the application, so now we need to see how it's used. Doing static analysis from this point may be more work than it's worth if the data isn't operated on immediately. To speed things up I'm going to use a debugger's assistance. I used WinDbg's [Time Travel Debugging](https://docs.microsoft.com/en-us/windows-hardware/drivers/debugger/time-travel-debugging-overview) to record an execution trace of the updater while it updates my radio. TTD is an invaluable tool and I'd highly recommend using it when possible. [rr](https://rr-project.org/) is an alternative for non-Windows platforms.
 
-The decompiler output shows this function copies the `RES_UPDATE_INFO` resource to a dynamically allocated buffer. The `qmemcpy()` is inlined and represented by a `rep movsd` instruction in the disassembly, so we need to break at the `movsd` instruction and examine the `edi` register's (destination address) value. I set a breakpoint by typing `bp 0x406968` in the command window, letting the application run, and when it breaks we can see the `edi` register value is `0x2be5020`. We can now set a memory access breakpoint using `ba r4 0x2be5020` to see where this data is used next.
+The decompiler output shows this function copies the `RES_UPDATE_INFO` resource to a dynamically allocated buffer. The `qmemcpy()` is inlined and represented by a `rep movsd` instruction in the disassembly, so we need to break at this instruction and examine the `edi` register's (destination address) value. I set a breakpoint by typing `bp 0x406968` in the command window, allow the application to continue running, and when it breaks we can see the `edi` register value is `0x2be5020`. We can now set a memory access breakpoint at this address using `ba r4 0x2be5020` to break whenever this data is read.
 
 Our breakpoint is hit at `0x4047DC` -- back to the disassembler. In IDA you can press `G` and enter this address to jump to it. We're finally at what looks like the data processing function:
 
 {{ resize_image(path="/img/yaesu/deobfuscate_function.png", width=800, height=800, op="fit") }}
 
-The first 4 bytes of our data are used as a time value and formatted as a string with `%Y%m%d%H%M%S`. With this knowledge let's clean up the variables:
+We broke when dereferencing `v2` and IDA has automatically named the variable it's being assigned to as `Time`. The `Time` variable is passed to another function which formats it as a string with `%Y%m%d%H%M%S`. Let's clean up the variables to reflect what we know:
 
 ```c,linenos
 bool __thiscall sub_4047B0(char *this)
@@ -89,8 +95,10 @@ bool __thiscall sub_4047B0(char *this)
   int (__thiscall **v9)(void *, char); // [esp+1Ch] [ebp-310h]
   int v10; // [esp+328h] [ebp-4h]
 
+  // rename v2 to encrypted_data
   encrypted_data = *(char **)(*((_DWORD *)AfxGetModuleState() + 1) + 160);
   Time = *(int *)encrypted_data;
+  // rename this function and its 2nd parameter
   format_timestamp(&Time, (int)&time_string, "%Y%m%d%H%M%S");
   v10 = 1;
   v7 = 0;
@@ -106,7 +114,7 @@ bool __thiscall sub_4047B0(char *this)
 }
 ```
 
-The timestamp string is passed to `sub_4082c0` on line 18 and the remainder of the update image is passed to `sub_408350` on line 19. We only care about the firmware data right now, and based on how `sub_408350` is called I'd wager its signature is something like:
+The timestamp string is passed to `sub_4082c0` on line 20 and the remainder of the update image is passed to `sub_408350` on line 21. I'm going to focus on `sub_408350` since I only care about the firmware data right now and based on how this function is called I'd wager its signature is something like:
 
 ```c
 status_t sub_408350(uint8_t *input, size_t input_len, uint8_t *output, output_len, size_t *out_data_processed);
@@ -185,7 +193,7 @@ LABEL_12:
 }
 ```
 
-I think we've found our function that starts decrypting the firmware! To confirm, I set a breakpoint in our debugger at the address where this function is called in `sub_4047B0`, `0x404842`, so we can examine the contents of the `output` parameter before and after it's executed.
+I think we've found our function that starts decrypting the firmware! To confirm, we want to see what the `output` parameter's data looks like before and after this function is called. I set a breakpoint in the debugger at the address where it's called (`bp 0x404842`) and put the value of the `edi` register (`0x2d7507c`) in WinDbg's memory window.
 
 Here's the data before:
 
@@ -254,6 +262,8 @@ LABEL_13:
       if ( data_len >= 8 )
         block_size = 8;
       remaining_data = data_len - block_size;
+
+      // inflate 1 byte of input data to 8 bytes of its bit representation
       for ( i = 0; i < 0x40; i += 8 )
       {
         encrypted_byte = *encrypted_data;
@@ -267,6 +277,7 @@ LABEL_13:
         inflated_data[i + 7] = encrypted_byte & 1;
         ++encrypted_data;
       }
+      // do something with the inflated data
       sub_407980(this, inflated_data, 0);
       if ( block_size )
         break;
@@ -275,6 +286,7 @@ LABEL_12:
         goto LABEL_13;
       data_len = remaining_data;
     }
+    // deflate the data back to bytes
     idata = &inflated_data[1];
     while ( 1 )
     {
@@ -303,7 +315,7 @@ At a high level this routine:
 4. After the 8-byte chunk is inflated, call `sub_407980` with the scratch buffer and `0` as arguments.
 5. Loop over the scratch buffer and reassemble 8 sequential bits as 1 byte, then set the byte at the appropriate index in the output buffer.
 
-Lots going on here, but let's take a look at step #3. If we take the bytes `0xAA` and `0x77` which have bit representations of `0b1010_1010` and `0b0111_1111` respectively and inflate them according to the decompiler output, we end up with:
+Lots going on here, but let's take a look at step #3. If we take the bytes `0xAA` and `0x77` which have bit representations of `0b1010_1010` and `0b0111_1111` respectively and inflate them to a 16-byte array using the algorithm above, we end up with:
 
 ```
 | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 |    | 8 | 9 | A | B | C | D | E | F |
@@ -448,9 +460,9 @@ _BYTE *__thiscall sub_407980(void *this, _BYTE *a2, int a3)
 }
 ```
 
-Oof. This is substantially more complicated but looks like the meat of the decryption algorithm. We'll refer to this function, `sub_407980`, as `decrypt_data` from here on out. We can see what may be an immediate roadblock: this function takes in a C++ `this` pointer (line 5) and performs bitwise operations on one of its members (line 53, 58, etc.). For now let's call this class member `key` and come back to it later.
+Oof. This is substantially more complicated but looks like the meat of the decryption algorithm. We'll refer to this function, `sub_407980`, as `decrypt_data` from here on out. We can see what may be an immediate roadblock: this function takes in a C++ `this` pointer (line 5) and performs bitwise operations on one of its members (line 18, 23, etc.). For now let's call this class member `key` and come back to it later.
 
-This function is the perfect example of decompilers emitting less than ideal code as a result of compiler optimizations/code reordering. It's really hard to tell even at a glance what data we already know about is being referenced and, at least for me, TTD was essential for following how data flows. It took a few hours of banging my head against IDA and WinDbg to understand, but this function can be broken up into 3 high-level phases:
+This function is the perfect example of decompilers emitting less than ideal code as a result of compiler optimizations/code reordering. For me, TTD was essential for following how data flows through this function. It took a few hours of banging my head against IDA and WinDbg to understand, but this function can be broken up into 3 high-level phases:
 
 1. Building a 48-byte buffer containing our key material XOR'd with data from a static table.
 
@@ -806,7 +818,7 @@ IDA thankfully supports disassembling the Hitachi/Rensas H8SX architecture. If w
 
 {{ resize_image(path="/img/yaesu/rom_initial_load.png", width=800, height=800, op="fit") }}
 
-We don't have shit. I'm not an embedded systems expert, but my friend Will suggested that the first few DWORDs look like they may belong to a vector table. If we right-click address 0 and select "Double word 0x142A", we can click on the new variable `unk_142A` to go to its location. Press `C` at this location to define it as Code, then press `P` to create a function at this address:
+We don't have shit. I'm not an embedded systems expert, but my friend suggested that the first few DWORDs look like they may belong to a vector table. If we right-click address 0 and select "Double word 0x142A", we can click on the new variable `unk_142A` to go to its location. Press `C` at this location to define it as Code, then press `P` to create a function at this address:
 
 {{ resize_image(path="/img/yaesu/firmware_analyzed.png", width=800, height=800, op="fit") }}
 
