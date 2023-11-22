@@ -1,0 +1,1055 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Deobfuscating World of Warships&#x27; Python Scripts | lander&#x27;s posts</title>
+  <meta name="title" content="Deobfuscating World of Warships&#x27; Python Scripts" />
+<meta name="twitter:title" content="Deobfuscating World of Warships&#x27; Python Scripts" />
+<meta name="og:twitter:title" content="Deobfuscating World of Warships&#x27; Python Scripts" />
+<meta name="description"
+    content="An in-depth analysis of how World of Warships obfuscates its game scripts and how to mostly deobfuscate them automatically." />
+<meta name="og:description"
+    content="An in-depth analysis of how World of Warships obfuscates its game scripts and how to mostly deobfuscate them automatically." />
+<meta name="twitter:description"
+    content="An in-depth analysis of how World of Warships obfuscates its game scripts and how to mostly deobfuscate them automatically." />
+
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content=" 2023-11-08T00:00:00+00:00">
+
+
+<meta name="twitter:card" content="summary_large_image">
+<meta property=" twitter:image" content="https://landaire.net/img/wows-obfuscation/header.png" />
+<meta property="og:image" content="https://landaire.net/img/wows-obfuscation/header.png" />
+<meta property="og:image:height" content="250" />
+<meta property="og:image:width" content="250" />
+<meta name="twitter:card" content="summary">
+
+  <meta name="referrer" content="no-referrer-when-downgrade">
+  <style>@font-face {
+font-family: 'BerkeleyMono';
+src: url('/font/BerkeleyMono-Regular.woff2') format('woff2'),
+url('/font/BerkeleyMono-Regular.woff') format('woff');
+}
+
+body {
+font-family: Verdana, sans-serif;
+margin: auto;
+padding: 20px;
+max-width: 720px;
+text-align: left;
+background-color: #fff;
+word-wrap: break-word;
+overflow-wrap: break-word;
+line-height: 1.5;
+color: #444;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+strong,
+b {
+color: #222;
+}
+
+a {
+color: #3273dc;
+}
+
+.title {
+text-decoration: none;
+border: 0;
+}
+
+.title span {
+font-weight: 400;
+}
+
+nav a {
+margin-right: 10px;
+}
+
+textarea {
+width: 100%;
+font-size: 1rem;
+}
+
+input {
+font-size: 1rem;
+}
+
+main,article {
+line-height: 1.6;
+}
+
+table {
+width: 100%;
+}
+
+img {
+max-width: 100%;
+}
+
+code {
+padding: 2px 5px;
+background-color: #f2f2f2;
+}
+
+pre code {
+color: #222;
+display: block;
+padding: 20px;
+white-space: pre-wrap;
+font-size: 0.875rem;
+overflow-x: auto;
+}
+
+div.highlight pre {
+background-color: initial;
+color: initial;
+}
+
+div.highlight code {
+background-color: unset;
+color: unset;
+}
+
+blockquote {
+border-left: 1px solid #999;
+color: #222;
+padding-left: 20px;
+font-style: italic;
+}
+
+footer {
+padding: 25px;
+text-align: center;
+}
+
+.helptext {
+color: #222;
+font-size: small;
+}
+
+.errorlist {
+color: #eba613;
+font-size: small;
+}
+
+/* blog posts */
+ul.blog-posts {
+list-style-type: none;
+padding: unset;
+}
+
+ul.blog-posts li {
+display: flex;
+}
+
+ul.blog-posts li span {
+flex: 0 0 130px;
+}
+
+ul.blog-posts li a:visited {
+color: #8b6fcb;
+}
+
+@media (prefers-color-scheme: dark) {
+body {
+background-color: #333;
+color: #ddd;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+strong,
+b {
+color: #eee;
+}
+
+a {
+color: #8cc2dd;
+}
+
+code {
+background-color: #222;
+}
+
+pre code {
+color: #ddd;
+}
+
+blockquote {
+color: #ccc;
+}
+
+textarea,
+input {
+background-color: #252525;
+color: #ddd;
+}
+
+.helptext {
+color: #aaa;
+}
+}
+
+.header-block {
+display: flex;
+justify-content: center;
+}
+
+.header-img {
+margin-right: 1rem ;
+}
+
+code, code * {
+font-family: 'BerkeleyMono', monospace;
+font-variant-ligatures: none;
+}</style>
+  </head>
+<body>
+  <header>
+  <a href="https:&#x2F;&#x2F;landaire.net" class="title">
+    <h2>lander&#x27;s posts</h2>
+  </a>
+  <nav>
+    <a href="https:&#x2F;&#x2F;landaire.net">Home</a>
+  </nav>
+</header>
+
+
+<div class="header-block">
+  
+  <a href="&#x2F;img&#x2F;wows-obfuscation&#x2F;header.png" class="header-img"><img src="https:&#x2F;&#x2F;landaire.net&#x2F;processed_images&#x2F;header.e36508feb1e669d9.png" /></a>
+  
+  <h1>Deobfuscating World of Warships&#x27; Python Scripts</h1>
+</div>
+<p>
+  <i>
+    <time datetime=' 2023-11-08T00:00:00+00:00' pubdate>08 Nov, 2023</time>
+  </i>
+</p>
+<main>
+  <p>An in-depth analysis of how World of Warships obfuscates its game scripts and how to mostly deobfuscate them. The <code>wowsdeob</code> project can be found on GitHub: <a href="https://github.com/landaire/wowsdeob">https://github.com/landaire/wowsdeob</a></p>
+<h2 id="background">Background</h2>
+<p>This blog post is something I'm writing 3 years after my initial research/development, and about 2 years after I stopped actively working on the tool. Some of the details in this blog may not be fully accurate from time slippage and a lot of the initial research notes I made were lost or scattered in Discord conversations.</p>
+<p>I am only now writing this as the game is somewhat dead and the development team chooses to continually release content that makes gameplay worse. Submarines, hybrid battleships, aircraft carriers, and HE-spamming battleships with cruiser concealment that overmatch everything have led to a less enjoyable gameplay experience.</p>
+<p>The tool and techniques have been kept to a very tight circle so that data mining could continue without a potential cat-and-mouse game with the developer. I apologize to that community if that does occur.</p>
+<p>Two years ago I open-sourced a tool I called <a href="https://github.com/landaire/unfuck"><code>unfuck</code></a> which I described as a &quot;Python 2.7 bytecode <del>deobfuscator</del> unfucker&quot;. That tool was the result of the work I had done for World of Warships, but isn't capable of completely deobfuscating World of Warships files out-of-the-box. <code>unfuck</code> <a href="https://news.ycombinator.com/item?id=28163546">made the rounds on HN</a> where I got supportive responses such as:</p>
+<blockquote>
+<p>Look, I get that edgy names are fun, but I'm happy that I will never have to use this tool for work, and I pity the fool who has to explain why &quot;unfuck&quot; was needed to solve a real problem.</p>
+</blockquote>
+<p>And:</p>
+<blockquote>
+<p>Ooof, really bad name. Makes me think the project or maintainer are immature...</p>
+</blockquote>
+<p>And someone respecting my licensing choices:</p>
+<blockquote>
+<p>Interesting dual licensing</p>
+</blockquote>
+<blockquote>
+<blockquote>
+<p>This project is dual-licensed under MIT and the ABSE (&quot;Anyone But Stefan Esser&quot;) license. Note that an additional exception to the license is added, forbidding use/redistribution of said content to his trainees as well, but only when in a 5 mile radius from &quot;Stefan Esser&quot; or while holding any sort of (video)conference/chat with him.</p>
+</blockquote>
+<blockquote>
+<p>Note that this license will only be used as long as what would capstone decode / that one other arm64 ida plugin thing by i0n1c (&quot;Stefan Esser&quot;) are not under the MIT license. afterwards, all exceptions are cleared and basically MIT license applies</p>
+</blockquote>
+</blockquote>
+<h2 id="what-is-world-of-warships">What is World of Warships?</h2>
+<p>World of Warships (WoWs) is a free-to-play naval warfare multiplayer game released in 2015 by Wargaming and their Lesta Studio. It supports <a href="https://web.archive.org/web/20230728140319/https://forum.worldofwarships.com/topic/174161-modapi-documentation/">multiple forms of modifications</a> via Adobe Flash for UI mods, XML/audio files for audio mods, custom ship textures, and Python for basically everything else. The Python APIs are somewhat limited, but can observe some in-game events that allow mod developers to surface information that the game doesn't show you by default.</p>
+<p>Unlike a lot of multiplayer games, WoWs uses an authoritative server model where each client is only receiving events that the server believes they <em>should</em> receive. For example, enemy ship locations and related information is only pushed down to clients when they are intended to be painted to your screen. There are no wall hacks and things like auto-aim are somewhat negated by player skill. That doesn't mean there aren't <a href="https://v.youku.com/v_show/id_XNTgxNzIzNjAwNA==.html">illegal mods/cheats</a> that show you where to aim, where incoming artillery shells will land, etc.</p>
+<p>With all of that said, there is very little incentive to cheat in this game. A top-tier player in World of Warships will have the game sense and skill that comes within a close margin to someone playing with cheats. Therefore deobfuscation of scripts doesn't necessarily help with cheat development apart from illegal mods, but may help modders create better mods in general.</p>
+<h2 id="game-scripts">Game Scripts</h2>
+<p>Although the World of Warships developers are mostly transparent about how game mechanics work, there have still been some mysteries. For example, the <a href="https://www.reddit.com/r/WorldOfWarships/comments/l1dpzt/reverse_engineered_dispersion_ellipse_including/">algorithm for how the dispersion ellipse of your shells is calculated</a> and the <a href="https://www.reddit.com/r/WorldOfWarships/comments/mesoun/reverse_engineered_how_sigma_works_with_dispersion/">dispersion of the shells themselves</a>.</p>
+<p>The format of match replay files is also <a href="https://github.com/Monstrofil/replays_unpack">mostly documented</a> through reverse engineering work of a few researchers and from reviewing publicly available engine source code, but there are still unknown elements to the serialized format. For these reasons it's highly desirable to review the implementation code to unmask these mysteries.</p>
+<p>There has been at least one other individual who managed to deobfuscate and decompile the game scripts as far back as 2016. A World of Warships EU forum member by the name of <a href="https://web.archive.org/web/20230802004250/https://forum.worldofwarships.eu/topic/55613-understanding-wgs-armor-penetration-curves/?page=3">&quot;TehRick&quot; / &quot;ThiSpawn&quot; made multiple posts</a> showing they had reverse engineered some of the C++ and Python logic. In fact, they explicitly called out the &quot;Lesta anti-noob protection&quot; obfuscated Python module name in one of their forum posts:</p>
+<p><img src="/img/wows-obfuscation/tehrick_1.png" alt="TehRick forum post" /></p>
+<p>In <a href="https://www.reddit.com/user/ThiSpawn">a Reddit post</a> by the same username they also linked to a decompiled Python source file: <a href="https://pastebin.com/y3Yk43Nd">https://pastebin.com/y3Yk43Nd</a>.</p>
+<p>Although TehRick seems to have disappeared soon after these posts, their code was still being referenced 4 years later!</p>
+<p><em>If you are TehRick / ThiSpawn feel free to reach out to me -- I would love to talk about your deobfuscator!</em></p>
+<h2 id="python-vm-primer">Python VM Primer</h2>
+<p>When Python source code is executed, you may notice that a <code>.pyc</code> file is created. The Python interpreter doesn't interpret raw source code -- it first compiles that source code to an intermediate representation that can be fed to the VM as instructions.</p>
+<p>The VM is stack-based with some &quot;registers&quot; which are used for runtime storage of variables in pre-defined variable (or unnamed) slots. Almost every VM operation with the exception of loads/stores will directly modify values on the stack in some way. Variable registers cannot be modified in-place, and must first be put directly on the stack.</p>
+<p>Each object on the stack or in a variable slot is a deserialized Python object representing one of the following types:</p>
+<ul>
+<li>None</li>
+<li>StopIteration</li>
+<li>Ellipsis</li>
+<li>Bool</li>
+<li>Long</li>
+<li>Float</li>
+<li>Complex</li>
+<li>Bytes</li>
+<li>String</li>
+<li>Tuple</li>
+<li>List</li>
+<li>Dict</li>
+<li>Set</li>
+<li>FrozenSet</li>
+<li>Code</li>
+</ul>
+<p>Basically the raw primitive types you're probably used to when writing Python. All module definitions, functions, etc. are defined as <code>Code</code> objects that live in the <code>co_consts</code> section of their parent code object. Ditto with any lists, tuples, etc. that are hard coded in source code.</p>
+<h3 id="instructions">Instructions</h3>
+<p>World of Warships uses Python 2.7 which has helpful documentation covering all instructions here: <a href="https://docs.python.org/2/library/dis.html">https://docs.python.org/2/library/dis.html</a>.</p>
+<p>All instructions are at least 1 byte for the opcode and up to 3 bytes for instructions which have a 16-bit argument. For example, a <code>JUMP_ABSOLUTE 300</code> may be encoded as <code>0x71_012c</code> and a <code>POP_TOP</code> may be encoded as <code>0x01</code>.</p>
+<p>The WoWs developers did not do any opcode remapping, which is a fairly common obfuscation trick when an application has the flexibility of embedding the Python VM.</p>
+<h2 id="prior-work-on-deobfuscation">Prior Work on Deobfuscation</h2>
+<h3 id="lpcvoid-s-findings">lpcvoid's Findings</h3>
+<p>World of Warships' core game logic is contained within a <code>scripts.zip</code> file that is handled by a special loader. The loader reads compiled Python (files ending in <code>.pyc</code>) out of this zip archive and even uses a special technique of handling the serialized Python code object.</p>
+<p>This logic and deobfuscating the <em>first stage</em> of the matryoshka doll has already been described by <a href="https://lpcvoid.com/blog/0007_wows_python_reversing/index.html">lpcvoid on his blog</a> and he even has a <a href="https://lpcvoid.com/blog/0008_python_bytecode_dejunking/index.html">part 2</a> going into some of the junk instructions. I highly recommend reading his blog posts before continuing, as I will not rehash his hard work.</p>
+<p>To summarize his findings: the module loader deserializes the bytecode object and uses the bytecode as an encryption key for some ciphertext stored in const data. After decrypting the ciphertext, the plaintext is decompressed (zlib) and is executed as a code object.</p>
+<h3 id="rapid-analysis-of-bytecode-using-pyasm">Rapid Analysis of Bytecode Using pyasm</h3>
+<p>I wanted to take a quick moment to call out that my friend @gabe_k wrote a tool for a CTF challenge he put together many years ago called <code>pyasm</code> that is specifically designed for this type of scenario. It can gracefully handle disassembling of bad instructions, and even supports recompiling a <code>.pyasm</code> file back to a serialized code object. I've forked the project and made some quality of life improvements/bug fixes here: <a href="https://github.com/landaire/pyasm">https://github.com/landaire/pyasm</a>.</p>
+<p>Here is an example of what one of these <code>.pyc</code> files look like when converted to a <code>.pyasm</code> file (redacted since it's very long):</p>
+<pre data-lang="python" style="background-color:#2b303b;color:#c0c5ce;" class="language-python "><code class="language-python" data-lang="python"><span>code
+</span><span>	stack_size </span><span style="color:#d08770;">3
+</span><span>	flags </span><span style="color:#d08770;">66
+</span><span>	consts </span><span style="color:#d08770;">4
+</span><span>		none
+</span><span>		string &quot;</span><span style="color:#a3be8c;">Wargaming.net | Lesta Studio</span><span>&quot;
+</span><span>		string &quot;</span><span style="color:#a3be8c;">an error occurred while loading module</span><span>&quot;
+</span><span>		string &quot;</span><span style="color:#96b5b4;">\x9a\xb6\x85</span><span style="color:#a3be8c;">A.^lPGO0Z/</span><span style="color:#96b5b4;">\xee</span><span style="color:#a3be8c;">Y3o</span><span style="color:#96b5b4;">\x11</span><span style="color:#a3be8c;">$,FCPCi&amp;:U</span><span style="color:#96b5b4;">\x04\t\x02</span><span style="color:#a3be8c;">IS</span><span style="color:#96b5b4;">\x15</span><span style="color:#a3be8c;">5EJ</span><span style="color:#96b5b4;">\x1a</span><span style="color:#a3be8c;">3</span><span style="color:#96b5b4;">\x96\x1f</span><span style="color:#a3be8c;">=*</span><span style="color:#96b5b4;">\xe2</span><span style="color:#a3be8c;">?</span><span style="color:#96b5b4;">\xa9</span><span style="color:#a3be8c;">5</span><span style="color:#96b5b4;">\xa5\t</span><span style="color:#a3be8c;">f</span><span style="color:#96b5b4;">\x13</span><span style="color:#a3be8c;">hl</span><span style="color:#96b5b4;">\x92</span><span style="color:#a3be8c;">,</span><span style="color:#96b5b4;">\x12\x14</span><span style="color:#a3be8c;">T</span><span style="color:#96b5b4;">\x06\xc8</span><span style="color:#a3be8c;">o:</span><span style="color:#96b5b4;">\x08\x16\xd4\xfd\xd0\x8c\xc1</span><span style="color:#a3be8c;">T</span><span style="color:#96b5b4;">\xa0\x9b\xe5</span><span style="color:#a3be8c;">b</span><span style="color:#96b5b4;">\xc3</span><span style="color:#a3be8c;">%</span><span style="color:#96b5b4;">\x0e</span><span style="color:#a3be8c;">D</span><span style="color:#96b5b4;">\x8e\x85\xfb</span><span style="color:#a3be8c;">%</span><span style="color:#96b5b4;">\x83\x9b\xff</span><span style="color:#a3be8c;">L</span><span style="color:#96b5b4;">\r</span><span style="color:#a3be8c;">H</span><span style="color:#96b5b4;">\r</span><span style="color:#a3be8c;">uk</span><span style="color:#96b5b4;">\x14\xf2</span><span style="color:#a3be8c;">=</span><span style="color:#96b5b4;">\xd7\x86\t\x13\x0b</span><span style="color:#a3be8c;">k</span><span style="color:#96b5b4;">\x83</span><span style="color:#a3be8c;">HL</span><span style="color:#96b5b4;">\t</span><span style="color:#a3be8c;">H</span><span style="color:#96b5b4;">\xbf\x07</span><span style="color:#a3be8c;">6IM</span><span style="color:#96b5b4;">\xa1\x0b</span><span style="color:#a3be8c;">TP</span><span style="color:#96b5b4;">\xdc\xc7</span><span style="color:#a3be8c;">&lt;</span><span style="color:#96b5b4;">\n\x08\x8c\xdd\x05\&#39;\x19\xf0\xa2</span><span style="color:#a3be8c;">FL</span><span style="color:#96b5b4;">\t\xbb\xd7\x15</span><span style="color:#a3be8c;">=</span><span style="color:#96b5b4;">\xd8\xc3\xba</span><span style="color:#a3be8c;">3</span><span style="color:#96b5b4;">\x19\x0f</span><span style="color:#a3be8c;">k</span><span style="color:#96b5b4;">\xd9\xe4\xf0\xbf\x9c</span><span style="color:#a3be8c;">?</span><span style="color:#96b5b4;">\n</span><span style="color:#a3be8c;">TJP</span><span style="color:#96b5b4;">\xc1\xcc\x17\xce\x04\x18\xfe</span><span style="color:#a3be8c;">98</span><span style="color:#96b5b4;">\x0e\x1d\x86\xdc\xab\x19\xe6</span><span style="color:#a3be8c;">)M,</span><span style="color:#96b5b4;">\x0e\xd4\xd8\xd4\x02\xb1\x0b</span><span style="color:#a3be8c;">(&amp;;(o_</span><span style="color:#96b5b4;">\x1c\x1b\x16\xd8\xe1</span><span style="color:#a3be8c;">!-</span><span style="color:#96b5b4;">\xad</span><span style="color:#a3be8c;">w</span><span style="color:#96b5b4;">\xda</span><span style="color:#a3be8c;">%</span><span style="color:#96b5b4;">\xd0</span><span style="color:#a3be8c;">/</span><span style="color:#96b5b4;">\xa2\x1a\x08</span><span style="color:#a3be8c;">*7</span><span style="color:#96b5b4;">\xc7\x9d\x10</span><span style="color:#a3be8c;">7</span><span style="color:#96b5b4;">\x0f\xe4\xcc\x1c\x0c</span><span style="color:#a3be8c;">)...</span><span style="background-color:#bf616a;color:#2b303b;">
+</span><span>	end
+</span><span>	names </span><span style="color:#d08770;">1
+</span><span>		string &quot;</span><span style="color:#a3be8c;">locals</span><span>&quot;
+</span><span>	end
+</span><span>	instructions
+</span><span>		&lt;</span><span style="color:#d08770;">255</span><span>&gt; </span><span style="color:#d08770;">65532
+</span><span>		</span><span style="color:#bf616a;">UNARY_INVERT 
+</span><span>		</span><span style="color:#bf616a;">SETUP_EXCEPT </span><span style="color:#d08770;">15
+</span><span>		</span><span style="color:#bf616a;">LOAD_CONST </span><span style="color:#d08770;">1 </span><span style="color:#65737e;"># Wargaming.net | Lesta Studio
+</span><span>		</span><span style="color:#bf616a;">LOAD_NAME </span><span style="color:#d08770;">0 </span><span style="color:#65737e;"># locals
+</span><span>		</span><span style="color:#bf616a;">CALL_FUNCTION </span><span style="color:#d08770;">0
+</span><span>		</span><span style="color:#bf616a;">DUP_TOP 
+</span><span>		</span><span style="color:#bf616a;">EXEC_STMT
+</span><span>		</span><span style="color:#bf616a;">POP_BLOCK 
+</span><span>		</span><span style="color:#bf616a;">JUMP_FORWARD </span><span style="color:#d08770;">12
+</span><span>		</span><span style="color:#d08770;">3 </span><span>* </span><span style="color:#bf616a;">POP_TOP
+</span><span>		</span><span style="color:#bf616a;">LOAD_CONST </span><span style="color:#d08770;">2 </span><span style="color:#65737e;"># an error occurred while loading module
+</span><span>		</span><span style="color:#bf616a;">PRINT_ITEM 
+</span><span>		</span><span style="color:#bf616a;">PRINT_NEWLINE 
+</span><span>		</span><span style="color:#bf616a;">JUMP_FORWARD </span><span style="color:#d08770;">1
+</span><span>		</span><span style="color:#bf616a;">END_FINALLY 
+</span><span>		</span><span style="color:#bf616a;">LOAD_CONST </span><span style="color:#d08770;">0 </span><span style="color:#65737e;"># None
+</span><span>		</span><span style="color:#bf616a;">RETURN_VALUE 
+</span><span>		</span><span style="color:#bf616a;">DELETE_NAME </span><span style="color:#d08770;">23519
+</span><span>		</span><span style="color:#bf616a;">UNARY_NOT
+</span><span>		</span><span style="color:#bf616a;">DELETE_NAME </span><span style="color:#d08770;">23438
+</span><span>		&lt;</span><span style="color:#d08770;">216</span><span>&gt; </span><span style="color:#d08770;">64603
+</span><span>		</span><span style="color:#bf616a;">INPLACE_OR
+</span><span>		</span><span style="color:#bf616a;">UNARY_NOT
+</span><span>		</span><span style="color:#bf616a;">DELETE_NAME </span><span style="color:#d08770;">23308
+</span><span style="color:#d08770;">...
+</span><span>end
+</span></code></pre>
+<p>Throughout my analysis of the obfuscation tricks I frequently leaned on pyasm for manually reordering/deleting instructions in order to figure out which sections were causing hiccups for the decompiler.</p>
+<h2 id="wows-generic-obfuscation-tricks">WoWs - Generic Obfuscation Tricks</h2>
+<h3 id="1-bogus-instructions">1: Bogus Instructions</h3>
+<p>After decrypting and decompressing the 2nd stage code object, you'll find that tools like <a href="https://pypi.org/project/uncompyle6/">uncompyle6</a> fail to decompile the bytecode to source with an error. In his 2nd blog post lpcvoid covered one of Lesta's tricks of inserting bogus instructions that contain completely invalid opcodes which confuse these types of tools. One thing not mentioned is that these instructions can also be valid but really mess up the VM's stack and cause static analysis to enter a bad state.</p>
+<p>Unfortunately, tools like uncompyle are mostly intended to run on Python bytecode generated cleanly by a Python VM. Invalid opcodes are definitely not supported, and neither are invalid instruction operands. This trick is the most straightforward for causing a decompiler to choke.</p>
+<h3 id="2-stack-reordering">2: Stack Reordering</h3>
+<p>Different Python code patterns -- even if semantically the same -- have very slight nuance in the emitted instructions. Tools like uncompyle in some cases rely on fragile instruction patterns for mapping to source code and will easily encounter errors when a wonky pattern is encountered.</p>
+<p>The following is a completely made-up example, but consider the following instruction sequence:</p>
+<pre style="background-color:#2b303b;color:#c0c5ce;"><code><span>              224  LOAD_CONST            0
+</span><span>              227  MAKE_FUNCTION_0       0  None
+</span><span>
+</span><span> L. 351       230  STORE_FAST            6  &#39;f333&#39;
+</span></code></pre>
+<p>This loads some code object from the const section, makes a function, and stores that function in <code>co_varnames[6]</code>. This would typically result in something like the following Python code:</p>
+<pre data-lang="python" style="background-color:#2b303b;color:#c0c5ce;" class="language-python "><code class="language-python" data-lang="python"><span style="color:#b48ead;">def </span><span style="color:#8fa1b3;">f333</span><span>():
+</span><span>    </span><span style="color:#b48ead;">pass
+</span></code></pre>
+<p>Now imagine that the instructions were rewritten to push and immediately pop a value to the stack randomly in the middle of creating the function:</p>
+<pre style="background-color:#2b303b;color:#c0c5ce;"><code><span>              224  LOAD_CONST            0
+</span><span>              227  MAKE_FUNCTION_0       0  None
+</span><span>              ...  LOAD_CONST            None
+</span><span>              ...  POP_TOP
+</span><span>
+</span><span> L. 351       230  STORE_FAST            6  &#39;f333&#39;
+</span></code></pre>
+<p>The <code>LOAD_CONST</code>/<code>MAKE_FUNCTION</code>/<code>STORE_FAST</code> pattern is broken by instructions that are effectively a no-op, and the signatures used by the decompilers are now broken.</p>
+<h3 id="3-const-predicates">3: Const Predicates</h3>
+<p>Related to trick #2, instruction patterns may be broken by inserting conditions that evaluate to a constant value. One side of the branch may bring you to some garbage instructions (trick #1) and on the other side of the branch will be the next set of valid code to be executed.</p>
+<p>Consider the following pseudocode:</p>
+<pre data-lang="python" style="background-color:#2b303b;color:#c0c5ce;" class="language-python "><code class="language-python" data-lang="python"><span>              </span><span style="color:#d08770;">224  </span><span style="color:#bf616a;">LOAD_CONST            </span><span style="color:#d08770;">0
+</span><span>              </span><span style="color:#d08770;">227  </span><span style="color:#bf616a;">MAKE_FUNCTION_0       </span><span style="color:#d08770;">0  None
+</span><span>              </span><span style="color:#b48ead;">if </span><span style="color:#96b5b4;">len</span><span>({</span><span style="color:#d08770;">1</span><span>, </span><span style="color:#d08770;">2</span><span>, </span><span style="color:#d08770;">3</span><span>} &amp; {</span><span style="color:#d08770;">2</span><span>}) &gt; </span><span style="color:#d08770;">0</span><span>:
+</span><span> L. </span><span style="color:#d08770;">351       230  </span><span style="color:#bf616a;">STORE_FAST            </span><span style="color:#d08770;">6  </span><span>&#39;</span><span style="color:#a3be8c;">f333</span><span>&#39;
+</span><span>              </span><span style="color:#b48ead;">else</span><span>:
+</span><span>              </span><span style="color:#d08770;">...  </span><span style="color:#bf616a;">POP_TOP
+</span><span>              </span><span style="color:#d08770;">...  </span><span style="color:#bf616a;">POP_TOP
+</span><span>              </span><span style="color:#d08770;">...  </span><span style="color:#bf616a;">POP_TOP
+</span><span>              </span><span style="color:#d08770;">...  </span><span style="color:#bf616a;">RETURN_VALUE
+</span><span>
+</span></code></pre>
+<p>In the middle of defining a function we've inserted a check to see if two sets overlap, and if so  we store the function in variable slot #6 (<code>STORE_FAST 6</code>). If the sets do not overlap, we go down the bogus code path that screws up stack state.</p>
+<h3 id="4-variable-renaming">4: Variable Renaming</h3>
+<p>This one really doesn't impact tools but definitely impacts any end user who manages to partially decompile anything: local variables and function names (in the serialized function object) are renamed to things that are illegal in Python source code such as keywords, operators, and a combination of these things with spaces. Function objects are typically renamed to be very large unique numbers. Here is a real example from when I first set on this project:</p>
+<pre data-lang="python" style="background-color:#2b303b;color:#c0c5ce;" class="language-python "><code class="language-python" data-lang="python"><span>
+</span><span>            </span><span style="color:#b48ead;">def </span><span style="color:#8fa1b3;">f333</span><span>(</span><span style="color:#bf616a;">impf</span><span>, </span><span style="color:#bf616a;">f222</span><span>):
+</span><span>                </span><span style="color:#b48ead;">continue </span><span>r ; = </span><span style="color:#d08770;">66
+</span><span>                h &gt;&gt; </span><span style="background-color:#bf616a;color:#2b303b;">]</span><span> = </span><span style="color:#d08770;">87
+</span><span>                </span><span style="color:#b48ead;">assert </span><span style="background-color:#bf616a;color:#2b303b;">}</span><span> </span><span style="color:#b48ead;">break </span><span>= </span><span style="color:#d08770;">538
+</span><span>                l </span><span style="color:#b48ead;">else try </span><span style="color:#d08770;">6 </span><span>= </span><span style="color:#d08770;">199
+</span><span>                </span><span style="color:#b48ead;">continue </span><span>r ; += </span><span style="color:#d08770;">66
+</span><span>                h &gt;&gt; </span><span style="background-color:#bf616a;color:#2b303b;">]</span><span> -= </span><span style="color:#d08770;">538
+</span><span>                </span><span style="color:#b48ead;">assert </span><span style="background-color:#bf616a;color:#2b303b;">}</span><span> </span><span style="color:#b48ead;">break </span><span>*= </span><span style="color:#d08770;">199
+</span><span>                </span><span style="color:#b48ead;">if </span><span>not </span><span style="background-color:#bf616a;color:#2b303b;">continue</span><span> r ; + h &gt;&gt; </span><span style="background-color:#bf616a;color:#2b303b;">]</span><span> &gt;= </span><span style="color:#b48ead;">assert </span><span style="background-color:#bf616a;color:#2b303b;">}</span><span> </span><span style="color:#b48ead;">break </span><span>- h &gt;&gt; </span><span style="background-color:#bf616a;color:#2b303b;">]</span><span> + l </span><span style="color:#b48ead;">else try </span><span style="color:#d08770;">6</span><span>:
+</span><span>                    * k </span><span style="color:#b48ead;">try </span><span style="color:#d08770;">4 </span><span>= </span><span style="color:#d08770;">113
+</span><span>                * k </span><span style="color:#b48ead;">try </span><span style="color:#d08770;">4 </span><span>= </span><span style="color:#d08770;">None
+</span><span>                </span><span style="color:#d08770;">2 </span><span>c = </span><span style="color:#d08770;">22
+</span><span>                v </span><span style="background-color:#bf616a;color:#2b303b;">as</span><span> </span><span style="color:#b48ead;">lambda </span><span style="color:#bf616a;">n </span><span>= </span><span style="color:#d08770;">433
+</span><span>                </span><span style="color:#d08770;">6 </span><span>p = </span><span style="color:#d08770;">147
+</span><span>                * k </span><span style="background-color:#bf616a;color:#2b303b;">try</span><span> </span><span style="background-color:#bf616a;color:#2b303b;">4</span><span> </span><span style="background-color:#bf616a;color:#2b303b;">+=</span><span> </span><span style="background-color:#bf616a;color:#2b303b;">113</span><span>
+</span><span>                </span><span style="color:#d08770;">2 </span><span>c -= </span><span style="color:#d08770;">433
+</span><span>                v </span><span style="background-color:#bf616a;color:#2b303b;">as</span><span> </span><span style="color:#b48ead;">lambda </span><span style="color:#bf616a;">n </span><span style="background-color:#bf616a;color:#2b303b;">*=</span><span> </span><span style="background-color:#bf616a;color:#2b303b;">147</span><span>
+</span><span>                </span><span style="color:#b48ead;">if </span><span>not * k </span><span style="background-color:#bf616a;color:#2b303b;">try</span><span> </span><span style="color:#d08770;">4 </span><span>+ </span><span style="color:#d08770;">2 </span><span>c &gt;= v </span><span style="background-color:#bf616a;color:#2b303b;">as</span><span> </span><span style="color:#b48ead;">lambda </span><span style="color:#bf616a;">n </span><span style="background-color:#bf616a;color:#2b303b;">-</span><span> </span><span style="background-color:#bf616a;color:#2b303b;">2</span><span> </span><span style="color:#bf616a;">c </span><span style="background-color:#bf616a;color:#2b303b;">+</span><span> </span><span style="background-color:#bf616a;color:#2b303b;">6</span><span> </span><span style="color:#bf616a;">p</span><span>:
+</span><span>                    </span><span style="color:#b48ead;">pass
+</span><span>                (j in, % /= p, </span><span style="color:#d08770;">6 </span><span>{ +, y [, += </span><span style="background-color:#bf616a;color:#2b303b;">import</span><span> r) = ()
+</span></code></pre>
+<h3 id="5-implicit-returns">5: Implicit Returns</h3>
+<p>The <code>RETURN_VALUE</code> instruction in Python returns the value located at the top of the VM's stack. Python will, as far as I'm aware, always emit a <code>RETURN_VALUE</code> with the immediately preceding instruction setting up the value to be returned. For example:</p>
+<pre style="background-color:#2b303b;color:#c0c5ce;"><code><span>LOAD_FAST 0
+</span><span>RETURN_VALUE
+</span></code></pre>
+<p>This loads the value stored at <code>co_varnames[0]</code> to the top of stack and returns it. Splitting up these instructions will break the pattern decompilers use to transform this into <code>return varname</code>. Imagine if the in the following code <code>tos</code> literally represented the top of the stack (and not a variable slot):</p>
+<pre data-lang="python" style="background-color:#2b303b;color:#c0c5ce;" class="language-python "><code class="language-python" data-lang="python"><span style="color:#b48ead;">if </span><span>condition:
+</span><span>    tos = </span><span style="color:#bf616a;">get_return_value</span><span>()
+</span><span style="color:#b48ead;">else</span><span>:
+</span><span>    tos = </span><span style="color:#bf616a;">other_return_value</span><span>()
+</span><span>
+</span><span style="color:#b48ead;">return
+</span></code></pre>
+<p>This would create the following control flow:</p>
+<p><img src="/img/wows-obfuscation/implicit_return.svg" alt="Implicit return control flow" /></p>
+<p>In this scenario the instruction immediately preceding the <code>RETURN_VALUE</code> isn't the instruction setting up the value -- it's likely some type of <code>JUMP</code> instruction or quite possibly anything else!</p>
+<p>It's not clear to me if this is more of a code optimization trick, or an obfuscation trick, but really what's the difference?</p>
+<h3 id="6-weird-jumps">6: Weird Jumps</h3>
+<p>Something else I noticed was that some jumps were just... weird? There were randomish-looking <code>JUMP_FORWARD N</code> instructions that didn't make sense (but usually were just jumping over garbage instructions), and were hard to disambiguate from those legitimately generated by the Python compiler. For example, the following Python code may insert a <code>JUMP_FORWARD 0</code> (jump to the next instruction):</p>
+<pre data-lang="python" style="background-color:#2b303b;color:#c0c5ce;" class="language-python "><code class="language-python" data-lang="python"><span style="color:#b48ead;">if</span><span> !foo: </span><span style="color:#65737e;"># POP_JUMP_IF_FALSE
+</span><span>    </span><span style="color:#65737e;"># EMIT THIS CODE FIRST
+</span><span>    </span><span style="color:#b48ead;">if </span><span>foo:
+</span><span>        </span><span style="color:#b48ead;">print </span><span>&quot;</span><span style="color:#a3be8c;">target</span><span>&quot;
+</span><span>    </span><span style="color:#b48ead;">else</span><span>:
+</span><span>        </span><span style="color:#b48ead;">print </span><span>&quot;</span><span style="color:#a3be8c;">else</span><span>&quot;
+</span><span style="color:#65737e;"># AFTER THE ABOVE BLOCK IS EMITTED, INSERT JUMP_FORWARD 0
+</span><span style="color:#b48ead;">else</span><span>:
+</span><span>    </span><span style="color:#65737e;"># EMIT BLOCK
+</span><span>    </span><span style="color:#b48ead;">print </span><span>&quot;</span><span style="color:#a3be8c;">main target</span><span>&quot;
+</span></code></pre>
+<p>This probably doesn't make much sense, so let me show a real example of the control flow at an instruction level:</p>
+
+<a href="&#x2F;img&#x2F;wows-obfuscation&#x2F;unnecessary_jump.png"><img src="https:&#x2F;&#x2F;landaire.net&#x2F;processed_images&#x2F;unnecessary_jump.718929423a8900b5.png" /></a>
+<p>Do you notice the <code>JUMP_FORWARD 0</code> in the left-center node? It's completely unnecessary! The layout of these instructions when serialized is: <code>POP_TOP</code>, <code>POP_TOP</code>, <code>POP_TOP</code>, <code>JUMP_FORWARD 0</code>, <code>LOAD_FAST 2</code>. The execution sequence of these instructions is exactly the same as well. You could remove the <code>JUMP_FORWARD 0</code> and nothing of value would be lost. So why is it there?</p>
+<p>It's just a side effect of how the Python compiler does codegen:</p>
+<pre data-lang="python" style="background-color:#2b303b;color:#c0c5ce;" class="language-python "><code class="language-python" data-lang="python"><span style="color:#b48ead;">def </span><span style="color:#8fa1b3;">visitIf</span><span>(</span><span style="color:#bf616a;">self</span><span>, </span><span style="color:#bf616a;">node</span><span>):
+</span><span>    end = </span><span style="color:#bf616a;">self</span><span>.</span><span style="color:#bf616a;">newBlock</span><span>()
+</span><span>    numtests = </span><span style="color:#96b5b4;">len</span><span>(node.tests)
+</span><span>    </span><span style="color:#b48ead;">for </span><span>i </span><span style="color:#b48ead;">in </span><span style="color:#96b5b4;">range</span><span>(numtests):
+</span><span>        test, suite = node.tests[i]
+</span><span>        </span><span style="color:#b48ead;">if </span><span style="color:#bf616a;">is_constant_false</span><span>(test):
+</span><span>            </span><span style="color:#65737e;"># XXX will need to check generator stuff here
+</span><span>            </span><span style="color:#b48ead;">continue
+</span><span>        </span><span style="color:#bf616a;">self</span><span>.</span><span style="color:#bf616a;">set_lineno</span><span>(test)
+</span><span>        </span><span style="color:#bf616a;">self</span><span>.</span><span style="color:#bf616a;">visit</span><span>(test)
+</span><span>        nextTest = </span><span style="color:#bf616a;">self</span><span>.</span><span style="color:#bf616a;">newBlock</span><span>()
+</span><span>        </span><span style="color:#bf616a;">self</span><span>.</span><span style="color:#bf616a;">emit</span><span>(&#39;</span><span style="color:#a3be8c;">POP_JUMP_IF_FALSE</span><span>&#39;, nextTest)
+</span><span>        </span><span style="color:#bf616a;">self</span><span>.</span><span style="color:#bf616a;">nextBlock</span><span>()
+</span><span>        </span><span style="color:#bf616a;">self</span><span>.</span><span style="color:#bf616a;">visit</span><span>(suite)
+</span><span>        </span><span style="color:#bf616a;">self</span><span>.</span><span style="color:#bf616a;">emit</span><span>(&#39;</span><span style="color:#a3be8c;">JUMP_FORWARD</span><span>&#39;, end) </span><span style="color:#65737e;"># &lt;--- UNCONDITIONALLY ADD `JUMP_FORWARD`
+</span><span>        </span><span style="color:#bf616a;">self</span><span>.</span><span style="color:#bf616a;">startBlock</span><span>(nextTest)
+</span><span>    </span><span style="color:#b48ead;">if </span><span>node.else_:
+</span><span>        </span><span style="color:#bf616a;">self</span><span>.</span><span style="color:#bf616a;">visit</span><span>(node.else_)
+</span><span>    </span><span style="color:#bf616a;">self</span><span>.</span><span style="color:#bf616a;">nextBlock</span><span>(end)
+</span></code></pre>
+<p>Sometimes that <code>JUMP_FORWARD</code> isn't jumping 0 bytes and may be some value that jumps over garbage instructions (and was inserted by the obfuscator). Other times this <code>JUMP_FORWARD</code> comes immediately after some other unconditional control flow instruction and will never be executed by a Python VM (or picked up by my instruction decoder).</p>
+<p>So why can't it be removed if it's usually unnecessary? Unfortunately uncompyle relies on the presence of the <code>JUMP_FORWARD</code> to determine what type of condition has occurred.</p>
+<h3 id="7-generally-weird-control-flow">7: Generally Weird Control Flow</h3>
+<p>This one is hard to express without sounding psychotic, but let me just say: <strong>fuck loops, fuck exception handlers</strong>. If you combine the weird jumps and false predicates in loops, you may be able to generate some code that looks like a loop but is only ever executed for one iteration before just jumping to some other part of the code because of a const predicate.</p>
+<p>And what about exception handlers that intentionally raise an exception that's supposed to be caught to trigger the &quot;good&quot; code path?</p>
+<p>And what about nesting exceptions inside of loops with const predicates?</p>
+<p>After encountering such a scenario I was starting to feel like this:</p>
+<p><img src="/img/wows-obfuscation/charlie.jpg" alt="Meme of Charlie's conspiracy theory board from It's Always Sunny in Philadelphia" /></p>
+<h2 id="deobfuscation">Deobfuscation</h2>
+<p>Deobfuscating everything together requires a solid framework that can achieve:</p>
+<ol>
+<li>Parsing all instructions in a manner that doesn't break on bogus opcodes</li>
+<li>Evaluating conditions to determine used/unused code</li>
+<li>Restoring instruction ordering</li>
+<li>Restoring variable names</li>
+<li>Deoptimizing code (implicit returns)</li>
+<li>Normalize weird control flow</li>
+</ol>
+<p>...so yeah the natural path I took here was to rebuild the Python VM in Rust in 2 months and write somewhat spaghetti code that revisiting two years later has me thinking &quot;wtf was I smoking?&quot;.</p>
+<h3 id="avoiding-bad-instructions">Avoiding Bad Instructions</h3>
+<p>Parsing instructions is fairly straightforward: an instruction with no arguments is 1 byte (opcode), and an instruction with an argument is 3 bytes (opcode + uint16). You start parsing instructions by reading from offset 0 in the <code>co_code</code> section of the code object and just continue this in a loop.</p>
+<p>Decompilers and disassemblers tend to read instructions <strong>linearly</strong> -- i.e. if the first instruction is <code>JUMP_ABSOLUTE 200</code> it's going to disassemble <code>JUMP_ABSOLUTE 200</code> from offset 0, then disassemble the next instruction from offset 3. This isn't great because you will run into a bunch of bogus instructions that can be avoided by simply creating a decoder that understands control flow.</p>
+<p>To mitigate this in my deobfuscator I instead add instruction offsets to a queue. A <code>JUMP_ABSOLUTE 200</code> will add offset 200 as next in the queue, and a <code>JUMP_IF_{TRUE,FALSE} &lt;TARGET&gt;</code> will add the offset for the target <strong>and</strong> the next instruction to the queue.</p>
+<p>Along the way I also compile an instruction graph where each node represents a basic block with edges to other basic blocks:</p>
+<a href="&#x2F;img&#x2F;wows-obfuscation&#x2F;stage2_obfuscated.svg"><img src="&#x2F;img&#x2F;wows-obfuscation&#x2F;stage2_obfuscated.svg" width="500" height="500" /></a><h3 id="removing-const-predicates">Removing const predicates</h3>
+<p>Remember how I said I rebuilt the Python VM in Rust? <a href="https://github.com/landaire/unfuck/blob/de4c631aa725ff8da5aed8e718117b607c009c3d/src/smallvm.rs#L130">I was serious, and it was <em>just</em> to solve this problem.</a> I do what I've called &quot;partial execution&quot;. Certain builtin functions are handled, and an individual code object's opcodes are executed to obtain a snapshot of the VM's stack and perform taint tracking. The main function signature is:</p>
+<pre data-lang="rust" style="background-color:#2b303b;color:#c0c5ce;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#65737e;">/// Executes an instruction, altering the input state and returning an error
+</span><span style="color:#65737e;">/// when the instruction cannot be correctly emulated. For example, some complex
+</span><span style="color:#65737e;">/// instructions are not currently supported at this time.
+</span><span style="color:#b48ead;">pub fn </span><span style="color:#8fa1b3;">execute_instruction</span><span>&lt;O: Opcode&lt;Mnemonic = py27::Mnemonic&gt;, F, T&gt;(
+</span><span>    </span><span style="color:#bf616a;">instr</span><span>: &amp;Instruction&lt;O&gt;,
+</span><span>    </span><span style="color:#bf616a;">code</span><span>: Arc&lt;Code&gt;,
+</span><span>    </span><span style="color:#bf616a;">stack</span><span>: &amp;</span><span style="color:#b48ead;">mut </span><span>VmStack&lt;T&gt;,
+</span><span>    </span><span style="color:#bf616a;">vars</span><span>: &amp;</span><span style="color:#b48ead;">mut </span><span>VmVars&lt;T&gt;,
+</span><span>    </span><span style="color:#bf616a;">names</span><span>: &amp;</span><span style="color:#b48ead;">mut </span><span>VmNames&lt;T&gt;,
+</span><span>    </span><span style="color:#bf616a;">globals</span><span>: &amp;</span><span style="color:#b48ead;">mut </span><span>VmNames&lt;T&gt;,
+</span><span>    </span><span style="color:#bf616a;">names_loaded</span><span>: LoadedNames,
+</span><span>    </span><span style="color:#b48ead;">mut </span><span style="color:#bf616a;">function_callback</span><span>: F,
+</span><span>    </span><span style="color:#bf616a;">access_tracking</span><span>: T,
+</span><span>) -&gt; Result&lt;(), Error&lt;O&gt;&gt;;
+</span></code></pre>
+<p>Brief rundown of all inputs:</p>
+<ul>
+<li><code>instr</code>: the instruction to be executed</li>
+<li><code>code</code>: the deserialized Python code object for which the instruction belongs to</li>
+<li><code>stack</code>: current snapshot of the VM stack</li>
+<li><code>vars</code>: all variable slots and their current values</li>
+<li><code>names</code>: map to a <code>vars</code> slot</li>
+<li><code>globals</code>: similar to <code>vars</code> but on a global level</li>
+<li><code>names_loaded</code>: modules imported</li>
+<li><code>function_callback</code>: callback for <code>CALL_FUNCTION</code> instruction and can be used for handling builtins or calling other code objects if desired</li>
+<li><code>access_tracking</code>: data to associate with a VM stack value</li>
+</ul>
+<p>When an instruction is executed and the stack is modified, the modified stack value will represent a tuple of <code>(Option&lt;value&gt;, [access_tracking])</code>. The first value in the tuple is the value that resulted from executing an instruction if it could be determined, otherwise <code>None</code>. The second value will represent some metadata for looking up instructions which contributed to generating/modifying that stack value (a basic block index + instruction index).</p>
+<p>The execution loop for a basic block looks something like this:</p>
+<pre data-lang="python" style="background-color:#2b303b;color:#c0c5ce;" class="language-python "><code class="language-python" data-lang="python"><span style="color:#b48ead;">for </span><span>instruction </span><span style="color:#b48ead;">in </span><span>basic_block:
+</span><span>    </span><span style="color:#b48ead;">if </span><span>instruction.</span><span style="color:#bf616a;">is_conditional_jump</span><span>():
+</span><span>        </span><span style="color:#b48ead;">if </span><span>tos[</span><span style="color:#d08770;">0</span><span>].</span><span style="color:#bf616a;">is_some</span><span>():
+</span><span>            </span><span style="color:#65737e;"># Determine the truthiness of top-of-stack.
+</span><span>            </span><span style="color:#65737e;">#
+</span><span>            </span><span style="color:#65737e;"># Based off of the opcode (JUMP_IF_{TRUE,FALSE}), determine which
+</span><span>            </span><span style="color:#65737e;"># branch is never taken and remove the edge from this BB to the BB
+</span><span>            </span><span style="color:#65737e;"># we will never branch to.
+</span><span>            </span><span style="color:#65737e;">#
+</span><span>            </span><span style="color:#65737e;"># We also iterate tos[1] and remove all of the instructions which
+</span><span>            </span><span style="color:#65737e;"># contributed to tos[0].
+</span><span>    </span><span style="color:#b48ead;">else</span><span>:
+</span><span>        </span><span style="color:#bf616a;">execute_instruction</span><span>(instruction, </span><span style="color:#d08770;">...</span><span>)
+</span></code></pre>
+<p>This will effectively <strong>remove</strong> instructions related to const conditions and (usually) the basic block not taken from the graph. These inserted, fake basic blocks are implicitly removed since they become orphaned from the main code graph.</p>
+<p>There are some issues with this approach:</p>
+<ol>
+<li>I need to correctly implement almost all VM instructions</li>
+<li>Large traces will balloon in computation complexity and memory</li>
+<li>Complex arithmetic or unsupported instructions will immediately stop the VM, which leaves code only partially deobfuscated</li>
+</ol>
+<h3 id="restoring-variable-names">Restoring Variable Names</h3>
+<p>Variable names are unfortunately always lost. Instead of &quot;restoring&quot;, I simply iterate and replace odd var names with the following script:</p>
+<pre data-lang="python" style="background-color:#2b303b;color:#c0c5ce;" class="language-python "><code class="language-python" data-lang="python"><span style="color:#b48ead;">def </span><span style="color:#8fa1b3;">fix_varnames</span><span>(</span><span style="color:#bf616a;">varnames</span><span>):
+</span><span>    </span><span style="color:#b48ead;">global </span><span>unknowns
+</span><span>    newvars = []
+</span><span>    </span><span style="color:#b48ead;">for </span><span>var </span><span style="color:#b48ead;">in </span><span>varnames:
+</span><span>        var = var.</span><span style="color:#bf616a;">strip</span><span>()
+</span><span>        unallowed_chars = &#39;</span><span style="color:#a3be8c;">=!@#$%^&amp;*()&quot;</span><span style="color:#96b5b4;">\&#39;</span><span style="color:#a3be8c;">/, </span><span>&#39;
+</span><span>        banned_char = </span><span style="color:#d08770;">False
+</span><span>        banned_words = [&#39;</span><span style="color:#a3be8c;">assert</span><span>&#39;, &#39;</span><span style="color:#a3be8c;">in</span><span>&#39;, &#39;</span><span style="color:#a3be8c;">continue</span><span>&#39;, &#39;</span><span style="color:#a3be8c;">break</span><span>&#39;, &#39;</span><span style="color:#a3be8c;">for</span><span>&#39;, &#39;</span><span style="color:#a3be8c;">def</span><span>&#39;, &#39;</span><span style="color:#a3be8c;">as</span><span>&#39;, &#39;</span><span style="color:#a3be8c;">elif</span><span>&#39;, &#39;</span><span style="color:#a3be8c;">else</span><span>&#39;, &#39;</span><span style="color:#a3be8c;">for</span><span>&#39;, &#39;</span><span style="color:#a3be8c;">from</span><span>&#39;, &#39;</span><span style="color:#a3be8c;">global</span><span>&#39;, &#39;</span><span style="color:#a3be8c;">if</span><span>&#39;, &#39;</span><span style="color:#a3be8c;">import</span><span>&#39;, &#39;</span><span style="color:#a3be8c;">is</span><span>&#39;, &#39;</span><span style="color:#a3be8c;">lambda</span><span>&#39;, &#39;</span><span style="color:#a3be8c;">not</span><span>&#39;, &#39;</span><span style="color:#a3be8c;">or</span><span>&#39;, &#39;</span><span style="color:#a3be8c;">pass</span><span>&#39;, &#39;</span><span style="color:#a3be8c;">print</span><span>&#39;, &#39;</span><span style="color:#a3be8c;">return</span><span>&#39;, &#39;</span><span style="color:#a3be8c;">while</span><span>&#39;, &#39;</span><span style="color:#a3be8c;">with</span><span>&#39;]
+</span><span>        </span><span style="color:#b48ead;">for </span><span>c </span><span style="color:#b48ead;">in </span><span>unallowed_chars:
+</span><span>            </span><span style="color:#b48ead;">if </span><span>c in var:
+</span><span>                banned_char = </span><span style="color:#d08770;">True
+</span><span>
+</span><span>        </span><span style="color:#b48ead;">if </span><span>not banned_char:
+</span><span>            </span><span style="color:#b48ead;">if </span><span>var in banned_words:
+</span><span>                banned_char = </span><span style="color:#d08770;">True
+</span><span>
+</span><span>        </span><span style="color:#b48ead;">if </span><span>banned_char:
+</span><span>            newvars.</span><span style="color:#bf616a;">append</span><span>(&#39;</span><span style="color:#a3be8c;">unknown_</span><span style="color:#d08770;">{0}</span><span>&#39;.</span><span style="color:#bf616a;">format</span><span>(unknowns))
+</span><span>            unknowns += </span><span style="color:#d08770;">1
+</span><span>        </span><span style="color:#b48ead;">else</span><span>:
+</span><span>            newvars.</span><span style="color:#bf616a;">append</span><span>(var)
+</span><span>    
+</span><span>    </span><span style="color:#b48ead;">return </span><span style="color:#bf616a;">tuple</span><span>(newvars)
+</span></code></pre>
+<p>Pretty simple replacement of illegal-looking variable name with <code>unknown_N</code>.</p>
+<h3 id="restoring-function-names">Restoring Function Names</h3>
+<p>Unlike var names, function names generally <em>can</em> be restored due to an oversight in the obfuscator. When a function is defined in a module, the bytecode for setting it up looks like the following:</p>
+<pre style="background-color:#2b303b;color:#c0c5ce;"><code><span>LOAD_CONST &lt;CONST_INDEX&gt; # Load the code object
+</span><span>MAKE_FUNCTION # Take the loaded code object and tell the interpreter to turn it into a function
+</span><span>STORE_NAME &lt;NAME_INDEX&gt; # Store the created function at the specified named index
+</span></code></pre>
+<p><code>NAME_INDEX</code> corresponds to a <code>name</code> string value located in the <code>co_names</code> array in the code object. The code object for the function also contains its name, which is generally what's used by decompilers to label a function. I leveraged this in my instruction handler loop by checking:</p>
+<pre data-lang="python" style="background-color:#2b303b;color:#c0c5ce;" class="language-python "><code class="language-python" data-lang="python"><span style="color:#b48ead;">for </span><span>instruction </span><span style="color:#b48ead;">in </span><span>basic_block:
+</span><span>    </span><span style="color:#b48ead;">if </span><span>instruction.</span><span style="color:#bf616a;">is_store_name</span><span>():
+</span><span>        accessed_instructions = tos[</span><span style="color:#d08770;">1</span><span>]
+</span><span>        </span><span style="color:#b48ead;">if </span><span>accessed_instructions[-</span><span style="color:#d08770;">1</span><span>].</span><span style="color:#bf616a;">is_make_function</span><span>():
+</span><span>            </span><span style="color:#65737e;"># change the function name on the code object to match what this
+</span><span>            </span><span style="color:#65737e;"># scope sees as the function name
+</span><span>            </span><span style="color:#bf616a;">fix_function_name</span><span>(tos[</span><span style="color:#d08770;">0</span><span>], co.co_names[instruction.argument])
+</span><span>
+</span><span>    </span><span style="color:#bf616a;">execute_instruction</span><span>(instruction, </span><span style="color:#d08770;">...</span><span>)
+</span></code></pre>
+<p>Strictly speaking these names aren't even necessary for the VM to run the code since they're really only present for debugging purposes. I suspect that this is either an oversight by Lesta or they deliberately left these in for debugging crashes on clients (although I'm not certain if they send back Python crash reports). Maybe there's something I don't know though.</p>
+<h3 id="deoptimizing-code">Deoptimizing Code</h3>
+<p>I <em>think</em> that <code>RETURN_VALUE</code> is really the only case I had to correct, and it was a fairly simple fix.</p>
+<ol>
+<li>Look for basic blocks that contain only a <code>RETURN_VALUE</code> instruction</li>
+<li>For each incoming edge, replace the final instruction in the basic block to be <code>RETURN_VALUE</code></li>
+<li>Remove the basic block from step 1</li>
+</ol>
+<p>The example control flow for return values then provided <a href="https://landaire.net/world-of-warships-deobfuscation/#5-implicit-returns">in the section about implicit returns</a> will now look like this:</p>
+<p><img src="/img/wows-obfuscation/implicit_return_fix.svg" alt="Implicit return fixups" /></p>
+<h3 id="fixing-bad-instructions">Fixing Bad Instructions</h3>
+<p>There are some scenarios where code paths containing bad instructions can't be outright removed. Usually it's because a condition couldn't be proven to be a const predicate, or there was some other factor involved that led to it not being removed. Even though I <em>know</em> they're bad, I'm hesitant to outright outright remove the nodes and conditions as gaps in the VM and data mixing may lead to incorrect instruction removal.</p>
+<p>To correct these basic blocks I calculate the depth of the stack at the location of the bad instruction, insert enough <code>POP_TOP</code> instructions to clear out the stack, and finally put a <code>LOAD_CONST None</code> and <code>RETURN_VALUE</code> at the end of the basic block to force a <code>return None</code>.</p>
+<h2 id="the-rest-of-the-matryoshka-doll">The Rest of The Matryoshka Doll</h2>
+<p>There are four distinct &quot;stages&quot; to loading the Python module, two of which we've already loosely discussed from lpcvoid's blog (encrypted code, and the compressed code).</p>
+<h3 id="stage-2-decompressed-code">Stage 2 - Decompressed Code</h3>
+<p>The following is an example stage 3 payload:</p>
+<pre data-lang="python" style="background-color:#2b303b;color:#c0c5ce;" class="language-python "><code class="language-python" data-lang="python"><span style="color:#b48ead;">import </span><span>sys, marshal, copy_reg
+</span><span style="color:#b48ead;">if </span><span style="color:#96b5b4;">id</span><span>(marshal.loads) != copy_reg.mmId:
+</span><span>    </span><span style="color:#b48ead;">return
+</span><span>code = sys.</span><span style="color:#bf616a;">_getframe</span><span>().f_back.f_code.co_code
+</span><span>impf = (</span><span style="color:#96b5b4;">isinstance</span><span>(__builtins__, dict) or __builtins__).__import__ </span><span style="color:#b48ead;">if </span><span style="color:#d08770;">1 </span><span style="color:#b48ead;">else </span><span>__builtins__[&#39;</span><span style="color:#a3be8c;">__import__</span><span>&#39;]
+</span><span style="color:#b48ead;">if </span><span>not </span><span style="color:#96b5b4;">hasattr</span><span>(impf, &#39;</span><span style="color:#a3be8c;">func_code</span><span>&#39;) or </span><span style="color:#96b5b4;">hash</span><span>(impf.func_code.co_code) != </span><span style="color:#d08770;">1236377808</span><span>:
+</span><span>    </span><span style="color:#b48ead;">if </span><span style="color:#96b5b4;">hasattr</span><span>(impf, &#39;</span><span style="color:#a3be8c;">func_code</span><span>&#39;) and </span><span style="color:#96b5b4;">type</span><span>(impf.func_globals[&#39;</span><span style="color:#a3be8c;">common</span><span>&#39;]) != </span><span style="color:#96b5b4;">type</span><span>(marshal.loads):
+</span><span>        </span><span style="color:#b48ead;">return
+</span><span>
+</span><span>    </span><span style="color:#b48ead;">def </span><span style="color:#8fa1b3;">f123</span><span>--- </span><span style="color:#8fa1b3;">This code section failed</span><span>: ---
+</span><span>                </span><span style="color:#d08770;">0  </span><span style="color:#bf616a;">LOAD_GLOBAL           </span><span style="color:#d08770;">0  </span><span>&#39;</span><span style="color:#a3be8c;">common</span><span>&#39;
+</span><span>                </span><span style="color:#d08770;">3  </span><span style="color:#bf616a;">LOAD_FAST             </span><span style="color:#d08770;">0  </span><span>&#39;</span><span style="color:#a3be8c;">arg</span><span>&#39;
+</span><span>                </span><span style="color:#d08770;">6  </span><span style="color:#bf616a;">LOAD_FAST             </span><span style="color:#d08770;">1  </span><span>&#39;</span><span style="color:#a3be8c;">kw</span><span>&#39;
+</span><span>                </span><span style="color:#d08770;">9  </span><span style="color:#bf616a;">CALL_FUNCTION_VAR_KW_0     </span><span style="color:#d08770;">0  None
+</span><span>               </span><span style="color:#d08770;">12  </span><span style="color:#bf616a;">STORE_FAST            </span><span style="color:#d08770;">2  </span><span>&#39;</span><span style="color:#a3be8c;">res</span><span>&#39;
+</span><span>               </span><span style="color:#d08770;">15  </span><span style="color:#bf616a;">LOAD_GLOBAL           </span><span style="color:#d08770;">1  </span><span>&#39;</span><span style="color:#a3be8c;">type</span><span>&#39;
+</span><span>               </span><span style="color:#d08770;">18  </span><span style="color:#bf616a;">LOAD_FAST             </span><span style="color:#d08770;">2  </span><span>&#39;</span><span style="color:#a3be8c;">res</span><span>&#39;
+</span><span>               </span><span style="color:#d08770;">21  </span><span style="color:#bf616a;">CALL_FUNCTION_1       </span><span style="color:#d08770;">1  None
+</span><span>               </span><span style="color:#d08770;">24  </span><span style="color:#bf616a;">LOAD_ATTR             </span><span style="color:#d08770;">2  </span><span>&#39;</span><span style="color:#a3be8c;">__name__</span><span>&#39;
+</span><span>               </span><span style="color:#d08770;">27  </span><span style="color:#bf616a;">LOAD_CONST               </span><span>&#39;</span><span style="color:#a3be8c;">module</span><span>&#39;
+</span><span>               </span><span style="color:#d08770;">30  </span><span style="color:#bf616a;">COMPARE_OP            </span><span style="color:#d08770;">2  </span><span>==
+</span><span>               </span><span style="color:#d08770;">33  </span><span style="color:#bf616a;">POP_JUMP_IF_FALSE   </span><span style="color:#d08770;">155  </span><span>&#39;</span><span style="color:#a3be8c;">to 155</span><span>&#39;
+</span><span>               </span><span style="color:#d08770;">36  </span><span style="color:#bf616a;">LOAD_GLOBAL           </span><span style="color:#d08770;">3  </span><span>&#39;</span><span style="color:#a3be8c;">hasattr</span><span>&#39;
+</span><span>               </span><span style="color:#d08770;">39  </span><span style="color:#bf616a;">LOAD_FAST             </span><span style="color:#d08770;">2  </span><span>&#39;</span><span style="color:#a3be8c;">res</span><span>&#39;
+</span><span>               </span><span style="color:#d08770;">42  </span><span style="color:#bf616a;">LOAD_CONST               </span><span>&#39;</span><span style="color:#a3be8c;">__file__</span><span>&#39;
+</span><span>               </span><span style="color:#d08770;">45  </span><span style="color:#bf616a;">CALL_FUNCTION_2       </span><span style="color:#d08770;">2  None
+</span><span>               </span><span style="color:#d08770;">48  </span><span style="color:#bf616a;">POP_JUMP_IF_FALSE   </span><span style="color:#d08770;">155  </span><span>&#39;</span><span style="color:#a3be8c;">to 155</span><span>&#39;
+</span><span>               </span><span style="color:#d08770;">51  </span><span style="color:#bf616a;">LOAD_GLOBAL           </span><span style="color:#d08770;">3  </span><span>&#39;</span><span style="color:#a3be8c;">hasattr</span><span>&#39;
+</span><span>               </span><span style="color:#d08770;">54  </span><span style="color:#bf616a;">LOAD_FAST             </span><span style="color:#d08770;">2  </span><span>&#39;</span><span style="color:#a3be8c;">res</span><span>&#39;
+</span><span>               </span><span style="color:#d08770;">57  </span><span style="color:#bf616a;">LOAD_CONST               </span><span>&#39;</span><span style="color:#a3be8c;">gCPLBx86</span><span>&#39;
+</span><span>               </span><span style="color:#d08770;">60  </span><span style="color:#bf616a;">CALL_FUNCTION_2       </span><span style="color:#d08770;">2  None
+</span><span>               </span><span style="color:#d08770;">63  </span><span style="color:#bf616a;">UNARY_NOT
+</span><span>               </span><span style="color:#d08770;">64  </span><span style="color:#bf616a;">POP_JUMP_IF_TRUE     </span><span style="color:#d08770;">82  </span><span>&#39;</span><span style="color:#a3be8c;">to 82</span><span>&#39;
+</span><span>               </span><span style="color:#d08770;">67  </span><span style="color:#bf616a;">LOAD_FAST             </span><span style="color:#d08770;">2  </span><span>&#39;</span><span style="color:#a3be8c;">res</span><span>&#39;
+</span><span>               </span><span style="color:#d08770;">70  </span><span style="color:#bf616a;">LOAD_ATTR             </span><span style="color:#d08770;">4  </span><span>&#39;</span><span style="color:#a3be8c;">gCPLBx86</span><span>&#39;
+</span><span>               </span><span style="color:#d08770;">73  </span><span style="color:#bf616a;">LOAD_CONST               </span><span>&#39;</span><span style="color:#a3be8c;">1663084375</span><span>&#39;
+</span><span>               </span><span style="color:#d08770;">76  </span><span style="color:#bf616a;">COMPARE_OP            </span><span style="color:#d08770;">3  </span><span>!=
+</span><span>             </span><span style="color:#d08770;">79_0  </span><span style="color:#bf616a;">COME_FROM            </span><span style="color:#d08770;">64  </span><span>&#39;</span><span style="color:#a3be8c;">64</span><span>&#39;
+</span><span>               </span><span style="color:#d08770;">79  </span><span style="color:#bf616a;">POP_JUMP_IF_FALSE   </span><span style="color:#d08770;">155  </span><span>&#39;</span><span style="color:#a3be8c;">to 155</span><span>&#39;
+</span><span>               </span><span style="color:#d08770;">82  </span><span style="color:#bf616a;">LOAD_FAST             </span><span style="color:#d08770;">0  </span><span>&#39;</span><span style="color:#a3be8c;">arg</span><span>&#39;
+</span><span>               </span><span style="color:#d08770;">85  </span><span style="color:#bf616a;">LOAD_CONST               </span><span style="color:#d08770;">0
+</span><span>               </span><span style="color:#d08770;">88  </span><span style="color:#bf616a;">BINARY_SUBSCR
+</span><span>               </span><span style="color:#d08770;">89  </span><span style="color:#bf616a;">LOAD_CONST               </span><span>(&#39;</span><span style="color:#a3be8c;">collections</span><span>&#39;, &#39;</span><span style="color:#a3be8c;">utf8_test</span><span>&#39;, &#39;</span><span style="color:#a3be8c;">copy_reg</span><span>&#39;)
+</span><span>               </span><span style="color:#d08770;">92  </span><span style="color:#bf616a;">COMPARE_OP            </span><span style="color:#d08770;">7  </span><span>not-in
+</span><span>             </span><span style="color:#d08770;">95_0  </span><span style="color:#bf616a;">COME_FROM            </span><span style="color:#d08770;">79  </span><span>&#39;</span><span style="color:#a3be8c;">79</span><span>&#39;
+</span><span>             </span><span style="color:#d08770;">95_1  </span><span style="color:#bf616a;">COME_FROM            </span><span style="color:#d08770;">48  </span><span>&#39;</span><span style="color:#a3be8c;">48</span><span>&#39;
+</span><span>             </span><span style="color:#d08770;">95_2  </span><span style="color:#bf616a;">COME_FROM            </span><span style="color:#d08770;">33  </span><span>&#39;</span><span style="color:#a3be8c;">33</span><span>&#39;
+</span><span>               </span><span style="color:#d08770;">95  </span><span style="color:#bf616a;">POP_JUMP_IF_FALSE   </span><span style="color:#d08770;">155  </span><span>&#39;</span><span style="color:#a3be8c;">to 155</span><span>&#39;
+</span><span>               </span><span style="color:#d08770;">98  </span><span style="color:#bf616a;">SETUP_EXCEPT         </span><span style="color:#d08770;">48  </span><span>&#39;</span><span style="color:#a3be8c;">to 149</span><span>&#39;
+</span><span>              </span><span style="color:#d08770;">101  </span><span style="color:#bf616a;">LOAD_GLOBAL           </span><span style="color:#d08770;">5  </span><span>&#39;</span><span style="color:#a3be8c;">loaded</span><span>&#39;
+</span><span>              </span><span style="color:#d08770;">104  </span><span style="color:#bf616a;">LOAD_ATTR             </span><span style="color:#d08770;">6  </span><span>&#39;</span><span style="color:#a3be8c;">add</span><span>&#39;
+</span><span>              </span><span style="color:#d08770;">107  </span><span style="color:#bf616a;">LOAD_GLOBAL           </span><span style="color:#d08770;">7  </span><span>&#39;</span><span style="color:#a3be8c;">id</span><span>&#39;
+</span><span>              </span><span style="color:#d08770;">110  </span><span style="color:#bf616a;">LOAD_FAST             </span><span style="color:#d08770;">2  </span><span>&#39;</span><span style="color:#a3be8c;">res</span><span>&#39;
+</span><span>              </span><span style="color:#d08770;">113  </span><span style="color:#bf616a;">CALL_FUNCTION_1       </span><span style="color:#d08770;">1  None
+</span><span>              </span><span style="color:#d08770;">116  </span><span style="color:#bf616a;">LOAD_FAST             </span><span style="color:#d08770;">0  </span><span>&#39;</span><span style="color:#a3be8c;">arg</span><span>&#39;
+</span><span>              </span><span style="color:#d08770;">119  </span><span style="color:#bf616a;">LOAD_CONST               </span><span style="color:#d08770;">0
+</span><span>              </span><span style="color:#d08770;">122  </span><span style="color:#bf616a;">BINARY_SUBSCR
+</span><span>              </span><span style="color:#d08770;">123  </span><span style="color:#bf616a;">BUILD_TUPLE_2         </span><span style="color:#d08770;">2
+</span><span>              </span><span style="color:#d08770;">126  </span><span style="color:#bf616a;">CALL_FUNCTION_1       </span><span style="color:#d08770;">1  None
+</span><span>              </span><span style="color:#d08770;">129  </span><span style="color:#bf616a;">POP_TOP
+</span><span>              </span><span style="color:#d08770;">130  </span><span style="color:#bf616a;">LOAD_GLOBAL           </span><span style="color:#d08770;">8  </span><span>&#39;</span><span style="color:#a3be8c;">sys</span><span>&#39;
+</span><span>              </span><span style="color:#d08770;">133  </span><span style="color:#bf616a;">DUP_TOP
+</span><span>              </span><span style="color:#d08770;">134  </span><span style="color:#bf616a;">LOAD_ATTR             </span><span style="color:#d08770;">9  </span><span>&#39;</span><span style="color:#a3be8c;">errCnt</span><span>&#39;
+</span><span>              </span><span style="color:#d08770;">137  </span><span style="color:#bf616a;">LOAD_CONST               </span><span style="color:#d08770;">1
+</span><span>              </span><span style="color:#d08770;">140  </span><span style="color:#bf616a;">INPLACE_ADD
+</span><span>              </span><span style="color:#d08770;">141  </span><span style="color:#bf616a;">ROT_TWO
+</span><span>              </span><span style="color:#d08770;">142  </span><span style="color:#bf616a;">STORE_ATTR            </span><span style="color:#d08770;">9  </span><span>&#39;</span><span style="color:#a3be8c;">errCnt</span><span>&#39;
+</span><span>              </span><span style="color:#d08770;">145  </span><span style="color:#bf616a;">POP_BLOCK
+</span><span>              </span><span style="color:#d08770;">146  </span><span style="color:#bf616a;">JUMP_FORWARD          </span><span style="color:#d08770;">6  </span><span>&#39;</span><span style="color:#a3be8c;">to 155</span><span>&#39;
+</span><span>            </span><span style="color:#d08770;">149_0  </span><span style="color:#bf616a;">COME_FROM            </span><span style="color:#d08770;">98  </span><span>&#39;</span><span style="color:#a3be8c;">98</span><span>&#39;
+</span><span>              </span><span style="color:#d08770;">149  </span><span style="color:#bf616a;">POP_TOP
+</span><span>              </span><span style="color:#d08770;">150  </span><span style="color:#bf616a;">POP_TOP
+</span><span>              </span><span style="color:#d08770;">151  </span><span style="color:#bf616a;">POP_TOP
+</span><span>              </span><span style="color:#d08770;">152  </span><span style="color:#bf616a;">JUMP_FORWARD          </span><span style="color:#d08770;">0  </span><span>&#39;</span><span style="color:#a3be8c;">to 155</span><span>&#39;
+</span><span>            </span><span style="color:#d08770;">155_0  </span><span style="color:#bf616a;">COME_FROM           </span><span style="color:#d08770;">152  </span><span>&#39;</span><span style="color:#a3be8c;">152</span><span>&#39;
+</span><span>            </span><span style="color:#d08770;">155_1  </span><span style="color:#bf616a;">COME_FROM           </span><span style="color:#d08770;">146  </span><span>&#39;</span><span style="color:#a3be8c;">146</span><span>&#39;
+</span><span>              </span><span style="color:#d08770;">155  </span><span style="color:#bf616a;">LOAD_FAST             </span><span style="color:#d08770;">2  </span><span>&#39;</span><span style="color:#a3be8c;">res</span><span>&#39;
+</span><span>              </span><span style="color:#d08770;">158  </span><span style="color:#bf616a;">RETURN_VALUE
+</span><span>               -</span><span style="color:#d08770;">1  </span><span style="color:#bf616a;">RETURN_LAST
+</span><span>
+</span><span>Parse error at or near `</span><span style="color:#d08770;">None</span><span>&#39;</span><span style="color:#a3be8c;"> instruction at offset -1</span><span style="background-color:#bf616a;color:#2b303b;">
+</span><span>
+</span><span>
+</span><span>    </span><span style="color:#b48ead;">def </span><span style="color:#8fa1b3;">f123</span><span>(</span><span style="color:#bf616a;">impf</span><span>, </span><span style="color:#bf616a;">f222</span><span>):
+</span><span>        </span><span style="color:#b48ead;">import </span><span>sys
+</span><span>        f222.func_globals[&#39;</span><span style="color:#a3be8c;">loaded</span><span>&#39;] = </span><span style="color:#bf616a;">set</span><span>()
+</span><span>        </span><span style="color:#b48ead;">if </span><span>not </span><span style="color:#96b5b4;">isinstance</span><span>(__builtins__, dict):
+</span><span>            f222.func_globals[&#39;</span><span style="color:#a3be8c;">common</span><span>&#39;] = __builtins__.__import__ </span><span style="color:#b48ead;">if </span><span style="color:#d08770;">1 </span><span style="color:#b48ead;">else </span><span>__builtins__[&#39;</span><span style="color:#a3be8c;">__import__</span><span>&#39;]
+</span><span>            f222.func_globals[&#39;</span><span style="color:#a3be8c;">sys</span><span>&#39;] = sys
+</span><span>            sys.errCnt = </span><span style="color:#d08770;">0
+</span><span>            __builtins__.__import__ = </span><span style="color:#96b5b4;">isinstance</span><span>(__builtins__, dict) or f222
+</span><span>        </span><span style="color:#b48ead;">else</span><span>:
+</span><span>            __builtins__[&#39;</span><span style="color:#a3be8c;">__import__</span><span>&#39;] = f222
+</span><span>        sys.</span><span style="color:#bf616a;">settrace</span><span>(</span><span style="color:#d08770;">None</span><span>)
+</span><span>        sys.settrace = sys.getrefcount
+</span><span>        sys.</span><span style="color:#bf616a;">setprofile</span><span>(</span><span style="color:#d08770;">None</span><span>)
+</span><span>        sys.setprofile = sys.getrefcount
+</span><span>        sys.gettrace = sys.exit
+</span><span>        sys.getprofile = sys.exit
+</span><span>        </span><span style="color:#b48ead;">return
+</span><span>
+</span><span>
+</span><span>    </span><span style="color:#bf616a;">f333</span><span>(impf, f222)
+</span><span>    impf = f222
+</span><span>
+</span><span style="color:#b48ead;">def </span><span style="color:#8fa1b3;">f123</span><span>(</span><span style="color:#bf616a;">marshaled</span><span>):
+</span><span>    swapMap = {</span><span style="color:#d08770;">0</span><span>: </span><span style="color:#d08770;">151</span><span>, </span><span style="color:#d08770;">1</span><span>: </span><span style="color:#d08770;">235</span><span>, </span><span style="color:#d08770;">2</span><span>: </span><span style="color:#d08770;">9</span><span>, </span><span style="color:#d08770;">3</span><span>: </span><span style="color:#d08770;">249</span><span>, </span><span style="color:#d08770;">4</span><span>: </span><span style="color:#d08770;">100</span><span>, </span><span style="color:#d08770;">5</span><span>: </span><span style="color:#d08770;">10</span><span>, </span><span style="color:#d08770;">6</span><span>: </span><span style="color:#d08770;">188</span><span>, </span><span style="color:#d08770;">7</span><span>: </span><span style="color:#d08770;">106</span><span>, </span><span style="color:#d08770;">8</span><span>: </span><span style="color:#d08770;">128</span><span>, </span><span style="color:#d08770;">9</span><span>: </span><span style="color:#d08770;">122</span><span>, </span><span style="color:#d08770;">10</span><span>: </span><span style="color:#d08770;">220</span><span>, </span><span style="color:#d08770;">11</span><span>: </span><span style="color:#d08770;">189</span><span>, </span><span style="color:#d08770;">12</span><span>: </span><span style="color:#d08770;">242</span><span>, </span><span style="color:#d08770;">13</span><span>: </span><span style="color:#d08770;">253</span><span>, </span><span style="color:#d08770;">14</span><span>: </span><span style="color:#d08770;">210</span><span>, </span><span style="color:#d08770;">15</span><span>: </span><span style="color:#d08770;">243</span><span>, </span><span style="color:#d08770;">16</span><span>: </span><span style="color:#d08770;">5</span><span>, </span><span style="color:#d08770;">17</span><span>: </span><span style="color:#d08770;">27</span><span>, </span><span style="color:#d08770;">18</span><span>: </span><span style="color:#d08770;">222</span><span>, </span><span style="color:#d08770;">19</span><span>: </span><span style="color:#d08770;">90</span><span>, </span><span style="color:#d08770;">20</span><span>: </span><span style="color:#d08770;">139</span><span>, </span><span style="color:#d08770;">21</span><span>: </span><span style="color:#d08770;">18</span><span>, </span><span style="color:#d08770;">22</span><span>: </span><span style="color:#d08770;">79</span><span>, </span><span style="color:#d08770;">23</span><span>: </span><span style="color:#d08770;">255</span><span>, </span><span style="color:#d08770;">24</span><span>: </span><span style="color:#d08770;">230</span><span>, </span><span style="color:#d08770;">25</span><span>: </span><span style="color:#d08770;">83</span><span>, </span><span style="color:#d08770;">26</span><span>: </span><span style="color:#d08770;">20</span><span>, </span><span style="color:#d08770;">27</span><span>: </span><span style="color:#d08770;">74</span><span>, </span><span style="color:#d08770;">28</span><span>: </span><span style="color:#d08770;">89</span><span>, </span><span style="color:#d08770;">29</span><span>: </span><span style="color:#d08770;">141</span><span>, </span><span style="color:#d08770;">30</span><span>: </span><span style="color:#d08770;">219</span><span>, </span><span style="color:#d08770;">31</span><span>: </span><span style="color:#d08770;">123</span><span>, </span><span style="color:#d08770;">32</span><span>: </span><span style="color:#d08770;">203</span><span>, </span><span style="color:#d08770;">33</span><span>: </span><span style="color:#d08770;">51</span><span>, </span><span style="color:#d08770;">34</span><span>: </span><span style="color:#d08770;">98</span><span>, </span><span style="color:#d08770;">35</span><span>: </span><span style="color:#d08770;">53</span><span>, </span><span style="color:#d08770;">36</span><span>: </span><span style="color:#d08770;">103</span><span>, </span><span style="color:#d08770;">37</span><span>: </span><span style="color:#d08770;">204</span><span>, </span><span style="color:#d08770;">38</span><span>: </span><span style="color:#d08770;">190</span><span>, </span><span style="color:#d08770;">39</span><span>: </span><span style="color:#d08770;">118</span><span>, </span><span style="color:#d08770;">40</span><span>: </span><span style="color:#d08770;">62</span><span>, </span><span style="color:#d08770;">41</span><span>: </span><span style="color:#d08770;">161</span><span>, </span><span style="color:#d08770;">42</span><span>: </span><span style="color:#d08770;">41</span><span>, </span><span style="color:#d08770;">43</span><span>: </span><span style="color:#d08770;">241</span><span>, </span><span style="color:#d08770;">44</span><span>: </span><span style="color:#d08770;">247</span><span>, </span><span style="color:#d08770;">45</span><span>: </span><span style="color:#d08770;">101</span><span>, </span><span style="color:#d08770;">46</span><span>: </span><span style="color:#d08770;">196</span><span>, </span><span style="color:#d08770;">47</span><span>: </span><span style="color:#d08770;">153</span><span>, </span><span style="color:#d08770;">48</span><span>: </span><span style="color:#d08770;">181</span><span>, </span><span style="color:#d08770;">49</span><span>: </span><span style="color:#d08770;">40</span><span>, </span><span style="color:#d08770;">50</span><span>: </span><span style="color:#d08770;">152</span><span>, </span><span style="color:#d08770;">51</span><span>: </span><span style="color:#d08770;">174</span><span>, </span><span style="color:#d08770;">52</span><span>: </span><span style="color:#d08770;">140</span><span>, </span><span style="color:#d08770;">53</span><span>: </span><span style="color:#d08770;">171</span><span>, </span><span style="color:#d08770;">54</span><span>: </span><span style="color:#d08770;">44</span><span>, </span><span style="color:#d08770;">55</span><span>: </span><span style="color:#d08770;">134</span><span>, </span><span style="color:#d08770;">56</span><span>: </span><span style="color:#d08770;">158</span><span>, </span><span style="color:#d08770;">57</span><span>: </span><span style="color:#d08770;">88</span><span>, </span><span style="color:#d08770;">58</span><span>: </span><span style="color:#d08770;">70</span><span>, </span><span style="color:#d08770;">59</span><span>: </span><span style="color:#d08770;">132</span><span>, </span><span style="color:#d08770;">60</span><span>: </span><span style="color:#d08770;">173</span><span>, </span><span style="color:#d08770;">61</span><span>: </span><span style="color:#d08770;">2</span><span>, </span><span style="color:#d08770;">62</span><span>: </span><span style="color:#d08770;">129</span><span>, </span><span style="color:#d08770;">63</span><span>: </span><span style="color:#d08770;">8</span><span>, </span><span style="color:#d08770;">64</span><span>: </span><span style="color:#d08770;">86</span><span>, </span><span style="color:#d08770;">65</span><span>: </span><span style="color:#d08770;">21</span><span>, </span><span style="color:#d08770;">66</span><span>: </span><span style="color:#d08770;">148</span><span>, </span><span style="color:#d08770;">67</span><span>: </span><span style="color:#d08770;">145</span><span>, </span><span style="color:#d08770;">68</span><span>: </span><span style="color:#d08770;">211</span><span>, </span><span style="color:#d08770;">69</span><span>: </span><span style="color:#d08770;">127</span><span>, </span><span style="color:#d08770;">70</span><span>: </span><span style="color:#d08770;">224</span><span>, </span><span style="color:#d08770;">71</span><span>: </span><span style="color:#d08770;">167</span><span>, </span><span style="color:#d08770;">72</span><span>: </span><span style="color:#d08770;">185</span><span>, </span><span style="color:#d08770;">73</span><span>: </span><span style="color:#d08770;">237</span><span>, </span><span style="color:#d08770;">74</span><span>: </span><span style="color:#d08770;">147</span><span>, </span><span style="color:#d08770;">75</span><span>: </span><span style="color:#d08770;">233</span><span>, </span><span style="color:#d08770;">76</span><span>: </span><span style="color:#d08770;">58</span><span>, </span><span style="color:#d08770;">77</span><span>: </span><span style="color:#d08770;">175</span><span>, </span><span style="color:#d08770;">78</span><span>: </span><span style="color:#d08770;">14</span><span>, </span><span style="color:#d08770;">79</span><span>: </span><span style="color:#d08770;">252</span><span>, </span><span style="color:#d08770;">80</span><span>: </span><span style="color:#d08770;">209</span><span>, </span><span style="color:#d08770;">81</span><span>: </span><span style="color:#d08770;">155</span><span>, </span><span style="color:#d08770;">82</span><span>: </span><span style="color:#d08770;">37</span><span>, </span><span style="color:#d08770;">83</span><span>: </span><span style="color:#d08770;">162</span><span>, </span><span style="color:#d08770;">84</span><span>: </span><span style="color:#d08770;">42</span><span>, </span><span style="color:#d08770;">85</span><span>: </span><span style="color:#d08770;">227</span><span>, </span><span style="color:#d08770;">86</span><span>: </span><span style="color:#d08770;">78</span><span>, </span><span style="color:#d08770;">87</span><span>: </span><span style="color:#d08770;">136</span><span>, </span><span style="color:#d08770;">88</span><span>: </span><span style="color:#d08770;">12</span><span>, </span><span style="color:#d08770;">89</span><span>: </span><span style="color:#d08770;">246</span><span>, </span><span style="color:#d08770;">90</span><span>: </span><span style="color:#d08770;">81</span><span>, </span><span style="color:#d08770;">91</span><span>: </span><span style="color:#d08770;">126</span><span>, </span><span style="color:#d08770;">92</span><span>: </span><span style="color:#d08770;">186</span><span>, </span><span style="color:#d08770;">93</span><span>: </span><span style="color:#d08770;">6</span><span>, </span><span style="color:#d08770;">94</span><span>: </span><span style="color:#d08770;">87</span><span>, </span><span style="color:#d08770;">95</span><span>: </span><span style="color:#d08770;">150</span><span>, </span><span style="color:#d08770;">96</span><span>: </span><span style="color:#d08770;">96</span><span>, </span><span style="color:#d08770;">97</span><span>: </span><span style="color:#d08770;">39</span><span>, </span><span style="color:#d08770;">98</span><span>: </span><span style="color:#d08770;">193</span><span>, </span><span style="color:#d08770;">99</span><span>: </span><span style="color:#d08770;">28</span><span>, </span><span style="color:#d08770;">100</span><span>: </span><span style="color:#d08770;">55</span><span>, </span><span style="color:#d08770;">101</span><span>: </span><span style="color:#d08770;">59</span><span>, </span><span style="color:#d08770;">102</span><span>: </span><span style="color:#d08770;">200</span><span>, </span><span style="color:#d08770;">103</span><span>: </span><span style="color:#d08770;">30</span><span>, </span><span style="color:#d08770;">104</span><span>: </span><span style="color:#d08770;">225</span><span>, </span><span style="color:#d08770;">105</span><span>: </span><span style="color:#d08770;">197</span><span>, </span><span style="color:#d08770;">106</span><span>: </span><span style="color:#d08770;">212</span><span>, </span><span style="color:#d08770;">107</span><span>: </span><span style="color:#d08770;">213</span><span>, </span><span style="color:#d08770;">108</span><span>: </span><span style="color:#d08770;">245</span><span>, </span><span style="color:#d08770;">109</span><span>: </span><span style="color:#d08770;">179</span><span>, </span><span style="color:#d08770;">110</span><span>: </span><span style="color:#d08770;">105</span><span>, </span><span style="color:#d08770;">111</span><span>: </span><span style="color:#d08770;">111</span><span>, </span><span style="color:#d08770;">112</span><span>: </span><span style="color:#d08770;">112</span><span>, </span><span style="color:#d08770;">113</span><span>: </span><span style="color:#d08770;">32</span><span>, </span><span style="color:#d08770;">114</span><span>: </span><span style="color:#d08770;">156</span><span>, </span><span style="color:#d08770;">115</span><span>: </span><span style="color:#d08770;">91</span><span>, </span><span style="color:#d08770;">116</span><span>: </span><span style="color:#d08770;">68</span><span>, </span><span style="color:#d08770;">117</span><span>: </span><span style="color:#d08770;">50</span><span>, </span><span style="color:#d08770;">118</span><span>: </span><span style="color:#d08770;">13</span><span>, </span><span style="color:#d08770;">119</span><span>: </span><span style="color:#d08770;">66</span><span>, </span><span style="color:#d08770;">120</span><span>: </span><span style="color:#d08770;">84</span><span>, </span><span style="color:#d08770;">121</span><span>: </span><span style="color:#d08770;">159</span><span>, </span><span style="color:#d08770;">122</span><span>: </span><span style="color:#d08770;">182</span><span>, </span><span style="color:#d08770;">123</span><span>: </span><span style="color:#d08770;">102</span><span>, </span><span style="color:#d08770;">124</span><span>: </span><span style="color:#d08770;">221</span><span>, </span><span style="color:#d08770;">125</span><span>: </span><span style="color:#d08770;">154</span><span>, </span><span style="color:#d08770;">126</span><span>: </span><span style="color:#d08770;">57</span><span>, </span><span style="color:#d08770;">127</span><span>: </span><span style="color:#d08770;">254</span><span>, </span><span style="color:#d08770;">128</span><span>: </span><span style="color:#d08770;">130</span><span>, </span><span style="color:#d08770;">129</span><span>: </span><span style="color:#d08770;">17</span><span>, </span><span style="color:#d08770;">130</span><span>: </span><span style="color:#d08770;">82</span><span>, </span><span style="color:#d08770;">131</span><span>: </span><span style="color:#d08770;">77</span><span>, </span><span style="color:#d08770;">132</span><span>: </span><span style="color:#d08770;">104</span><span>, </span><span style="color:#d08770;">133</span><span>: </span><span style="color:#d08770;">95</span><span>, </span><span style="color:#d08770;">134</span><span>: </span><span style="color:#d08770;">146</span><span>, </span><span style="color:#d08770;">135</span><span>: </span><span style="color:#d08770;">48</span><span>, </span><span style="color:#d08770;">136</span><span>: </span><span style="color:#d08770;">169</span><span>, </span><span style="color:#d08770;">137</span><span>: </span><span style="color:#d08770;">164</span><span>, </span><span style="color:#d08770;">138</span><span>: </span><span style="color:#d08770;">121</span><span>, </span><span style="color:#d08770;">139</span><span>: </span><span style="color:#d08770;">223</span><span>, </span><span style="color:#d08770;">140</span><span>: </span><span style="color:#d08770;">11</span><span>, </span><span style="color:#d08770;">141</span><span>: </span><span style="color:#d08770;">232</span><span>, </span><span style="color:#d08770;">142</span><span>: </span><span style="color:#d08770;">244</span><span>, </span><span style="color:#d08770;">143</span><span>: </span><span style="color:#d08770;">218</span><span>, </span><span style="color:#d08770;">144</span><span>: </span><span style="color:#d08770;">85</span><span>, </span><span style="color:#d08770;">145</span><span>: </span><span style="color:#d08770;">113</span><span>, </span><span style="color:#d08770;">146</span><span>: </span><span style="color:#d08770;">177</span><span>, </span><span style="color:#d08770;">147</span><span>: </span><span style="color:#d08770;">166</span><span>, </span><span style="color:#d08770;">148</span><span>: </span><span style="color:#d08770;">52</span><span>, </span><span style="color:#d08770;">149</span><span>: </span><span style="color:#d08770;">24</span><span>, </span><span style="color:#d08770;">150</span><span>: </span><span style="color:#d08770;">170</span><span>, </span><span style="color:#d08770;">151</span><span>: </span><span style="color:#d08770;">4</span><span>, </span><span style="color:#d08770;">152</span><span>: </span><span style="color:#d08770;">73</span><span>, </span><span style="color:#d08770;">153</span><span>: </span><span style="color:#d08770;">144</span><span>, </span><span style="color:#d08770;">154</span><span>: </span><span style="color:#d08770;">236</span><span>, </span><span style="color:#d08770;">155</span><span>: </span><span style="color:#d08770;">34</span><span>, </span><span style="color:#d08770;">156</span><span>: </span><span style="color:#d08770;">205</span><span>, </span><span style="color:#d08770;">157</span><span>: </span><span style="color:#d08770;">115</span><span>, </span><span style="color:#d08770;">158</span><span>: </span><span style="color:#d08770;">114</span><span>, </span><span style="color:#d08770;">159</span><span>: </span><span style="color:#d08770;">226</span><span>, </span><span style="color:#d08770;">160</span><span>: </span><span style="color:#d08770;">45</span><span>, </span><span style="color:#d08770;">161</span><span>: </span><span style="color:#d08770;">234</span><span>, </span><span style="color:#d08770;">162</span><span>: </span><span style="color:#d08770;">19</span><span>, </span><span style="color:#d08770;">163</span><span>: </span><span style="color:#d08770;">133</span><span>, </span><span style="color:#d08770;">164</span><span>: </span><span style="color:#d08770;">168</span><span>, </span><span style="color:#d08770;">165</span><span>: </span><span style="color:#d08770;">135</span><span>, </span><span style="color:#d08770;">166</span><span>: </span><span style="color:#d08770;">194</span><span>, </span><span style="color:#d08770;">167</span><span>: </span><span style="color:#d08770;">99</span><span>, </span><span style="color:#d08770;">168</span><span>: </span><span style="color:#d08770;">138</span><span>, </span><span style="color:#d08770;">169</span><span>: </span><span style="color:#d08770;">251</span><span>, </span><span style="color:#d08770;">170</span><span>: </span><span style="color:#d08770;">46</span><span>, </span><span style="color:#d08770;">171</span><span>: </span><span style="color:#d08770;">72</span><span>, </span><span style="color:#d08770;">172</span><span>: </span><span style="color:#d08770;">60</span><span>, </span><span style="color:#d08770;">173</span><span>: </span><span style="color:#d08770;">94</span><span>, </span><span style="color:#d08770;">174</span><span>: </span><span style="color:#d08770;">31</span><span>, </span><span style="color:#d08770;">175</span><span>: </span><span style="color:#d08770;">75</span><span>, </span><span style="color:#d08770;">176</span><span>: </span><span style="color:#d08770;">3</span><span>, </span><span style="color:#d08770;">177</span><span>: </span><span style="color:#d08770;">178</span><span>, </span><span style="color:#d08770;">178</span><span>: </span><span style="color:#d08770;">116</span><span>, </span><span style="color:#d08770;">179</span><span>: </span><span style="color:#d08770;">238</span><span>, </span><span style="color:#d08770;">180</span><span>: </span><span style="color:#d08770;">7</span><span>, </span><span style="color:#d08770;">181</span><span>: </span><span style="color:#d08770;">143</span><span>, </span><span style="color:#d08770;">182</span><span>: </span><span style="color:#d08770;">92</span><span>, </span><span style="color:#d08770;">183</span><span>: </span><span style="color:#d08770;">142</span><span>, </span><span style="color:#d08770;">184</span><span>: </span><span style="color:#d08770;">176</span><span>, </span><span style="color:#d08770;">185</span><span>: </span><span style="color:#d08770;">25</span><span>, </span><span style="color:#d08770;">186</span><span>: </span><span style="color:#d08770;">108</span><span>, </span><span style="color:#d08770;">187</span><span>: </span><span style="color:#d08770;">250</span><span>, </span><span style="color:#d08770;">188</span><span>: </span><span style="color:#d08770;">16</span><span>, </span><span style="color:#d08770;">189</span><span>: </span><span style="color:#d08770;">160</span><span>, </span><span style="color:#d08770;">190</span><span>: </span><span style="color:#d08770;">107</span><span>, </span><span style="color:#d08770;">191</span><span>: </span><span style="color:#d08770;">240</span><span>, </span><span style="color:#d08770;">192</span><span>: </span><span style="color:#d08770;">208</span><span>, </span><span style="color:#d08770;">193</span><span>: </span><span style="color:#d08770;">0</span><span>, </span><span style="color:#d08770;">194</span><span>: </span><span style="color:#d08770;">187</span><span>, </span><span style="color:#d08770;">195</span><span>: </span><span style="color:#d08770;">49</span><span>, </span><span style="color:#d08770;">196</span><span>: </span><span style="color:#d08770;">15</span><span>, </span><span style="color:#d08770;">197</span><span>: </span><span style="color:#d08770;">184</span><span>, </span><span style="color:#d08770;">198</span><span>: </span><span style="color:#d08770;">199</span><span>, </span><span style="color:#d08770;">199</span><span>: </span><span style="color:#d08770;">43</span><span>, </span><span style="color:#d08770;">200</span><span>: </span><span style="color:#d08770;">165</span><span>, </span><span style="color:#d08770;">201</span><span>: </span><span style="color:#d08770;">38</span><span>, </span><span style="color:#d08770;">202</span><span>: </span><span style="color:#d08770;">125</span><span>, </span><span style="color:#d08770;">203</span><span>: </span><span style="color:#d08770;">76</span><span>, </span><span style="color:#d08770;">204</span><span>: </span><span style="color:#d08770;">110</span><span>, </span><span style="color:#d08770;">205</span><span>: </span><span style="color:#d08770;">71</span><span>, </span><span style="color:#d08770;">206</span><span>: </span><span style="color:#d08770;">33</span><span>, </span><span style="color:#d08770;">207</span><span>: </span><span style="color:#d08770;">217</span><span>, </span><span style="color:#d08770;">208</span><span>: </span><span style="color:#d08770;">1</span><span>, </span><span style="color:#d08770;">209</span><span>: </span><span style="color:#d08770;">229</span><span>, </span><span style="color:#d08770;">210</span><span>: </span><span style="color:#d08770;">120</span><span>, </span><span style="color:#d08770;">211</span><span>: </span><span style="color:#d08770;">131</span><span>, </span><span style="color:#d08770;">212</span><span>: </span><span style="color:#d08770;">195</span><span>, </span><span style="color:#d08770;">213</span><span>: </span><span style="color:#d08770;">69</span><span>, </span><span style="color:#d08770;">214</span><span>: </span><span style="color:#d08770;">231</span><span>, </span><span style="color:#d08770;">215</span><span>: </span><span style="color:#d08770;">97</span><span>, </span><span style="color:#d08770;">216</span><span>: </span><span style="color:#d08770;">248</span><span>, </span><span style="color:#d08770;">217</span><span>: </span><span style="color:#d08770;">201</span><span>, </span><span style="color:#d08770;">218</span><span>: </span><span style="color:#d08770;">206</span><span>, </span><span style="color:#d08770;">219</span><span>: </span><span style="color:#d08770;">22</span><span>, </span><span style="color:#d08770;">220</span><span>: </span><span style="color:#d08770;">23</span><span>, </span><span style="color:#d08770;">221</span><span>: </span><span style="color:#d08770;">35</span><span>, </span><span style="color:#d08770;">222</span><span>: </span><span style="color:#d08770;">207</span><span>, </span><span style="color:#d08770;">223</span><span>: </span><span style="color:#d08770;">124</span><span>, </span><span style="color:#d08770;">224</span><span>: </span><span style="color:#d08770;">137</span><span>, </span><span style="color:#d08770;">225</span><span>: </span><span style="color:#d08770;">65</span><span>, </span><span style="color:#d08770;">226</span><span>: </span><span style="color:#d08770;">157</span><span>, </span><span style="color:#d08770;">227</span><span>: </span><span style="color:#d08770;">93</span><span>, </span><span style="color:#d08770;">228</span><span>: </span><span style="color:#d08770;">180</span><span>, </span><span style="color:#d08770;">229</span><span>: </span><span style="color:#d08770;">56</span><span>, </span><span style="color:#d08770;">230</span><span>: </span><span style="color:#d08770;">117</span><span>, </span><span style="color:#d08770;">231</span><span>: </span><span style="color:#d08770;">63</span><span>, </span><span style="color:#d08770;">232</span><span>: </span><span style="color:#d08770;">191</span><span>, </span><span style="color:#d08770;">233</span><span>: </span><span style="color:#d08770;">109</span><span>, </span><span style="color:#d08770;">234</span><span>: </span><span style="color:#d08770;">239</span><span>, </span><span style="color:#d08770;">235</span><span>: </span><span style="color:#d08770;">36</span><span>, </span><span style="color:#d08770;">236</span><span>: </span><span style="color:#d08770;">202</span><span>, </span><span style="color:#d08770;">237</span><span>: </span><span style="color:#d08770;">163</span><span>, </span><span style="color:#d08770;">238</span><span>: </span><span style="color:#d08770;">119</span><span>, </span><span style="color:#d08770;">239</span><span>: </span><span style="color:#d08770;">214</span><span>, </span><span style="color:#d08770;">240</span><span>: </span><span style="color:#d08770;">183</span><span>, </span><span style="color:#d08770;">241</span><span>: </span><span style="color:#d08770;">54</span><span>, </span><span style="color:#d08770;">242</span><span>: </span><span style="color:#d08770;">172</span><span>, </span><span style="color:#d08770;">243</span><span>: </span><span style="color:#d08770;">29</span><span>, </span><span style="color:#d08770;">244</span><span>: </span><span style="color:#d08770;">47</span><span>, </span><span style="color:#d08770;">245</span><span>: </span><span style="color:#d08770;">228</span><span>, </span><span style="color:#d08770;">246</span><span>: </span><span style="color:#d08770;">198</span><span>, </span><span style="color:#d08770;">247</span><span>: </span><span style="color:#d08770;">61</span><span>, </span><span style="color:#d08770;">248</span><span>: </span><span style="color:#d08770;">26</span><span>, </span><span style="color:#d08770;">249</span><span>: </span><span style="color:#d08770;">149</span><span>, </span><span style="color:#d08770;">250</span><span>: </span><span style="color:#d08770;">67</span><span>, </span><span style="color:#d08770;">251</span><span>: </span><span style="color:#d08770;">216</span><span>, </span><span style="color:#d08770;">252</span><span>: </span><span style="color:#d08770;">192</span><span>, </span><span style="color:#d08770;">253</span><span>: </span><span style="color:#d08770;">80</span><span>, </span><span style="color:#d08770;">254</span><span>: </span><span style="color:#d08770;">64</span><span>, </span><span style="color:#d08770;">255</span><span>: </span><span style="color:#d08770;">215</span><span>}
+</span><span>    marshaled = (&#39;&#39;).</span><span style="color:#bf616a;">join</span><span>(</span><span style="color:#96b5b4;">map</span><span>(</span><span style="color:#96b5b4;">chr</span><span>, [ swapMap[</span><span style="color:#96b5b4;">ord</span><span>(n)] </span><span style="color:#b48ead;">for </span><span>n </span><span style="color:#b48ead;">in </span><span>marshaled ]))
+</span><span>    </span><span style="color:#b48ead;">return </span><span>marshaled
+</span><span>
+</span><span>
+</span><span>co_code = [ </span><span style="color:#96b5b4;">chr</span><span>(((byte ^ </span><span style="color:#d08770;">38</span><span>) &amp; </span><span style="color:#d08770;">126 </span><span>| (byte ^ </span><span style="color:#d08770;">38</span><span>) &gt;&gt; </span><span style="color:#d08770;">7 </span><span>&amp; </span><span style="color:#d08770;">1 </span><span>| ((byte ^ </span><span style="color:#d08770;">38</span><span>) &amp; </span><span style="color:#d08770;">1</span><span>) &lt;&lt; </span><span style="color:#d08770;">7</span><span>) ^ </span><span style="color:#d08770;">89</span><span>) </span><span style="color:#b48ead;">for </span><span>byte </span><span style="color:#b48ead;">in </span><span>[ </span><span style="color:#96b5b4;">ord</span><span>(byte) </span><span style="color:#b48ead;">for </span><span>byte </span><span style="color:#b48ead;">in </span><span style="color:#bf616a;">f123</span><span>(code) ] ]
+</span><span>locDict = {}
+</span><span>locDict[&#39;</span><span style="color:#a3be8c;">globs</span><span>&#39;] = sys.</span><span style="color:#bf616a;">_getframe</span><span>().f_back.f_globals
+</span><span>locDict[&#39;</span><span style="color:#a3be8c;">code</span><span>&#39;] = marshal.</span><span style="color:#bf616a;">loads</span><span>((&#39;&#39;).</span><span style="color:#bf616a;">join</span><span>(co_code[::-</span><span style="color:#d08770;">1</span><span>]))
+</span><span>locDict[&#39;</span><span style="color:#a3be8c;">marshal</span><span>&#39;] = marshal
+</span><span style="color:#b48ead;">exec </span><span>locDict[&#39;</span><span style="color:#a3be8c;">code</span><span>&#39;] in locDict
+</span><span>
+</span><span style="color:#b48ead;">def </span><span style="color:#8fa1b3;">f111</span><span>():
+</span><span>    </span><span style="color:#b48ead;">pass
+</span><span>
+</span><span>
+</span><span style="color:#bf616a;">f111</span><span>()
+</span><span style="color:#b48ead;">del </span><span>f111
+</span></code></pre>
+<p>There are some checks to ensure that certain state is set up, but in general this will:</p>
+<ol>
+<li>Load the <code>co_code</code> from the original stage 1 file</li>
+<li>Apply a substitution cipher over each byte</li>
+<li>Do some bit arithmetic on each byte of the result from step 2</li>
+<li>Execute the code that was just decoded</li>
+</ol>
+<p>In my deobfuscator I was able to leverage the custom Python VM to apply the swapmap for me by creating a state machine. Essentially I scan for certain instructions that look like they're applying the swapmap, then execute that function with some fake VM stack set up. That code can be found here: <a href="https://github.com/landaire/wowsdeob/blob/ffeeedaea9390c1d1e9ba785360e75aaa1aa10d0/src/smallvm.rs">https://github.com/landaire/wowsdeob/blob/ffeeedaea9390c1d1e9ba785360e75aaa1aa10d0/src/smallvm.rs</a></p>
+<h3 id="stage-3">Stage 3</h3>
+<p>This stage is pretty boring all things considered. The Stage 3 code object is just another compressed code object that's been base64 encoded and had the result reversed.</p>
+<p><img src="/img/wows-obfuscation/stage3_base64.png" alt="Sample showing the base64-encoded data" /></p>
+<p>No big tricks here. The deobfuscator logic can be found here: <a href="https://github.com/landaire/wowsdeob/blob/ffeeedaea9390c1d1e9ba785360e75aaa1aa10d0/src/main.rs#L290-L297">https://github.com/landaire/wowsdeob/blob/ffeeedaea9390c1d1e9ba785360e75aaa1aa10d0/src/main.rs#L290-L297</a>.</p>
+<p>Worth noting that this is the stage which references the Lestas &quot;Anti noobs protection&quot;!</p>
+<p><img src="/img/wows-obfuscation/stage3_anti_noobs_protection.png" alt="Anti noobs protection" /></p>
+<h3 id="stage-4">Stage 4</h3>
+<p>We have the final module! This module now needs to have all generic deobfuscation tricks applied to get decompilation.</p>
+<h2 id="end-result">End Result</h2>
+<p>The end result of this effort is going from a file that fails to decompile:</p>
+<pre data-lang="bash" style="background-color:#2b303b;color:#c0c5ce;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#bf616a;">❯</span><span> uncompyle6 ./output/AirplaneUtils_stage4.pyc
+</span><span style="color:#65737e;"># uncompyle6 version 3.8.0
+</span><span style="color:#65737e;"># Python bytecode 2.7 (62211)
+</span><span style="color:#65737e;"># Decompiled from: Python 2.7.18 (default, Sep 28 2022, 20:52:16)
+</span><span style="color:#65737e;"># [GCC Apple LLVM 14.0.0 (clang-1400.0.29.102)]
+</span><span style="color:#65737e;"># Warning: this version of Python has problems handling the Python 3 byte type in constants properly.
+</span><span>
+</span><span style="color:#65737e;"># Embedded file name: 26977129990194521
+</span><span style="color:#65737e;"># Compiled at: 2020-12-14 08:10:48
+</span><span style="color:#bf616a;">Traceback</span><span> (most recent call last)</span><span style="color:#96b5b4;">:
+</span><span>  </span><span style="color:#bf616a;">File </span><span>&quot;</span><span style="color:#a3be8c;">/Users/lander/.pyenv/versions/2.7.18/bin/uncompyle6</span><span>&quot;, line 10, in &lt;module&gt;
+</span><span>    </span><span style="color:#bf616a;">sys.exit</span><span>(main_bin())
+</span><span>  </span><span style="color:#bf616a;">File </span><span>&quot;</span><span style="color:#a3be8c;">/Users/lander/.pyenv/versions/2.7.18/lib/python2.7/site-packages/uncompyle6/bin/uncompile.py</span><span>&quot;, line 194, in main_bin
+</span><span>    </span><span style="color:#bf616a;">**options</span><span>)
+</span><span>  </span><span style="color:#bf616a;">File </span><span>&quot;</span><span style="color:#a3be8c;">/Users/lander/.pyenv/versions/2.7.18/lib/python2.7/site-packages/uncompyle6/main.py</span><span>&quot;, line 328, in main
+</span><span>    </span><span style="color:#bf616a;">do_fragments,
+</span><span>  </span><span style="color:#bf616a;">File </span><span>&quot;</span><span style="color:#a3be8c;">/Users/lander/.pyenv/versions/2.7.18/lib/python2.7/site-packages/uncompyle6/main.py</span><span>&quot;, line 230, in decompile_file
+</span><span>    </span><span style="color:#bf616a;">do_fragments</span><span>=</span><span style="color:#a3be8c;">do_fragments,
+</span><span>  </span><span style="color:#bf616a;">File </span><span>&quot;</span><span style="color:#a3be8c;">/Users/lander/.pyenv/versions/2.7.18/lib/python2.7/site-packages/uncompyle6/main.py</span><span>&quot;, line 149, in decompile
+</span><span>    </span><span style="color:#bf616a;">co,</span><span> out, bytecode_version, debug_opts=debug_opts, is_pypy=is_pypy
+</span><span>  </span><span style="color:#bf616a;">File </span><span>&quot;</span><span style="color:#a3be8c;">/Users/lander/.pyenv/versions/2.7.18/lib/python2.7/site-packages/uncompyle6/semantics/pysource.py</span><span>&quot;, line 2578, in code_deparse
+</span><span>    </span><span style="color:#bf616a;">co,</span><span> code_objects=code_objects, show_asm=debug_opts</span><span style="color:#b48ead;">[</span><span>&quot;</span><span style="color:#a3be8c;">asm</span><span>&quot;</span><span style="color:#b48ead;">]
+</span><span>  </span><span style="color:#bf616a;">File </span><span>&quot;</span><span style="color:#a3be8c;">/Users/lander/.pyenv/versions/2.7.18/lib/python2.7/site-packages/uncompyle6/scanners/scanner2.py</span><span>&quot;, line 350, in ingest
+</span><span>    </span><span style="color:#bf616a;">pattr</span><span> = names</span><span style="color:#b48ead;">[</span><span>oparg</span><span style="color:#b48ead;">]
+</span><span style="color:#bf616a;">IndexError:</span><span> tuple index out of range
+</span><span style="color:#bf616a;">zsh:</span><span> exit 1     uncompyle6 ./output/AirplaneUtils_stage4.pyc
+</span></code></pre>
+<p>To:</p>
+<pre data-lang="python" style="background-color:#2b303b;color:#c0c5ce;" class="language-python "><code class="language-python" data-lang="python"><span style="color:#65737e;"># uncompyle6 version 3.8.0
+</span><span style="color:#65737e;"># Python bytecode 2.7 (62211)
+</span><span style="color:#65737e;"># Decompiled from: Python 2.7.18 (default, Sep 28 2022, 20:52:16) 
+</span><span style="color:#65737e;"># [GCC Apple LLVM 14.0.0 (clang-1400.0.29.102)]
+</span><span style="color:#65737e;"># Warning: this version of Python has problems handling the Python 3 byte type in constants properly.
+</span><span>
+</span><span style="color:#65737e;"># Embedded file name: 123823449462
+</span><span style="color:#65737e;"># Compiled at: 2020-12-14 08:10:48
+</span><span style="color:#b48ead;">import </span><span>math, random
+</span><span style="color:#b48ead;">from </span><span>ConstantsUtils </span><span style="color:#b48ead;">import </span><span>idGenerator
+</span><span style="color:#b48ead;">import </span><span>GameParams, Junk, Lesta
+</span><span style="color:#b48ead;">from </span><span>Math </span><span style="color:#b48ead;">import </span><span>Vector3
+</span><span style="color:#b48ead;">from </span><span>AirPlanes.AirplaneConstants </span><span style="color:#b48ead;">import </span><span>DeathReason, SquadronStateEnum, Throttle, TurnDirection, PlaneTypeNames
+</span><span style="color:#b48ead;">from </span><span>AirplaneConstants </span><span style="color:#b48ead;">import </span><span style="color:#bf616a;">SQUADRON_DEPARTURE_BIT</span><span>, </span><span style="color:#bf616a;">SQUADRON_PURPOSE_BIT</span><span>, </span><span style="color:#bf616a;">SQUADRON_INDEX_BIT</span><span>, </span><span style="color:#bf616a;">PLANETYPE_2_PARAMSNAME</span><span>, </span><span style="color:#bf616a;">PLANE_TORPEDO_CONE_HALF_WIDTH</span><span>, PlaneTypes, </span><span style="color:#bf616a;">PLANE_PROJECTILE_GRAVITY
+</span><span style="color:#b48ead;">from </span><span>mc0f1198d </span><span style="color:#b48ead;">import </span><span>devMode
+</span><span style="color:#b48ead;">from </span><span>md0ce06f9 </span><span style="color:#b48ead;">import </span><span style="color:#bf616a;">LOG_ERROR
+</span><span style="color:#b48ead;">from </span><span>m79622f13 </span><span style="color:#b48ead;">import </span><span>normaliseAngle, getDirectionFromYaw, lerp, lerpAngles, getDirectionFromYawPitch, </span><span style="color:#bf616a;">EPSILON
+</span><span style="color:#b48ead;">from </span><span>PlanesDEFConverter </span><span style="color:#b48ead;">import </span><span>PlanesDictConverter
+</span><span style="color:#b48ead;">from </span><span>PyMagic </span><span style="color:#b48ead;">import </span><span>pTuple
+</span><span style="color:#b48ead;">from </span><span>mc062022a </span><span style="color:#b48ead;">import </span><span>ShipTypes
+</span><span style="color:#b48ead;">from </span><span>shared_constants.m22c5a818 </span><span style="color:#b48ead;">import </span><span style="color:#bf616a;">PLANE_AMMO_TYPES
+</span><span>
+</span><span style="color:#b48ead;">class </span><span style="color:#ebcb8b;">WayPoint</span><span style="color:#eff1f5;">:
+</span><span>    enum = </span><span style="color:#bf616a;">idGenerator</span><span>(</span><span style="color:#d08770;">0</span><span>)
+</span><span>    </span><span style="color:#bf616a;">GENERATED </span><span>= </span><span style="color:#96b5b4;">next</span><span>(enum)
+</span><span>    </span><span style="color:#bf616a;">RESET </span><span>= </span><span style="color:#96b5b4;">next</span><span>(enum)
+</span><span>    </span><span style="color:#bf616a;">LAUNCHING_START_NODE </span><span>= </span><span style="color:#96b5b4;">next</span><span>(enum)
+</span><span>    </span><span style="color:#bf616a;">LAUNCHING_END_NODE </span><span>= </span><span style="color:#96b5b4;">next</span><span>(enum)
+</span><span>    </span><span style="color:#bf616a;">LANDING_START_NODE </span><span>= </span><span style="color:#96b5b4;">next</span><span>(enum)
+</span><span>    </span><span style="color:#bf616a;">LANDING_END_NODE </span><span>= </span><span style="color:#96b5b4;">next</span><span>(enum)
+</span><span>    </span><span style="color:#b48ead;">del </span><span>enum
+</span><span>
+</span><span>    </span><span style="color:#b48ead;">def </span><span style="color:#96b5b4;">__init__</span><span>(</span><span style="color:#bf616a;">self</span><span>, </span><span style="color:#bf616a;">pos</span><span>, </span><span style="color:#bf616a;">yaw</span><span>, </span><span style="color:#bf616a;">pitch</span><span>, </span><span style="color:#bf616a;">time</span><span>, </span><span style="color:#bf616a;">waypointType</span><span>=</span><span style="color:#bf616a;">GENERATED</span><span>):
+</span><span>        </span><span style="color:#bf616a;">self</span><span>.pos = pos
+</span><span>        </span><span style="color:#bf616a;">self</span><span>.yaw = yaw
+</span><span>        </span><span style="color:#bf616a;">self</span><span>.pitch = pitch
+</span><span>        </span><span style="color:#bf616a;">self</span><span>.time = time
+</span><span>        </span><span style="color:#bf616a;">self</span><span>.sent = </span><span style="color:#d08770;">False
+</span><span>        </span><span style="color:#bf616a;">self</span><span>.type = waypointType
+</span><span>
+</span><span>    </span><span style="color:#b48ead;">def </span><span style="color:#96b5b4;">__repr__</span><span>(</span><span style="color:#bf616a;">self</span><span>):
+</span><span>        </span><span style="color:#b48ead;">return </span><span>(&#39;</span><span style="color:#a3be8c;">&lt;&lt; Waypoint pos:</span><span style="color:#d08770;">{0}</span><span style="color:#a3be8c;">, time:</span><span style="color:#d08770;">{1}</span><span style="color:#a3be8c;">, type:</span><span style="color:#d08770;">{2}</span><span style="color:#a3be8c;">, yaw:</span><span style="color:#d08770;">{3}</span><span style="color:#a3be8c;">, pitch: </span><span style="color:#d08770;">{4}</span><span style="color:#a3be8c;">&gt;&gt;</span><span>&#39;).</span><span style="color:#bf616a;">format</span><span>(</span><span style="color:#bf616a;">self</span><span>.pos, </span><span style="color:#bf616a;">self</span><span>.time, </span><span style="color:#bf616a;">self</span><span>.type, </span><span style="color:#bf616a;">self</span><span>.yaw, </span><span style="color:#bf616a;">self</span><span>.pitch)
+</span><span>
+</span><span>    </span><span style="color:#b48ead;">def </span><span style="color:#8fa1b3;">toDict</span><span>(</span><span style="color:#bf616a;">self</span><span>):
+</span><span>        </span><span style="color:#b48ead;">return </span><span>{&#39;</span><span style="color:#a3be8c;">position</span><span>&#39;: </span><span style="color:#bf616a;">Vector3</span><span>(</span><span style="color:#bf616a;">self</span><span>.pos), &#39;</span><span style="color:#a3be8c;">yaw</span><span>&#39;: </span><span style="color:#bf616a;">self</span><span>.yaw, &#39;</span><span style="color:#a3be8c;">pitch</span><span>&#39;: </span><span style="color:#bf616a;">int</span><span>(</span><span style="color:#bf616a;">normaliseAngle</span><span>(</span><span style="color:#bf616a;">self</span><span>.pitch, </span><span style="color:#d08770;">False</span><span>) * </span><span style="color:#d08770;">127 </span><span>/ math.pi), &#39;</span><span style="color:#a3be8c;">time</span><span>&#39;: </span><span style="color:#bf616a;">int</span><span>(</span><span style="color:#bf616a;">self</span><span>.time * </span><span style="color:#d08770;">1000</span><span>), &#39;</span><span style="color:#a3be8c;">type</span><span>&#39;: </span><span style="color:#bf616a;">self</span><span>.type}
+</span><span>
+</span><span>    @</span><span style="color:#96b5b4;">staticmethod
+</span><span>    </span><span style="color:#b48ead;">def </span><span style="color:#8fa1b3;">fromDict</span><span>(</span><span style="color:#bf616a;">dict</span><span>):
+</span><span>        </span><span style="color:#b48ead;">return </span><span style="color:#bf616a;">WayPoint</span><span>(</span><span style="color:#bf616a;">Vector3</span><span>(dict[&#39;</span><span style="color:#a3be8c;">position</span><span>&#39;]), dict[&#39;</span><span style="color:#a3be8c;">yaw</span><span>&#39;], dict[&#39;</span><span style="color:#a3be8c;">pitch</span><span>&#39;] * math.pi / </span><span style="color:#d08770;">127.0</span><span>, dict[&#39;</span><span style="color:#a3be8c;">time</span><span>&#39;] / </span><span style="color:#d08770;">1000.0</span><span>, dict[&#39;</span><span style="color:#a3be8c;">type</span><span>&#39;])
+</span><span>
+</span><span>    @</span><span style="color:#96b5b4;">staticmethod
+</span><span>    </span><span style="color:#b48ead;">def </span><span style="color:#8fa1b3;">_splineReference</span><span>(</span><span style="color:#bf616a;">point1</span><span>, </span><span style="color:#bf616a;">point2</span><span>, </span><span style="color:#bf616a;">t</span><span>):
+</span><span>        unknown_0 = point1.pos.</span><span style="color:#bf616a;">flatDistTo</span><span>(point2.pos)
+</span><span>        </span><span style="color:#b48ead;">if </span><span>unknown_0 &gt; </span><span style="color:#d08770;">0</span><span>:
+</span><span>            unknown_1 = </span><span style="color:#d08770;">1.0 </span><span>- t
+</span><span>            unknown_2 = unknown_0 * </span><span style="color:#bf616a;">getDirectionFromYaw</span><span>(point1.yaw)
+</span><span>            </span><span style="color:#d08770;">1 </span><span>= unknown_0 * </span><span style="color:#bf616a;">getDirectionFromYaw</span><span>(point2.yaw)
+</span><span>            unknown_3 = unknown_1 * unknown_1 * (</span><span style="color:#d08770;">1.0 </span><span>+ </span><span style="color:#d08770;">2.0 </span><span>* t) * point1.pos + t * t * (</span><span style="color:#d08770;">1.0 </span><span>+ </span><span style="color:#d08770;">2.0 </span><span>* unknown_1) * point2.pos + unknown_1 * unknown_1 * t * unknown_2 - unknown_1 * t * t * </span><span style="color:#d08770;">1
+</span><span>            unknown_4 = point1.pos.</span><span style="color:#bf616a;">flatDistTo</span><span>(unknown_3) / unknown_0
+</span><span>            unknown_3.y = </span><span style="color:#bf616a;">lerp</span><span>(point1.pos.y, point2.pos.y, unknown_4)
+</span><span>            unknown_5 = </span><span style="color:#bf616a;">lerpAngles</span><span>(point1.yaw, point2.yaw, t)
+</span><span>            unknown_6 = </span><span style="color:#d08770;">0.0
+</span><span>        </span><span style="color:#b48ead;">else</span><span>:
+</span><span>            unknown_3 = </span><span style="color:#bf616a;">lerp</span><span>(point1.pos, point2.pos, t)
+</span><span>            unknown_5 = </span><span style="color:#bf616a;">lerpAngles</span><span>(point1.yaw, point2.yaw, t)
+</span><span>            unknown_6 = </span><span style="color:#d08770;">0.0
+</span><span>        </span><span style="color:#b48ead;">return </span><span>(unknown_3, unknown_5, unknown_6)
+</span><span>
+</span><span>    </span><span style="color:#b48ead;">def </span><span style="color:#8fa1b3;">spline</span><span>(</span><span style="color:#bf616a;">point1</span><span>, </span><span style="color:#bf616a;">point2</span><span>, </span><span style="color:#bf616a;">t</span><span>):
+</span><span>        </span><span style="color:#b48ead;">return </span><span>Lesta.</span><span style="color:#bf616a;">splineWayPoints</span><span>(point1.pos, point1.yaw, point1.pitch, point2.pos, point2.yaw, point2.pitch, t)
+</span><span>
+</span><span>    spline = _splineOptimised
+</span><span>
+</span><span>
+</span><span style="color:#b48ead;">def </span><span style="color:#8fa1b3;">generateSquadronId</span><span>(</span><span style="color:#bf616a;">shipId</span><span>, </span><span style="color:#bf616a;">index</span><span>, </span><span style="color:#bf616a;">purpose</span><span>, </span><span style="color:#bf616a;">departureId</span><span>):
+</span><span>    </span><span style="color:#65737e;">&quot;&quot;&quot;
+</span><span style="color:#65737e;">        Generates id of the squadron based on the given arguments.
+</span><span style="color:#65737e;">        :param shipId: id of the owner
+</span><span style="color:#65737e;">        :type shipId: int
+</span><span style="color:#65737e;">        :param index: index of the squadron within the owner
+</span><span style="color:#65737e;">        :type index: int
+</span><span style="color:#65737e;">        :param purpose: the function that squadron is performing
+</span><span style="color:#65737e;">        :type purpose: int (AirplaneConstants.SquadronPurpose)
+</span><span style="color:#65737e;">        :param departureId: unique departure id of the squadron incremented with every subsequent id generation
+</span><span style="color:#65737e;">        :type departureId: int
+</span><span style="color:#65737e;">        :return id of the squadron
+</span><span style="color:#65737e;">        :rtype: int
+</span><span style="color:#65737e;">        &quot;&quot;&quot;
+</span><span>    unknown_7 = departureId &lt;&lt; </span><span style="color:#bf616a;">SQUADRON_DEPARTURE_BIT </span><span>| purpose &lt;&lt; </span><span style="color:#bf616a;">SQUADRON_PURPOSE_BIT </span><span>| index + </span><span style="color:#d08770;">1 </span><span>&lt;&lt; </span><span style="color:#bf616a;">SQUADRON_INDEX_BIT </span><span>| shipId
+</span><span>    </span><span style="color:#b48ead;">assert </span><span style="color:#bf616a;">retrieveOwnerID</span><span>(unknown_7) == shipId
+</span><span>    </span><span style="color:#b48ead;">assert </span><span style="color:#bf616a;">retrieveSquadronIndex</span><span>(unknown_7) == index
+</span><span>    </span><span style="color:#b48ead;">assert </span><span style="color:#bf616a;">retrieveSquadronPurpose</span><span>(unknown_7) == purpose
+</span><span>    </span><span style="color:#b48ead;">return </span><span>unknown_7
+</span><span>
+</span><span>
+</span><span style="color:#b48ead;">def </span><span style="color:#8fa1b3;">retrieveSquadronIndex</span><span>(</span><span style="color:#bf616a;">squadronId</span><span>):
+</span><span>    unknown_8 = </span><span style="color:#d08770;">7
+</span><span>    </span><span style="color:#b48ead;">return </span><span>(squadronId &gt;&gt; </span><span style="color:#bf616a;">SQUADRON_INDEX_BIT </span><span>&amp; unknown_8) - </span><span style="color:#d08770;">1
+</span><span>
+</span><span>
+</span><span style="color:#b48ead;">def </span><span style="color:#8fa1b3;">retrieveSquadronPurpose</span><span>(</span><span style="color:#bf616a;">squadronId</span><span>):
+</span><span>    unknown_9 = </span><span style="color:#d08770;">7
+</span><span>    </span><span style="color:#b48ead;">return </span><span>squadronId &gt;&gt; </span><span style="color:#bf616a;">SQUADRON_PURPOSE_BIT </span><span>&amp; unknown_9
+</span><span>
+</span><span>
+</span><span style="color:#b48ead;">def </span><span style="color:#8fa1b3;">retrieveSquadronDeparture</span><span>(</span><span style="color:#bf616a;">squadronId</span><span>):
+</span><span>    unknown_10 = </span><span style="color:#d08770;">7
+</span><span>    </span><span style="color:#b48ead;">return </span><span>squadronId &gt;&gt; </span><span style="color:#bf616a;">SQUADRON_DEPARTURE_BIT </span><span>&amp; unknown_10
+</span><span>
+</span><span>
+</span><span style="color:#b48ead;">def </span><span style="color:#8fa1b3;">parseSquadronId</span><span>(</span><span style="color:#bf616a;">squadronId</span><span>):
+</span><span>    </span><span style="color:#b48ead;">return </span><span>(</span><span style="color:#bf616a;">retrieveSquadronIndex</span><span>(squadronId), </span><span style="color:#bf616a;">retrieveSquadronPurpose</span><span>(squadronId), </span><span style="color:#bf616a;">retrieveSquadronDeparture</span><span>(squadronId))
+</span><span>
+</span><span>
+</span><span style="color:#b48ead;">def </span><span style="color:#8fa1b3;">retrieveOwnerID</span><span>(</span><span style="color:#bf616a;">id</span><span>):
+</span><span>    </span><span style="color:#b48ead;">return </span><span style="color:#96b5b4;">id </span><span>&amp; </span><span style="color:#d08770;">4294967295</span><span style="color:#b48ead;">L
+</span><span>
+</span><span>
+</span><span style="color:#b48ead;">def </span><span style="color:#8fa1b3;">getPlaneName</span><span>(</span><span style="color:#bf616a;">params</span><span>, </span><span style="color:#bf616a;">planeType</span><span>):
+</span><span>    unknown_11 = PLANETYPE_2_PARAMSNAME.</span><span style="color:#bf616a;">get</span><span>(planeType)
+</span><span>    </span><span style="color:#b48ead;">if </span><span>planeType:
+</span><span>        </span><span style="color:#b48ead;">return </span><span>params.__dict__[unknown_11].planeType
+</span><span>    </span><span style="color:#b48ead;">return </span><span>planeType
+</span><span>
+</span><span>
+</span><span style="color:#b48ead;">def </span><span style="color:#8fa1b3;">getTorpedoingArea</span><span>--- </span><span style="color:#8fa1b3;">This code section failed</span><span>: ---
+</span><span>                </span><span style="color:#d08770;">0  </span><span style="color:#bf616a;">LOAD_GLOBAL           </span><span style="color:#d08770;">0  </span><span>&#39;</span><span style="color:#a3be8c;">getDirectionFromYaw</span><span>&#39;
+</span><span>                </span><span style="color:#d08770;">3  </span><span style="color:#bf616a;">LOAD_FAST             </span><span style="color:#d08770;">1  </span><span>&#39;</span><span style="color:#a3be8c;">attackDir</span><span>&#39;
+</span><span>                </span><span style="color:#d08770;">6  </span><span style="color:#bf616a;">LOAD_ATTR             </span><span style="color:#d08770;">1  </span><span>&#39;</span><span style="color:#a3be8c;">yaw</span><span>&#39;
+</span><span>                </span><span style="color:#d08770;">9  </span><span style="color:#bf616a;">LOAD_GLOBAL           </span><span style="color:#d08770;">2  </span><span>&#39;</span><span style="color:#a3be8c;">math</span><span>&#39;
+</span><span>               </span><span style="color:#d08770;">12  </span><span style="color:#bf616a;">LOAD_ATTR             </span><span style="color:#d08770;">3  </span><span>&#39;</span><span style="color:#a3be8c;">pi</span><span>&#39;
+</span><span>               </span><span style="color:#d08770;">15  </span><span style="color:#bf616a;">LOAD_CONST               </span><span style="color:#d08770;">2
+</span><span>               </span><span style="color:#d08770;">18  </span><span style="color:#bf616a;">BINARY_DIVIDE    
+</span><span>               </span><span style="color:#d08770;">19  </span><span style="color:#bf616a;">BINARY_ADD
+</span><span>               </span><span style="color:#d08770;">20  </span><span style="color:#bf616a;">CALL_FUNCTION_1       </span><span style="color:#d08770;">1  None
+</span><span>               </span><span style="color:#d08770;">23  </span><span style="color:#bf616a;">STORE_FAST            </span><span style="color:#d08770;">6  </span><span>&#39;</span><span style="color:#a3be8c;">unknown_14</span><span>&#39;
+</span><span>               </span><span style="color:#d08770;">26  </span><span style="color:#bf616a;">LOAD_GLOBAL           </span><span style="color:#d08770;">4  </span><span>&#39;</span><span style="color:#a3be8c;">min</span><span>&#39;
+</span><span>               </span><span style="color:#d08770;">29  </span><span style="color:#bf616a;">LOAD_CODE                </span><span>&lt;code_object </span><span style="color:#d08770;">369464740902</span><span>&gt;
+</span><span>               </span><span style="color:#d08770;">32  </span><span style="color:#bf616a;">MAKE_FUNCTION_0       </span><span style="color:#d08770;">0  None
+</span><span>               </span><span style="color:#d08770;">35  </span><span style="color:#bf616a;">LOAD_FAST             </span><span style="color:#d08770;">4  </span><span>&#39;</span><span style="color:#a3be8c;">formation</span><span>&#39;
+</span><span>               </span><span style="color:#d08770;">38  </span><span style="color:#bf616a;">LOAD_ATTR             </span><span style="color:#d08770;">5  </span><span>&#39;</span><span style="color:#a3be8c;">positions</span><span>&#39;
+</span><span>               </span><span style="color:#d08770;">41  </span><span style="color:#bf616a;">GET_ITER         
+</span><span>               </span><span style="color:#d08770;">42  </span><span style="color:#bf616a;">CALL_FUNCTION_1       </span><span style="color:#d08770;">1  None
+</span><span>               </span><span style="color:#d08770;">45  </span><span style="color:#bf616a;">CALL_FUNCTION_1       </span><span style="color:#d08770;">1  None
+</span><span>               </span><span style="color:#d08770;">48  </span><span style="color:#bf616a;">STORE_FAST            </span><span style="color:#d08770;">7  </span><span>&#39;</span><span style="color:#a3be8c;">unknown_15</span><span>&#39;
+</span><span>               </span><span style="color:#d08770;">51  </span><span style="color:#bf616a;">LOAD_GLOBAL           </span><span style="color:#d08770;">6  </span><span>&#39;</span><span style="color:#a3be8c;">max</span><span>&#39;
+</span><span>               </span><span style="color:#d08770;">54  </span><span style="color:#bf616a;">LOAD_CODE                </span><span>&lt;code_object </span><span style="color:#d08770;">369537115186</span><span>&gt;
+</span><span>               </span><span style="color:#d08770;">57  </span><span style="color:#bf616a;">MAKE_FUNCTION_0       </span><span style="color:#d08770;">0  None
+</span><span>               </span><span style="color:#d08770;">60  </span><span style="color:#bf616a;">LOAD_FAST             </span><span style="color:#d08770;">4  </span><span>&#39;</span><span style="color:#a3be8c;">formation</span><span>&#39;
+</span><span>               </span><span style="color:#d08770;">63  </span><span style="color:#bf616a;">LOAD_ATTR             </span><span style="color:#d08770;">5  </span><span>&#39;</span><span style="color:#a3be8c;">positions</span><span>&#39;
+</span><span>               </span><span style="color:#d08770;">66  </span><span style="color:#bf616a;">GET_ITER         
+</span><span>               </span><span style="color:#d08770;">67  </span><span style="color:#bf616a;">CALL_FUNCTION_1       </span><span style="color:#d08770;">1  None
+</span><span>               </span><span style="color:#d08770;">70  </span><span style="color:#bf616a;">CALL_FUNCTION_1       </span><span style="color:#d08770;">1  None
+</span><span>               </span><span style="color:#d08770;">73  </span><span style="color:#bf616a;">STORE_FAST            </span><span style="color:#d08770;">8  </span><span>&#39;</span><span style="color:#a3be8c;">unknown_16</span><span>&#39;
+</span><span>               </span><span style="color:#d08770;">76  </span><span style="color:#bf616a;">LOAD_FAST             </span><span style="color:#d08770;">8  </span><span>&#39;</span><span style="color:#a3be8c;">unknown_16</span><span>&#39;
+</span><span>               </span><span style="color:#d08770;">79  </span><span style="color:#bf616a;">LOAD_FAST             </span><span style="color:#d08770;">7  </span><span>&#39;</span><span style="color:#a3be8c;">unknown_15</span><span>&#39;
+</span><span>               </span><span style="color:#d08770;">82  </span><span style="color:#bf616a;">BINARY_SUBTRACT  
+</span><span>               </span><span style="color:#d08770;">83  </span><span style="color:#bf616a;">STORE_FAST            </span><span style="color:#d08770;">9  </span><span>&#39;</span><span style="color:#a3be8c;">unknown_17</span><span>&#39;
+</span><span>               </span><span style="color:#d08770;">86  </span><span style="color:#bf616a;">LOAD_FAST             </span><span style="color:#d08770;">9  </span><span>&#39;</span><span style="color:#a3be8c;">unknown_17</span><span>&#39;
+</span><span>               </span><span style="color:#d08770;">89  </span><span style="color:#bf616a;">LOAD_FAST             </span><span style="color:#d08770;">5  </span><span>&#39;</span><span style="color:#a3be8c;">currentPlaneCount</span><span>&#39;
+</span><span>               </span><span style="color:#d08770;">92  </span><span style="color:#bf616a;">BINARY_MULTIPLY  
+</span><span>               </span><span style="color:#d08770;">93  </span><span style="color:#bf616a;">LOAD_FAST             </span><span style="color:#d08770;">4  </span><span>&#39;</span><span style="color:#a3be8c;">formation</span><span>&#39;
+</span><span>               </span><span style="color:#d08770;">96  </span><span style="color:#bf616a;">LOAD_ATTR             </span><span style="color:#d08770;">7  </span><span>&#39;</span><span style="color:#a3be8c;">npositions</span><span>&#39;
+</span><span>               </span><span style="color:#d08770;">99  </span><span style="color:#bf616a;">BINARY_DIVIDE    
+</span><span>              </span><span style="color:#d08770;">100  </span><span style="color:#bf616a;">STORE_FAST           </span><span style="color:#d08770;">10  </span><span>&#39;</span><span style="color:#a3be8c;">unknown_18</span><span>&#39;
+</span><span>              </span><span style="color:#d08770;">103  </span><span style="color:#bf616a;">LOAD_FAST             </span><span style="color:#d08770;">0  </span><span>&#39;</span><span style="color:#a3be8c;">attackPoint</span><span>&#39;
+</span><span>              </span><span style="color:#d08770;">106  </span><span style="color:#bf616a;">LOAD_FAST            </span><span style="color:#d08770;">10  </span><span>&#39;</span><span style="color:#a3be8c;">unknown_18</span><span>&#39;
+</span><span>              </span><span style="color:#d08770;">109  </span><span style="color:#bf616a;">LOAD_CONST               </span><span style="color:#d08770;">2
+</span><span>              </span><span style="color:#d08770;">112  </span><span style="color:#bf616a;">BINARY_DIVIDE    
+</span><span>              </span><span style="color:#d08770;">113  </span><span style="color:#bf616a;">LOAD_GLOBAL           </span><span style="color:#d08770;">8  </span><span>&#39;</span><span style="color:#a3be8c;">PLANE_TORPEDO_CONE_HALF_WIDTH</span><span>&#39;
+</span><span>              </span><span style="color:#d08770;">116  </span><span style="color:#bf616a;">BINARY_SUBTRACT  
+</span><span>              </span><span style="color:#d08770;">117  </span><span style="color:#bf616a;">LOAD_FAST             </span><span style="color:#d08770;">6  </span><span>&#39;</span><span style="color:#a3be8c;">unknown_14</span><span>&#39;
+</span><span>              </span><span style="color:#d08770;">120  </span><span style="color:#bf616a;">BINARY_MULTIPLY  
+</span><span>              </span><span style="color:#d08770;">121  </span><span style="color:#bf616a;">BINARY_SUBTRACT  
+</span><span>              </span><span style="color:#d08770;">122  </span><span style="color:#bf616a;">STORE_FAST           </span><span style="color:#d08770;">11  </span><span>&#39;</span><span style="color:#a3be8c;">unknown_19</span><span>&#39;
+</span><span>              </span><span style="color:#d08770;">125  </span><span style="color:#bf616a;">LOAD_FAST             </span><span style="color:#d08770;">0  </span><span>&#39;</span><span style="color:#a3be8c;">attackPoint</span><span>&#39;
+</span><span>              </span><span style="color:#d08770;">128  </span><span style="color:#bf616a;">LOAD_FAST            </span><span style="color:#d08770;">10  </span><span>&#39;</span><span style="color:#a3be8c;">unknown_18</span><span>&#39;
+</span><span>              </span><span style="color:#d08770;">131  </span><span style="color:#bf616a;">LOAD_CONST               </span><span style="color:#d08770;">2
+</span><span>              </span><span style="color:#d08770;">134  </span><span style="color:#bf616a;">BINARY_DIVIDE    
+</span><span>              </span><span style="color:#d08770;">135  </span><span style="color:#bf616a;">LOAD_GLOBAL           </span><span style="color:#d08770;">8  </span><span>&#39;</span><span style="color:#a3be8c;">PLANE_TORPEDO_CONE_HALF_WIDTH</span><span>&#39;
+</span><span>              </span><span style="color:#d08770;">138  </span><span style="color:#bf616a;">BINARY_ADD       
+</span><span>              </span><span style="color:#d08770;">139  </span><span style="color:#bf616a;">LOAD_FAST             </span><span style="color:#d08770;">6  </span><span>&#39;</span><span style="color:#a3be8c;">unknown_14</span><span>&#39;
+</span><span>              </span><span style="color:#d08770;">142  </span><span style="color:#bf616a;">BINARY_MULTIPLY  
+</span><span>              </span><span style="color:#d08770;">143  </span><span style="color:#bf616a;">BINARY_ADD       
+</span><span>              </span><span style="color:#d08770;">144  </span><span style="color:#bf616a;">STORE_FAST           </span><span style="color:#d08770;">12  </span><span>&#39;</span><span style="color:#a3be8c;">unknown_20</span><span>&#39;
+</span><span>              </span><span style="color:#d08770;">147  </span><span style="color:#bf616a;">LOAD_FAST            </span><span style="color:#d08770;">11  </span><span>&#39;</span><span style="color:#a3be8c;">unknown_19</span><span>&#39;
+</span><span>              </span><span style="color:#d08770;">150  </span><span style="color:#bf616a;">LOAD_FAST            </span><span style="color:#d08770;">12  </span><span>&#39;</span><span style="color:#a3be8c;">unknown_20</span><span>&#39;
+</span><span>              </span><span style="color:#d08770;">153  </span><span style="color:#bf616a;">COMPARE_OP            </span><span style="color:#d08770;">2  </span><span>==
+</span><span>              </span><span style="color:#d08770;">156  </span><span style="color:#bf616a;">POP_JUMP_IF_FALSE   </span><span style="color:#d08770;">176  </span><span>&#39;</span><span style="color:#a3be8c;">to 176</span><span>&#39;
+</span><span>              </span><span style="color:#d08770;">159  </span><span style="color:#bf616a;">LOAD_FAST            </span><span style="color:#d08770;">12  </span><span>&#39;</span><span style="color:#a3be8c;">unknown_20</span><span>&#39;
+</span><span>              </span><span style="color:#d08770;">162  </span><span style="color:#bf616a;">LOAD_FAST             </span><span style="color:#d08770;">6  </span><span>&#39;</span><span style="color:#a3be8c;">unknown_14</span><span>&#39;
+</span><span>              </span><span style="color:#d08770;">165  </span><span style="color:#bf616a;">LOAD_CONST               </span><span style="color:#d08770;">0.001
+</span><span>              </span><span style="color:#d08770;">168  </span><span style="color:#bf616a;">BINARY_MULTIPLY  
+</span><span>              </span><span style="color:#d08770;">169  </span><span style="color:#bf616a;">INPLACE_ADD      
+</span><span>              </span><span style="color:#d08770;">170  </span><span style="color:#bf616a;">STORE_FAST           </span><span style="color:#d08770;">12  </span><span>&#39;</span><span style="color:#a3be8c;">unknown_20</span><span>&#39;
+</span><span>              </span><span style="color:#d08770;">173  </span><span style="color:#bf616a;">JUMP_FORWARD          </span><span style="color:#d08770;">0  </span><span>&#39;</span><span style="color:#a3be8c;">to 176</span><span>&#39;
+</span><span>            </span><span style="color:#d08770;">176_0  </span><span style="color:#bf616a;">COME_FROM           </span><span style="color:#d08770;">173  </span><span>&#39;</span><span style="color:#a3be8c;">173</span><span>&#39;
+</span><span>              </span><span style="color:#d08770;">176  </span><span style="color:#bf616a;">LOAD_FAST             </span><span style="color:#d08770;">0  </span><span>&#39;</span><span style="color:#a3be8c;">attackPoint</span><span>&#39;
+</span><span>              </span><span style="color:#d08770;">179  </span><span style="color:#bf616a;">LOAD_FAST             </span><span style="color:#d08770;">1  </span><span>&#39;</span><span style="color:#a3be8c;">attackDir</span><span>&#39;
+</span><span>              </span><span style="color:#d08770;">182  </span><span style="color:#bf616a;">LOAD_FAST             </span><span style="color:#d08770;">2  </span><span>&#39;</span><span style="color:#a3be8c;">planeParams</span><span>&#39;
+</span><span>              </span><span style="color:#d08770;">185  </span><span style="color:#bf616a;">LOAD_ATTR             </span><span style="color:#d08770;">9  </span><span>&#39;</span><span style="color:#a3be8c;">torpedoAimDist</span><span>&#39;
+</span><span>              </span><span style="color:#d08770;">188  </span><span style="color:#bf616a;">BINARY_MULTIPLY  
+</span><span>              </span><span style="color:#d08770;">189  </span><span style="color:#bf616a;">BINARY_ADD       
+</span><span>              </span><span style="color:#d08770;">190  </span><span style="color:#bf616a;">STORE_FAST           </span><span style="color:#d08770;">13  </span><span>&#39;</span><span style="color:#a3be8c;">unknown_21</span><span>&#39;
+</span><span>              </span><span style="color:#d08770;">193  </span><span style="color:#bf616a;">LOAD_FAST            </span><span style="color:#d08770;">13  </span><span>&#39;</span><span style="color:#a3be8c;">unknown_21</span><span>&#39;
+</span><span>              </span><span style="color:#d08770;">196  </span><span style="color:#bf616a;">LOAD_FAST             </span><span style="color:#d08770;">6  </span><span>&#39;</span><span style="color:#a3be8c;">unknown_14</span><span>&#39;
+</span><span>              </span><span style="color:#d08770;">199  </span><span style="color:#bf616a;">LOAD_FAST             </span><span style="color:#d08770;">3  </span><span>&#39;</span><span style="color:#a3be8c;">spreading</span><span>&#39;
+</span><span>              </span><span style="color:#d08770;">202  </span><span style="color:#bf616a;">BINARY_MULTIPLY  
+</span><span>              </span><span style="color:#d08770;">203  </span><span style="color:#bf616a;">LOAD_CONST               </span><span style="color:#d08770;">0.5
+</span><span>              </span><span style="color:#d08770;">206  </span><span style="color:#bf616a;">BINARY_MULTIPLY  
+</span><span>              </span><span style="color:#d08770;">207  </span><span style="color:#bf616a;">BINARY_SUBTRACT  
+</span><span>              </span><span style="color:#d08770;">208  </span><span style="color:#bf616a;">STORE_FAST           </span><span style="color:#d08770;">14  </span><span>&#39;</span><span style="color:#a3be8c;">unknown_22</span><span>&#39;
+</span><span>              </span><span style="color:#d08770;">211  </span><span style="color:#bf616a;">LOAD_FAST            </span><span style="color:#d08770;">13  </span><span>&#39;</span><span style="color:#a3be8c;">unknown_21</span><span>&#39;
+</span><span>              </span><span style="color:#d08770;">214  </span><span style="color:#bf616a;">LOAD_FAST             </span><span style="color:#d08770;">6  </span><span>&#39;</span><span style="color:#a3be8c;">unknown_14</span><span>&#39;
+</span><span>              </span><span style="color:#d08770;">217  </span><span style="color:#bf616a;">LOAD_FAST             </span><span style="color:#d08770;">3  </span><span>&#39;</span><span style="color:#a3be8c;">spreading</span><span>&#39;
+</span><span>              </span><span style="color:#d08770;">220  </span><span style="color:#bf616a;">BINARY_MULTIPLY  
+</span><span>              </span><span style="color:#d08770;">221  </span><span style="color:#bf616a;">LOAD_CONST               </span><span style="color:#d08770;">0.5
+</span><span>              </span><span style="color:#d08770;">224  </span><span style="color:#bf616a;">BINARY_MULTIPLY  
+</span><span>              </span><span style="color:#d08770;">225  </span><span style="color:#bf616a;">BINARY_ADD       
+</span><span>              </span><span style="color:#d08770;">226  </span><span style="color:#bf616a;">STORE_FAST           </span><span style="color:#d08770;">15  </span><span>&#39;</span><span style="color:#a3be8c;">unknown_23</span><span>&#39;
+</span><span>              </span><span style="color:#d08770;">229  </span><span style="color:#bf616a;">LOAD_FAST            </span><span style="color:#d08770;">11  </span><span>&#39;</span><span style="color:#a3be8c;">unknown_19</span><span>&#39;
+</span><span>              </span><span style="color:#d08770;">232  </span><span style="color:#bf616a;">LOAD_FAST            </span><span style="color:#d08770;">12  </span><span>&#39;</span><span style="color:#a3be8c;">unknown_20</span><span>&#39;
+</span><span>              </span><span style="color:#d08770;">235  </span><span style="color:#bf616a;">LOAD_FAST            </span><span style="color:#d08770;">14  </span><span>&#39;</span><span style="color:#a3be8c;">unknown_22</span><span>&#39;
+</span><span>              </span><span style="color:#d08770;">238  </span><span style="color:#bf616a;">LOAD_FAST            </span><span style="color:#d08770;">15  </span><span>&#39;</span><span style="color:#a3be8c;">unknown_23</span><span>&#39;
+</span><span>              </span><span style="color:#d08770;">241  </span><span style="color:#bf616a;">BUILD_TUPLE_4         </span><span style="color:#d08770;">4 
+</span><span>              </span><span style="color:#d08770;">244  </span><span style="color:#bf616a;">RETURN_VALUE     
+</span><span>               -</span><span style="color:#d08770;">1  </span><span style="color:#bf616a;">RETURN_LAST      
+</span><span>
+</span><span>Parse error at or near `</span><span style="color:#d08770;">None</span><span>&#39;</span><span style="color:#a3be8c;"> instruction at offset -1</span><span style="background-color:#bf616a;color:#2b303b;">
+</span><span>
+</span><span>
+</span><span style="color:#b48ead;">def </span><span style="color:#8fa1b3;">getBombingZone</span><span>(</span><span style="color:#bf616a;">planeParams</span><span>, </span><span style="color:#bf616a;">modifierParams</span><span>, </span><span style="color:#bf616a;">aimAccuracy</span><span>, </span><span style="color:#bf616a;">attackerStrength</span><span>=</span><span style="color:#d08770;">1.0</span><span>):
+</span><span>    unknown_24 = planeParams.maxSpread
+</span><span>    unknown_25 = planeParams.minSpread
+</span><span>    unknown_26 = </span><span style="color:#bf616a;">lerp</span><span>(unknown_24[</span><span style="color:#d08770;">0</span><span>], unknown_25[</span><span style="color:#d08770;">0</span><span>], aimAccuracy) * modifierParams.planeSpreadMultiplier
+</span><span>    unknown_27 = </span><span style="color:#bf616a;">lerp</span><span>(unknown_24[</span><span style="color:#d08770;">1</span><span>], unknown_25[</span><span style="color:#d08770;">1</span><span>], aimAccuracy) * modifierParams.planeSpreadMultiplier
+</span><span>    </span><span style="color:#d08770;">0 </span><span>= planeParams.outerSalvoSize[</span><span style="color:#d08770;">0</span><span>] * unknown_26 * attackerStrength
+</span><span>    unknown_28 = planeParams.outerSalvoSize[</span><span style="color:#d08770;">1</span><span>] * unknown_27
+</span><span>    unknown_29 = planeParams.innerSalvoSize[</span><span style="color:#d08770;">0</span><span>] * unknown_26 * attackerStrength
+</span><span>    unknown_30 = planeParams.innerSalvoSize[</span><span style="color:#d08770;">1</span><span>] * unknown_27
+</span><span>    </span><span style="color:#b48ead;">return </span><span>(</span><span style="color:#d08770;">0</span><span>, unknown_28, unknown_29, unknown_30)
+</span><span>
+</span><span>
+</span><span style="color:#65737e;"># snip
+</span></code></pre>
+<p>Clearly some functions still fail to decompile, but it may be enough to just read the instructions at this point to understand the intent.</p>
+<p>And code objects that go from this:</p>
+<a href="&#x2F;img&#x2F;wows-obfuscation&#x2F;simple_obfuscation_example.svg"><img src="&#x2F;img&#x2F;wows-obfuscation&#x2F;simple_obfuscation_example.svg" width="500" height="500" /></a>
+<p>To this:</p>
+<a href="&#x2F;img&#x2F;wows-obfuscation&#x2F;simple_deobfuscation_example.svg"><img src="&#x2F;img&#x2F;wows-obfuscation&#x2F;simple_deobfuscation_example.svg" width="500" height="500" /></a><h2 id="closing-thoughts">Closing Thoughts</h2>
+<p>There's one common theme in this post that I hope some readers picked up on: we are constantly battling the <em>decompiler's</em> ability to unravel code based off of heuristics instead of battling the obfuscator injecting garbage. The const predicates for example aren't even that big of a deal -- they just insert false control flow that at a <em>source</em> level is fairly straightforward to see is garbage.</p>
+<p>However, this false control flow is enough to throw off the decompiler's ability to figure out a <em>single</em> source code pattern that results in the entire code object failing to decompile. This isn't a jab at <code>uncompyle</code> either -- it's a great tool that works fairly well considering there's zero competition in this space. However, I think that if I were to solve this problem from scratch in 2023 I'd solve it very differently by working on a better decompiler that erodes away mapping of 1:1 source code to bytecode, and instead focuses on rebuilding source with the same functional semantics.</p>
+<p>As reverse engineers we don't really care about how the code was originally written, we just want to understand its intent at a higher level.</p>
+<h2 id="thanks">Thanks</h2>
+<p>Thank you, reader, for making it this far. I'd like to extend thanks to the following people for their support in this research/providing deobfuscator feedback:</p>
+<ul>
+<li>lpcvoid (without his initial blog post I wouldn't have been nearly as motivated to go down this endeavour)</li>
+<li>Track</li>
+<li>TTaro</li>
+<li>901234</li>
+<li>notyourfather</li>
+<li>gabe_k</li>
+<li>Scout1Treia</li>
+<li>EdibleBug</li>
+</ul>
+
+</main>
+<p>
+</p>
+<footer>
+    Made with <a href="https://codeberg.org/alanpearce/zola-bearblog">Zola ʕ•ᴥ•ʔ Bear</a>
+</footer>
+</body>
+</html>

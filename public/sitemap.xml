@@ -8,15 +8,12 @@
         <lastmod>2016-04-22T15:01:55-07:00</lastmod>
     </url>
     <url>
-        <loc>https://landaire.net/asan-one-weird-trick/</loc>
-        <lastmod>2023-02-10</lastmod>
-    </url>
-    <url>
         <loc>https://landaire.net/cve-2016-1902/</loc>
         <lastmod>2016-01-24T15:48:01-08:00</lastmod>
     </url>
     <url>
-        <loc>https://landaire.net/page/1/</loc>
+        <loc>https://landaire.net/one-weird-asan-trick/</loc>
+        <lastmod>2023-02-10</lastmod>
     </url>
     <url>
         <loc>https://landaire.net/phpbb-3-1-7-security-update/</loc>
@@ -28,5 +25,9 @@
     </url>
     <url>
         <loc>https://landaire.net/tags/</loc>
+    </url>
+    <url>
+        <loc>https://landaire.net/world-of-warships-deobfuscation/</loc>
+        <lastmod>2023-11-08</lastmod>
     </url>
 </urlset>

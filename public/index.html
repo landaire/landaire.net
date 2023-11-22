@@ -1,180 +1,301 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-  
-<title>Home | lander&#x27;s posts</title>
-
-
-
-<meta property="og:title" content="Home">
-
-
-
-<meta name="author" content="@landaire">
-
-
-<meta property="og:locale" content="en-US">
-
-
-<meta name="description" content="nothing interesting">
-<meta property="og:description" content="nothing interesting">
+  <title>lander&#x27;s posts</title>
+  <meta name="title" content="lander&#x27;s posts" />
+<meta name="twitter:title" content="lander&#x27;s posts" />
+<meta name="og:twitter:title" content="lander&#x27;s posts" />
+<meta name="description"
+    content="nothing interesting" />
+<meta name="og:description"
+    content="nothing interesting" />
+<meta name="twitter:description"
+    content="nothing interesting" />
 
 
 
-<link rel="canonical" href="https://landaire.net/">
-<meta property="og:url" content="https://landaire.net/">
-
-
-
-<meta property="og:site_name" content="lander&#x27;s posts" />
-
-
-
-
-
-
-
-
-
-
-
-  <meta name="twitter:card" content="summary">
-
-
-
-  <meta property="twitter:title" content="Home">
-
-
-
-
-
-
-
-
-<script type="application/ld+json">
-{
-  "author": {
-    "@type":"Person",
-	  "name":"@landaire",
-  },
-  "description": "nothing interesting",
-  "url": "https://landaire.net/",
-  "@context":"https://schema.org",
-  "@type": "WebSite",
-  "headline": "Home"
-  
+  <meta name="referrer" content="no-referrer-when-downgrade">
+  <style>@font-face {
+font-family: 'BerkeleyMono';
+src: url('/font/BerkeleyMono-Regular.woff2') format('woff2'),
+url('/font/BerkeleyMono-Regular.woff') format('woff');
 }
-</script>
 
-  <link rel="stylesheet" href="https://landaire.net/main.css">
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Libre+Baskerville:400,400i,700">
+body {
+font-family: Verdana, sans-serif;
+margin: auto;
+padding: 20px;
+max-width: 720px;
+text-align: left;
+background-color: #fff;
+word-wrap: break-word;
+overflow-wrap: break-word;
+line-height: 1.5;
+color: #444;
+}
 
-  <link rel="icon" type="image/png" sizes="32x32" href="https://landaire.net/assets/favicon-32x32.png">
-  <link rel="icon" type="image/png" sizes="16x16" href="https://landaire.net/assets/favicon-16x16.png">
-  <link rel="apple-touch-icon" sizes="180x180" href="https://landaire.net/assets/apple-touch-icon.png">
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+strong,
+b {
+color: #222;
+}
 
-  
+a {
+color: #3273dc;
+}
 
-  
+.title {
+text-decoration: none;
+border: 0;
+}
 
-  
-  
-</head>
+.title span {
+font-weight: 400;
+}
 
+nav a {
+margin-right: 10px;
+}
+
+textarea {
+width: 100%;
+font-size: 1rem;
+}
+
+input {
+font-size: 1rem;
+}
+
+main,article {
+line-height: 1.6;
+}
+
+table {
+width: 100%;
+}
+
+img {
+max-width: 100%;
+}
+
+code {
+padding: 2px 5px;
+background-color: #f2f2f2;
+}
+
+pre code {
+color: #222;
+display: block;
+padding: 20px;
+white-space: pre-wrap;
+font-size: 0.875rem;
+overflow-x: auto;
+}
+
+div.highlight pre {
+background-color: initial;
+color: initial;
+}
+
+div.highlight code {
+background-color: unset;
+color: unset;
+}
+
+blockquote {
+border-left: 1px solid #999;
+color: #222;
+padding-left: 20px;
+font-style: italic;
+}
+
+footer {
+padding: 25px;
+text-align: center;
+}
+
+.helptext {
+color: #222;
+font-size: small;
+}
+
+.errorlist {
+color: #eba613;
+font-size: small;
+}
+
+/* blog posts */
+ul.blog-posts {
+list-style-type: none;
+padding: unset;
+}
+
+ul.blog-posts li {
+display: flex;
+}
+
+ul.blog-posts li span {
+flex: 0 0 130px;
+}
+
+ul.blog-posts li a:visited {
+color: #8b6fcb;
+}
+
+@media (prefers-color-scheme: dark) {
+body {
+background-color: #333;
+color: #ddd;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+strong,
+b {
+color: #eee;
+}
+
+a {
+color: #8cc2dd;
+}
+
+code {
+background-color: #222;
+}
+
+pre code {
+color: #ddd;
+}
+
+blockquote {
+color: #ccc;
+}
+
+textarea,
+input {
+background-color: #252525;
+color: #ddd;
+}
+
+.helptext {
+color: #aaa;
+}
+}
+
+.header-block {
+display: flex;
+justify-content: center;
+}
+
+.header-img {
+margin-right: 1rem ;
+}
+
+code, code * {
+font-family: 'BerkeleyMono', monospace;
+font-variant-ligatures: none;
+}</style>
+  </head>
 <body>
-  
-  <nav class="nav">
-    <div class="nav-container">
-      <a href="https://landaire.net">
-        <h2 class="nav-title">lander&#x27;s posts</h2>
-      </a>
-      <ul>
-        
-          
-            <li><a href="https://landaire.net"></a></li>
-          
-        
-      </ul>
-    </div>
+  <header>
+  <a href="https:&#x2F;&#x2F;landaire.net" class="title">
+    <h2>lander&#x27;s posts</h2>
+  </a>
+  <nav>
+    <a href="https:&#x2F;&#x2F;landaire.net">Home</a>
   </nav>
-  
+</header>
 
-  <main>
+<main>
+  <ul class="blog-posts">
     
-
-	<div class="catalogue">
-		<a href="https://landaire.net/asan-one-weird-trick/" class="catalogue-item">
-  <div>
-    <span class="catalogue-pinned">Pinned &middot;</span>
-    <time datetime="2023-02-10" class="catalogue-time">February 10, 2023</time>
-    <h1 class="catalogue-title">One Weird Trick to Improve Bug Finding With ASAN</h1>
-    <div class="catalogue-line"></div>
-    <p>ASAN Primer
-If you're already an ASAN expert, feel free to skip to the next section.
-AddressSanitizer (ASAN) is an extremely useful tool in software testing, debugging, and security testing for finding memory safety issues in native applications. It's extremely straightforward to…</p>
-  </div>
-</a><a href="https://landaire.net/reversing-yaesu-firmware-encryption/" class="catalogue-item">
-  <div>
-    <span class="catalogue-pinned">Pinned &middot;</span>
-    <time datetime="2021-12-27" class="catalogue-time">December 27, 2021</time>
-    <h1 class="catalogue-title">Reverse Engineering Yaesu FT-70D Firmware Encryption</h1>
-    <div class="catalogue-line"></div>
-    <p>Background
-Ham radios are a fun way of learning how the radio spectrum works, and more importantly: they're embedded devices that may run weird chips/firmware! I got curious how easy it'd be to hack my Yaesu FT-70D, so I started doing some research. The only existing resource I c…</p>
-  </div>
-</a><a href="https://landaire.net/apple-imageio-dos/" class="catalogue-item">
-  <div>
-    <span class="catalogue-pinned">Pinned &middot;</span>
-    <time datetime="2016-04-22T15:01:55-07:00" class="catalogue-time">April 22, 2016</time>
-    <h1 class="catalogue-title">Apple ImageIO Denial of Service</h1>
-    <div class="catalogue-line"></div>
-    <p>Last Updated: April 5, 2017 to address some incompleteness and errors. You can view the revision history here.
-
-Application Services is a framework in iOS and OS X which provides what's known as the Image I/O framework. ImageIO itself is a collection of utilities and data types f…</p>
-  </div>
-</a><a href="https://landaire.net/phpbb-3-1-7-security-update/" class="catalogue-item">
-  <div>
-    <span class="catalogue-pinned">Pinned &middot;</span>
-    <time datetime="2016-01-25T22:05:08-08:00" class="catalogue-time">January 25, 2016</time>
-    <h1 class="catalogue-title">Finding a CSRF vulnerability in phpBB</h1>
-    <div class="catalogue-line"></div>
-    <p>The phpBB team released phpBB version 3.1.7-PL1
-on Jan 11, 2016 which fixed a CSRF issue I found in the admin control panel BBCode
-creation form. Since BBCode is basically whitelisted HTML created by admins this
-CSRF vulnerability could allow an attacker to inject arbitrary HTML …</p>
-  </div>
-</a><a href="https://landaire.net/cve-2016-1902/" class="catalogue-item">
-  <div>
-    <span class="catalogue-pinned">Pinned &middot;</span>
-    <time datetime="2016-01-24T15:48:01-08:00" class="catalogue-time">January 24, 2016</time>
-    <h1 class="catalogue-title">CVE-2016-1902: Symfony SecureRandom</h1>
-    <div class="catalogue-line"></div>
-    <p>Overview
-Recently the Symfony project published a security advisory
-to the SecureRandom
-class in their Security component that affects Symfony versions 2.3.0-2.3.36,
-2.6.0-2.6.12, 2.7.0-2.7.8. On most sane systems there is no problem, but
-in the event that something goes wrong th…</p>
-  </div>
-</a>
-	</div>
-	<div class="pagination">
-		
-		
-		
-	</div>
-
-
-  </main>
-
-  
-  <footer>
-    <span>&copy; 2021 Lander Brandt. Made with <a href="https://www.getzola.org">Zola</a> using the <a
-          href="https://github.com/aaranxu/tale-zola">Tale-Zola</a> theme.</span>
-  </footer>
-  
+    <li>
+      <span>
+        <i>
+          <time datetime=' 2023-11-08T00:00:00+00:00' pubdate>
+            08 Nov, 2023
+          </time>
+        </i>
+      </span>
+      <a href="https:&#x2F;&#x2F;landaire.net&#x2F;world-of-warships-deobfuscation&#x2F;">Deobfuscating World of Warships&#x27; Python Scripts</a>
+    </li>
+    
+    <li>
+      <span>
+        <i>
+          <time datetime=' 2023-02-10T00:00:00+00:00' pubdate>
+            10 Feb, 2023
+          </time>
+        </i>
+      </span>
+      <a href="https:&#x2F;&#x2F;landaire.net&#x2F;one-weird-asan-trick&#x2F;">One Weird Trick to Improve Bug Finding With ASAN</a>
+    </li>
+    
+    <li>
+      <span>
+        <i>
+          <time datetime=' 2021-12-27T00:00:00+00:00' pubdate>
+            27 Dec, 2021
+          </time>
+        </i>
+      </span>
+      <a href="https:&#x2F;&#x2F;landaire.net&#x2F;reversing-yaesu-firmware-encryption&#x2F;">Reverse Engineering Yaesu FT-70D Firmware Encryption</a>
+    </li>
+    
+    <li>
+      <span>
+        <i>
+          <time datetime=' 2016-04-22T15:01:55-07:00' pubdate>
+            22 Apr, 2016
+          </time>
+        </i>
+      </span>
+      <a href="https:&#x2F;&#x2F;landaire.net&#x2F;apple-imageio-dos&#x2F;">Apple ImageIO Denial of Service</a>
+    </li>
+    
+    <li>
+      <span>
+        <i>
+          <time datetime=' 2016-01-25T22:05:08-08:00' pubdate>
+            25 Jan, 2016
+          </time>
+        </i>
+      </span>
+      <a href="https:&#x2F;&#x2F;landaire.net&#x2F;phpbb-3-1-7-security-update&#x2F;">Finding a CSRF vulnerability in phpBB</a>
+    </li>
+    
+    <li>
+      <span>
+        <i>
+          <time datetime=' 2016-01-24T15:48:01-08:00' pubdate>
+            24 Jan, 2016
+          </time>
+        </i>
+      </span>
+      <a href="https:&#x2F;&#x2F;landaire.net&#x2F;cve-2016-1902&#x2F;">CVE-2016-1902: Symfony SecureRandom</a>
+    </li>
+    
+  </ul>
+  <small>
+    <div>
+      
+      
+    </div>
+  </small>
+</main>
+<footer>
+    Made with <a href="https://codeberg.org/alanpearce/zola-bearblog">Zola ʕ•ᴥ•ʔ Bear</a>
+</footer>
 </body>
 </html>
