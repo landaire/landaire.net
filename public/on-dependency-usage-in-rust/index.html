@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>On Dependency Usage in Rust | lander&#x27;s posts</title>
+  <meta name="title" content="On Dependency Usage in Rust" />
+<meta name="twitter:title" content="On Dependency Usage in Rust" />
+<meta name="og:twitter:title" content="On Dependency Usage in Rust" />
+<meta name="description"
+    content="Rust and Node aren&#x27;t bad for encouraging dependency use -- your favorite language&#x27;s tools just suck." />
+<meta name="og:description"
+    content="Rust and Node aren&#x27;t bad for encouraging dependency use -- your favorite language&#x27;s tools just suck." />
+<meta name="twitter:description"
+    content="Rust and Node aren&#x27;t bad for encouraging dependency use -- your favorite language&#x27;s tools just suck." />
+
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content=" 2024-06-03T00:00:00+00:00">
+
+
+
+  <meta name="referrer" content="no-referrer-when-downgrade">
+  <link rel="alternate" type="application/atom+xml" title="lander&#x27;s posts" href="https://landaire.net/atom.xml">
+  <style>@font-face {
+font-family: 'BerkeleyMono';
+src: url('/font/BerkeleyMono-Regular.woff2') format('woff2'),
+url('/font/BerkeleyMono-Regular.woff') format('woff');
+}
+
+body {
+font-family: Verdana, sans-serif;
+margin: auto;
+padding: 20px;
+max-width: 720px;
+text-align: left;
+background-color: #fff;
+word-wrap: break-word;
+overflow-wrap: break-word;
+line-height: 1.5;
+color: #444;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+strong,
+b {
+color: #222;
+}
+
+a {
+color: #3273dc;
+}
+
+.title {
+text-decoration: none;
+border: 0;
+}
+
+.title span {
+font-weight: 400;
+}
+
+nav a {
+margin-right: 10px;
+}
+
+textarea {
+width: 100%;
+font-size: 1rem;
+}
+
+input {
+font-size: 1rem;
+}
+
+main,article {
+line-height: 1.6;
+}
+
+table {
+width: 100%;
+}
+
+img {
+max-width: 100%;
+}
+
+code {
+padding: 2px 5px;
+background-color: #f2f2f2;
+}
+
+pre code {
+color: #222;
+display: block;
+padding: 20px;
+white-space: pre-wrap;
+font-size: 0.875rem;
+overflow-x: auto;
+}
+
+div.highlight pre {
+background-color: initial;
+color: initial;
+}
+
+div.highlight code {
+background-color: unset;
+color: unset;
+}
+
+blockquote {
+border-left: 1px solid #999;
+color: #222;
+padding-left: 20px;
+font-style: italic;
+}
+
+footer {
+padding: 25px;
+text-align: center;
+}
+
+.helptext {
+color: #222;
+font-size: small;
+}
+
+.errorlist {
+color: #eba613;
+font-size: small;
+}
+
+/* blog posts */
+ul.blog-posts {
+list-style-type: none;
+padding: unset;
+}
+
+ul.blog-posts li {
+display: flex;
+}
+
+ul.blog-posts li span {
+flex: 0 0 130px;
+}
+
+ul.blog-posts li a:visited {
+color: #8b6fcb;
+}
+
+@media (prefers-color-scheme: dark) {
+body {
+background-color: #333;
+color: #ddd;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+strong,
+b {
+color: #eee;
+}
+
+a {
+color: #8cc2dd;
+}
+
+code {
+background-color: #222;
+}
+
+pre code {
+color: #ddd;
+}
+
+blockquote {
+color: #ccc;
+}
+
+textarea,
+input {
+background-color: #252525;
+color: #ddd;
+}
+
+.helptext {
+color: #aaa;
+}
+}
+
+.header-block {
+display: flex;
+justify-content: center;
+}
+
+.header-img {
+margin-right: 1rem ;
+}
+
+code, code * {
+font-family: 'BerkeleyMono', monospace;
+font-variant-ligatures: none;
+}</style>
+  </head>
+<body>
+  <header>
+  <a href="https:&#x2F;&#x2F;landaire.net" class="title">
+    <h2>lander&#x27;s posts</h2>
+  </a>
+  <nav>
+    <a href="https:&#x2F;&#x2F;landaire.net">Home</a>
+  </nav>
+</header>
+
+
+  <h1>On Dependency Usage in Rust</h1>
+</div>
+<p>
+  <i>
+    <time datetime=' 2024-06-03T00:00:00+00:00' pubdate>03 Jun, 2024</time>
+  </i>
+</p>
+<main>
+  <p><em>Rust and JS aren't bad for encouraging dependency use -- your favorite language's tools just suck.</em></p>
+<h2 id="context">Context</h2>
+<p>A couple months back I read <a href="https://scribe.rip/@john_25313/c-isnt-a-hangover-rust-isn-t-a-hangover-cure-580c9b35b5ce">&quot;C isn't a Hangover; Rust isn't a Hangover Cure&quot;</a> (<a href="https://medium.com/@john_25313/c-isnt-a-hangover-rust-isn-t-a-hangover-cure-580c9b35b5ce">original Medium link</a>) by John Viega. I <a href="https://x.com/landaire/status/1782890213146083625">responded to the post</a> already on Twitter (sometimes known as X) and in hindsight should have just written a blog post to begin with since the platform is so terrible for longform comment.</p>
+<p>What follows is hopefully a more organized, digestable, and better response to John's post than what I wrote on Twitter. If you haven't read his post, I recommend giving it a read for full context instead of reading just what I've decided to directly respond to.</p>
+<p>John's post goes into some concerns about using Rust and if Rust is really the right choice over something GC'd, and covers a few angles including whether memory safety really matters for you, what language best fits your <em>team</em>, and something that came up multiple times is dependency usage.</p>
+<p>I disagree with some of the arguments John made surrounding dependencies and I frequently hear similar sentiments said by crowds who are anti-Rust. The idea that a program is less desirable or less secure because it has more dependencies. I find these arguments to be an easy jab lacking substance, and wanted to take an opportunity to challenge them.</p>
+<p>My big complaint with John's points is that he spells out negatives but ignores most positives, instead telling the reader to figure those out for themselves.</p>
+<p>It's important to understand who I am for a frame of reference: my background is in security and I first learned to program in C# making tools for Xbox 360 modding. That involved some reverse engineering and learning C++ for writing trainers/tools/cheats or whatever stuff would have to run on the console. Following my Xbox hacking in my teens, I professionally did web dev for some years (PHP), then web security, then hypervisor security at Microsoft, and now native code security focused on mobile applications. With the exception of my ~3 years in professional web dev, my title has always had &quot;Security Engineer&quot; in it -- not &quot;Software Engineer&quot;. I sure as shit write a lot of code though.</p>
+<p>I was entirely self-taught in programming at age 13 mostly through following online tutorials, and got a bachelor's degree in computer science.</p>
+<p>My language of choice for about 8 years now has been Rust. This was settled upon after trying Go, D, Python, and some other languages inbetween. I am nobody in C/C++ circles and I'm a nobody in Rust circles, but I do pay close attention to the Rust community because I love the language.</p>
+<h2 id="why-are-dependencies-seen-as-insecure">Why are dependencies seen as insecure?</h2>
+<p>John talks about this at good length and it's worth reading his thoughts. If you're too lazy to do so, I think it can be sufficiently summarized as:</p>
+<ol>
+<li>&quot;Code review is a lot harder to do well than writing code&quot;</li>
+<li>Dependencies can come from anyone and can generally be contributed to by anyone. Therefore the more dependencies you have, the larger your implicit circle of trust, and any break in that circle breaks your security. They become a single point of failure.</li>
+<li>You trust the code you write, and you know the code you write.</li>
+</ol>
+<p>On #1, I don't agree -- at least not broadly. It's probably true for small bits of code that you have the technical know-how to write yourself, but in memory-safe langauges what's the worst thing you can miss in a code review of something that's not technically complicated? Probably minor bugs that would cause a DoS. So you bring in a dependency that you didn't audit super closely and now you have a DoS in your application. Depends on your threat model how important this is to you, and whether that impacts your mental quality rating of the dependency.</p>
+<p>On #2 I mostly agree. You are opening up your circle of trust, but done right you can protect yourself. The <a href="https://en.wikipedia.org/wiki/Npm_left-pad_incident">npm left-pad incident</a> is a prime example of what can go wrong from even a non-malicious dependency failure.</p>
+<p>In the left-pad incident a package named &quot;left-pad&quot; was removed from the npm registry causing widespread build failures for almost every node.js application. The broad usage of this dependency shocked people since it was less than 50 lines of code and could be written by anyone.</p>
+<p>If you're pulling in a dependency that's <em>already</em> compromised then you're a bit late, but for avoiding <em>future</em> compromise you can:</p>
+<ul>
+<li>Use a package service that does not delete yanked dependencies. This should only be possible in extremely rare scenarios where e.g. someone's private information was exposed. crates.io, Rust's default package source, <a href="https://crates.io/policies">does not permit deletion</a>.</li>
+<li>Commit lockfiles to ensure that builds are reproducible, the same dependencies are pulled every time, and a future compromise of a dependency doesn't impact you unless you explicitly update. This is the default behavior for Cargo and npm. The lockfile will also ensure that the dependency's location is preserved, preventing dependency substitution attacks and should ensure that with the first point above that even a yanked dependency can still be resolved.</li>
+<li>Vendor dependencies so that you have a true complete snapshot of things without relying on 3rd parties. This weighs a lot more and is harder to manage over time but is an immediate solution to both of the above points.</li>
+</ul>
+<p>On #3, sure. This is reasonable, but there are costs to writing that code that I'll cover later on.</p>
+<h2 id="just-because-c-c-users-suffer-doesn-t-mean-everyone-else-has-to">Just because C/C++ users suffer doesn't mean everyone else has to</h2>
+<p>I'm going to quote a few of John's paragraphs for full context and then dissect some of them one-by-one:</p>
+<blockquote>
+<p>Rust makes it easy to pull in outside dependencies, and much like in the JavaScript ecosystem, it seems to have encouraged lots of tiny dependencies. That makes it a lot harder to monitor and manage the problem.</p>
+<p>But Rust’s situation is even worse than in most languages, in that core Rust libraries (major libraries officially maintained by the Rust project) make heavy use of third party dependencies. The project needs to take ownership and provide oversight for their libraries.</p>
+<p>To me, this has long been one of the biggest risks in software. I can write C code that is reasonably defensive, but I have a hard time trusting any single dependency I use, never mind scaling that out.</p>
+<p>Properly securing your dependency supply chain is a much harder problem than writing safe C code. Personally, I only pull in dependencies beyond standard libraries if the work I’d have to do in order to credibly replace the functionality is so great that, if I didn’t bring in a dependency, I would choose not to do the work.</p>
+<p>C is a lot better than Rust in this regard, but it’s not particularly great. Partially, that’s because the C standard libraries (which I am always willing to use; the core language implementation and runtime is a given) are not at all extensive. People who write a lot of C end up building things themselves once and keeping them around and adapting them for decades, including basic data structures like hash tables.</p>
+</blockquote>
+<p>First of all, I strongly disagree with the sentiment that securing your dependency supply chain is harder than writing safe C/C++ code.</p>
+<p>You have to be at least a moderately advanced user in C++/core memory safety ideas to come to the realization that modifying a container while iterating it with iterators is a bad idea, or that there are subtly different ways to zero-initialize a structure that result in subtly different ways of it being zero-initialized (which may or may not include its padding), or that <a href="https://stackoverflow.com/a/31774802/455678">some types of pointer arithmetic/comparisons are undefined behavior</a>.</p>
+<p>You don't need to be an advanced programmer to do a short sniff test to see if a dependency you're bringing in to your application looks fairly widely used and trusted by a community. Sure, the XZ backdoor is an extreme example of even experts who were <em>members of the project</em> missed something snuck in over time, but this is not what we're talking about here.</p>
+<blockquote>
+<p>Rust makes it easy to pull in outside dependencies</p>
+</blockquote>
+<p>Honestly? <em>Thank god</em>.</p>
+<p>While C/C++ applications generally require fewer dependencies, most of the time you're relying on the project maintainer to provide you with a list of those dependencies and how to install them with your platform's preferred package manager.</p>
+<p>Something that I always find myself saying when try to build a C/C++ application from source is &quot;shit I'm missing a header&quot; and general complaints about the build tools themselves. And of course the build/configuration tool tells you what you lack but doesn't tell you what you need to install because that's not its responsibility. The build tool may support building on your favorite OS, but it doesn't know how to install packages on that OS or even <em>what</em> the package is.</p>
+<p>So you're left with a terrible error message that can leave you wondering &quot;Do I need to install lib-dev-whatever2 or just lib-whatever2? Is this even available via my OS's package manager?&quot;</p>
+<p>Don't forget all of the dependencies you need to install just to install the dependency too: pkgconf, autoconf, autotools, ninja, cmake, whatever, and any other libraries this single dependency may rely on. Kicking the problem into a Dockerfile is also not a good substitution for a quality build tool.</p>
+<p>The developer experience surrounding dependencies in C/C++ is so awful that you just default to not using any at all. Or you bring in a &quot;header-only library&quot; that makes integration easy because bringing in multiple external source/header files makes people want to turn off their computer and consider another career.</p>
+<blockquote>
+<p>[Easy dependency usage] seems to have encouraged lots of tiny dependencies. That makes it a lot harder to monitor and manage the problem.</p>
+</blockquote>
+<p>I disagree that the dependency story becomes harder to manage. There are multiple tools to monitor and manage your dependency usage in Rust:</p>
+<ul>
+<li><a href="https://doc.rust-lang.org/cargo/commands/cargo-tree.html">cargo-tree</a> can tell you your dependency tree</li>
+<li><a href="https://github.com/geiger-rs/cargo-geiger">cargo-geiger</a> can tell you if any of your dependencies in the graph use <code>unsafe{}</code></li>
+<li><a href="https://github.com/cackle-rs/cackle">cargo-acl</a> can tell you which crates use <code>unsafe{}</code>, run build scripts to see if any use network/filesystem, and provides you with API usage information to see if a crate is doing things unexpected. It can even sandbox the build tools.</li>
+<li><a href="https://blog.rust-lang.org/inside-rust/2020/01/23/Introducing-cargo-audit-fix-and-more.html">cargo-audit</a> can tell you if any of your crates are affected by a known security vulnerability and fix the used package version automatically.</li>
+</ul>
+<p>These are all possible because Rust's tooling ecosystem is so good. These are not things that are run by default so the argument is a bit weaker, but the fact that they exist means you have the option of using them if you want to. For example, I've seen many CI pipelines that use <code>cargo-audit</code> to ensure vulnerable crates aren't being used.</p>
+<blockquote>
+<p>People who write a lot of C end up building things themselves once and keeping them around and adapting them for decades, including basic data structures like hash tables.</p>
+</blockquote>
+<p>I see this as a bad thing. You're probably going to write bugs and it's going to be hard to fix affected applications. No proper version tracking or update mechanism means that depending on how you use and manage this ad-hoc dependency, tracking where it's used and patching affected programs might be difficult.</p>
+<p>A hash table is also not necessarily a &quot;basic&quot; data structure but I would definitely consider it a <em>common</em> data structure. Common data structures and algorithms can still have bugs, and there are many examples of this (and if it's so common why isn't it in the stdlib?). No intent here to shame these folks, but just some examples: <a href="https://rustsec.org/packages/smallvec.html">smallvec</a>, <a href="https://blog.isosceles.com/the-webp-0day/">libwebp's Huffman tree decoding</a>, and <a href="https://www.openwall.com/lists/oss-security/2024/01/30/7">glibc's <code>qsort()</code></a>. (I'm aware that glibc and libwebp would typically be installed using your distro's package manager but that's besides the point.)</p>
+<p>So why are we shooting ourselves in the foot by making it difficult to track and manage our dependencies for C/C++, including even our <em>own</em> first-party dependencies?</p>
+<p><a href="https://x.com/Lucretiel/status/1772865033757679892">@Lucretiel summarized this same sentiment fairly well on Twitter</a>:</p>
+<blockquote>
+<p>Quick reminder that I C doesn't have a culture of minimal dependencies because of some kind of ingrained strong principles in its community, C has a culture of minimal dependencies because adding a dependency in C is a pain in the fucking ass.</p>
+<p>Rust and Node.js have smaller projects and deeper dependency trees than C++ or Python for literally no other reason than the fact that the former languages make it very easy to create, publish, distribute, and declare dependencies.</p>
+<p>This is systemic incentives 101.</p>
+</blockquote>
+<h2 id="rust-isn-t-as-batteries-included-as-other-languages">Rust isn't as &quot;batteries included&quot; as other languages</h2>
+<p>One point John makes is:</p>
+<blockquote>
+<p>Languages like Go and Python that have extensive standard libraries that the language maintainers take responsibility for are actually the best case scenario in my opinion. Yes, more people touch the code, but the DIY economics are often the wrong choice, and having organizations willing to both be accountable, and provide an environment where people can focus on minimizing dependencies if they feel its important, is a good thing.</p>
+<p>...</p>
+<p>Generally, I think Rust (and pretty much any programming language) would be served well to take ownership of their standard libraries. Pull in all the dependencies, and be willing to take ownership.</p>
+</blockquote>
+<p>I agree with John that having batteries included simplifies things for both new and established users, but I don't think we should be so quick to add more batteries to the collection without sufficient testing.</p>
+<p>My understanding is Rust has learned from the mistakes of other languages and explicitly tries not to include things in the standard library that the Rust core team believes don't quite fit, including for reasons of figuring out the API. You simply have more freedom with packages: they're semver-versioned and you can break compat with an appropriate version bump.</p>
+<p>You don't necessarily know the warts of an API until you start to really use it widely. Take for example the <a href="https://crates.io/crates/rand"><code>rand</code> crate</a>. There is no random number generator in the Rust standard library, and <code>rand</code> is the de facto standard crate for this task.</p>
+<p>That's a bit odd, no? Random number generation is fairly common and one would think it's in the standard library. There's even a tracking issue for adding one: <a href="https://github.com/rust-lang/rust/issues/27703">#27703</a> (and <a href="https://github.com/rust-lang/rust/issues/36999">#36999</a>).</p>
+<p>While I agree in principle, putting something into the standard library mostly means that the APIs for it are immutable. You know what's changed in fairly minor but meaningful ways since those issues were closed? The <code>rand</code> crate's APIs. If these had been brought into the standard library as-is we'd be mostly forever stuck with certain warts like <a href="https://docs.rs/rand/0.6.5/rand/trait.Rng.html#method.gen_range"><code>Rng::gen_range()</code></a> accepting 2 args (low, high) instead of the more-natural <code>Range</code> (using <code>low..=high</code> syntax).</p>
+<p>Rust itself is still a growing and changing language as well, and it may not make sense to land on an API that would be better once language improvements land. Good luck changing a stabilized API without breaking compat.</p>
+<h2 id="package-management-in-other-languages-also-suck">Package management in other languages also suck</h2>
+<blockquote>
+<p>Yes, Python has become so popular, that plenty of people use outside dependencies, and there are several popular package managers. However, it’s still in a vastly better place from a supply chain perspective than JavaScript, which has become famous among developers for hidden dependencies on trivially small packages.</p>
+</blockquote>
+<p>There's no way to really sugarcoat this, but Python and Go package management really fucking sucked (Python still sucks, but some semi-recent tools are making it suck less).</p>
+<p>So Python has monolithic dependencies... but why? Because the tooling and <a href="https://packaging.python.org/en/latest/tutorials/packaging-projects/">uploading dependencies</a> is high-friction<sup><sup>(I've never uploaded -- maybe it's easier than I think)</sup></sup>. And we're supposed to praise this? In what world is Python + pip &quot;in a vastly better place from a supply chain perspective than JavaScript&quot; because of this fact either?</p>
+<ul>
+<li>pip dependencies are by default global which causes conflicts with other Python applications, forcing you to use virtual environments. <em>Note: <a href="https://www.reddit.com/r/rust/comments/1d86c62/on_dependency_usage_in_rust/l76qj85/">/u/encyclopedist on Reddit</a> pointed out that this has recently changed with <a href="https://peps.python.org/pep-0668/">PEP 668</a>.</em></li>
+<li>If pip hits a version conflict within your own project's package graph you're in for a headache</li>
+<li>Packages with native dependencies are a mystery to basically everyone except the package author. Or is this just me?</li>
+<li>There's no strong lockfile containing metadata sufficient for guaranteeing the bits someone installing a project's dependencies for the first time match the bits when the lockfile was generated (i.e. package hashes).</li>
+</ul>
+<p>pip in my experience has been so frustrating to use for dependency management that it inspires me to just simply not use dependencies to begin with. <strong>Yes there are tools that make this easier, but they are not defaults or even agreed upon by the community.</strong></p>
+<p>And before Go had its <a href="https://go.dev/blog/versioning-proposal">package management renaissance</a> does anyone remember what it looked like to use dependencies in Go?</p>
+<p>You imported a library like this in your code:</p>
+<pre data-lang="go" style="background-color:#2b303b;color:#c0c5ce;" class="language-go "><code class="language-go" data-lang="go"><span style="color:#b48ead;">import </span><span>(
+</span><span>  &quot;</span><span style="color:#a3be8c;">github.com/codegangsta/cli</span><span>&quot;
+</span><span>)
+</span></code></pre>
+<p>You use <code>go get</code> to download the dependencies to your local machine, and built the application.</p>
+<p>There were no lock files, no versions, nothing. The latest version of the source code was grabbed and used until you updated it which may have had breaking changes. The community had to resort to package proxies to version packages. Today it's pretty insane to think about letting a 3rd party man-in-the-middle your packages and deliver it to you with no integrity checks just to work around warts in the tools.</p>
+<p>And what about other languages like C#? NuGet, .NET's package manager, was also terrible.</p>
+<p>I don't know how it is today, but around ~2017 while working at Microsoft I discovered that NuGet had a &quot;feature&quot; where the client would reach out to all of your package feeds in parallel to fetch a package and whichever responded first won. I can't find the issue for it on GitHub, but someone had reported this behavior and it was considered &quot;by-design&quot;.</p>
+<p>Even still when I presented the problem to the NuGet team internally, they did not see it as a vulnerability. The obvious problem here was that we were leaking our internal package names to external package feeds and a name collision could result in the wrong package being used (this was before dependency substitution/confusion attacks were widely known).</p>
+<p>NuGet also had no lock files, no integrity checks, and conveniently provides install/build scripts and usually what you're receiving is prebuilt binaries. Code integrity isn't verified and the only thing that would have prevented you from using a completely different binary was <a href="https://learn.microsoft.com/en-us/dotnet/standard/assembly/strong-named">Strong naming</a> which is not a security boundary. In fact, I've seen a lot of projects publish their strong name key.</p>
+<p>Rust was fortunately blessed from the beginning (<a href="https://blog.rust-lang.org/2014/11/20/Cargo.html">pre-1.0, 2014!</a>) with people who knew how to build a package manager. Cargo is not perfect, but it works pretty damn well for the majority of Rust users.</p>
+<p>It is <em>because</em> the package management story in Rust is so good compared to other languages that the standard library doesn't need to be as feature-complete. Shipping with a fantastic package manager in 1.0 allowed the community package ecosystem to explode without having to pause and shift towards better or different solutions (NuGet's change to <a href="https://devblogs.microsoft.com/nuget/enable-repeatable-package-restores-using-a-lock-file/">JSON-based projects</a>, Go's shift away from <code>go get</code> using git-based imports to Go modules, and many different Python package managers like poetry, rye, pipenv).</p>
+<p>Rust developers are not bleeding from using the tools they depend on and it's absurd to me that this is considered a weakness.</p>
+<h2 id="what-about-dependency-explosion">What about dependency explosion?</h2>
+<p>Here is an example of an application I'm working on that reads files in a custom filesystem specific to the Xbox 360 (known as XContent / STFS). There's crypto involved for signing the header and verifying file data and conceptually this single file contains many others similar to a tarball or zip file.</p>
+<p>It's a CLI application with the following dependencies in its <code>Cargo.toml</code> file:</p>
+<pre data-lang="toml" style="background-color:#2b303b;color:#c0c5ce;" class="language-toml "><code class="language-toml" data-lang="toml"><span>[dependencies]
+</span><span style="color:#65737e;"># For mmaping the input file
+</span><span style="color:#bf616a;">memmap2 </span><span>= &quot;</span><span style="color:#a3be8c;">0.9</span><span>&quot;
+</span><span>
+</span><span style="color:#65737e;"># Parsing arguments
+</span><span style="color:#bf616a;">clap </span><span>= { </span><span style="color:#bf616a;">version </span><span>= &quot;</span><span style="color:#a3be8c;">4.5.4</span><span>&quot;, </span><span style="color:#bf616a;">features </span><span>= [&quot;</span><span style="color:#a3be8c;">derive</span><span>&quot;] }
+</span><span>
+</span><span style="color:#65737e;"># Easy error handling
+</span><span style="color:#bf616a;">anyhow </span><span>= &quot;</span><span style="color:#a3be8c;">1.0</span><span>&quot;
+</span><span>
+</span><span style="color:#65737e;"># Data serialization
+</span><span style="color:#bf616a;">serde </span><span>= { </span><span style="color:#bf616a;">version </span><span>= &quot;</span><span style="color:#a3be8c;">1.0</span><span>&quot; }
+</span><span>
+</span><span style="color:#65737e;"># Reading the input file&#39;s filesystem
+</span><span style="color:#bf616a;">stfs </span><span>= { </span><span style="color:#bf616a;">version </span><span>= &quot;</span><span style="color:#a3be8c;">0.1</span><span>&quot;, </span><span style="color:#bf616a;">path </span><span>= &quot;</span><span style="color:#a3be8c;">../stfs</span><span>&quot; }
+</span><span>
+</span><span style="color:#65737e;"># Also for reading the input file&#39;s filesystem
+</span><span style="color:#bf616a;">xcontent </span><span>= { </span><span style="color:#bf616a;">path </span><span>= &quot;</span><span style="color:#a3be8c;">../xcontent</span><span>&quot; }
+</span><span>
+</span><span style="color:#65737e;"># Date/time operations
+</span><span style="color:#bf616a;">chrono </span><span>= &quot;</span><span style="color:#a3be8c;">0.4.38</span><span>&quot;
+</span><span>
+</span><span style="color:#65737e;"># Converting data to/from hexadecimal
+</span><span style="color:#bf616a;">hex </span><span>= &quot;</span><span style="color:#a3be8c;">0.4.3</span><span>&quot;
+</span><span>
+</span><span style="color:#65737e;"># Converting file sizes to something human-readable
+</span><span style="color:#bf616a;">humansize </span><span>= &quot;</span><span style="color:#a3be8c;">2.1.3</span><span>&quot;
+</span><span>
+</span><span style="color:#65737e;"># Serializing data to JSON
+</span><span style="color:#bf616a;">serde_json </span><span>= &quot;</span><span style="color:#a3be8c;">1.0</span><span>&quot;
+</span></code></pre>
+<p>According to <a href="https://lib.rs/crates/cargo-deps-list"><code>cargo deps-list</code></a> this results in 102 dependencies from the 10 direct dependencies I specified. <a href="https://github.com/jplatte/cargo-depgraph"><code>cargo depgraph</code></a> produced this graph:</p>
+<p><a href="/img/dependency-usage-in-rust/acceleration_dependency_graph.svg"><img src="/img/dependency-usage-in-rust/acceleration_dependency_graph.svg" alt="The application's dependency graph in dotviz format" /></a></p>
+<p><em>Click for a larger image</em></p>
+<h3 id="the-sniff-test">The sniff test</h3>
+<p>I've mentioned my &quot;quick checks&quot; or &quot;sniff test&quot; a couple times in this blog post, so it's worth calling out what it is.</p>
+<p>I 100% did not audit all 102 of these dependencies in the above graph, but for each of the 10 <em>I directly brought in to my application</em> I looked at the author to see if I knew of them, looked at their project setup, and decided their goals align with mine which led me to using the crate. I've passed on crates that to me looked like someone not necessarily intending for others to use their work, or simply did not pass my vibe check.</p>
+<p>Here is what my personal flow looks like:</p>
+<ol>
+<li>Do a search for the topic I'm interested in</li>
+</ol>
+<p><a href="/img/dependency-usage-in-rust/convert_to_hex_search.png"><img src="/img/dependency-usage-in-rust/convert_to_hex_search.png" alt="Kagi serach for &quot;convert to hex rust&quot;" /></a></p>
+<ol start="2">
+<li>Check the crates.io page</li>
+</ol>
+<p><a href="/img/dependency-usage-in-rust/hex_crates_io.png"><img src="/img/dependency-usage-in-rust/hex_crates_io.png" alt="crates.io page for the &quot;hex&quot; crate" /></a></p>
+<p>✅ The crate has good examples and information. I don't recognize the author, but that's not terribly uncommon.</p>
+<ol start="3">
+<li>Check the crate's stats to get an idea of how widely used it is</li>
+</ol>
+<p><a href="/img/dependency-usage-in-rust/hex_stats.png"><img src="/img/dependency-usage-in-rust/hex_stats.png" alt="&quot;hex&quot; crate usage stats" /></a></p>
+<p>✅ Tons of usage. These numbers can be gamed, but probably not to this level.</p>
+<ol start="4">
+<li>Check the versions.</li>
+</ol>
+<p><a href="/img/dependency-usage-in-rust/hex_versions.png"><img src="/img/dependency-usage-in-rust/hex_versions.png" alt="hex crate versions showing 9 versions, last one was 3 years ago" /></a></p>
+<p>✅ 9 versions since its original release 8 years ago. The last release was 3 years ago. The author isn't changing stuff all the time which is good as I don't expect a hex crate to have heavy code churn.</p>
+<ol start="5">
+<li>Check who is using this crate to see if I recognize any of them</li>
+</ol>
+<p><a href="/img/dependency-usage-in-rust/hex_dependents.png"><img src="/img/dependency-usage-in-rust/hex_dependents.png" alt="dependents for the hex crate" /></a></p>
+<p>✅ The hex crate has over 4,000 other crates depending on it and I recognize all of the top 5 biggest users.</p>
+<ol start="6">
+<li>Check the repo</li>
+</ol>
+<p><a href="/img/dependency-usage-in-rust/hex_repo.png"><img src="/img/dependency-usage-in-rust/hex_repo.png" alt="hex crate repo" /></a></p>
+<p>✅ This is not a great example but the hex crate has some stars, the active development about matches the crates.io page (keep in mind the repository doesn't have to match what's uploaded to crates.io!), and the project looks decently put together. There's also no build.rs script that I need to check out.</p>
+<p>The crate passes all of my standard checks! I feel comfortable pulling the crate into my repository</p>
+<h3 id="economic-factors">Economic factors</h3>
+<p>Something John mentions multiple times is weighing &quot;economic factors&quot; when considering what language or dependencies to use.</p>
+<blockquote>
+<p>Avoid unnecessary dependencies. I will leave ‘unnecessary’ vaguely defined here; you need to be educated and judge all the economic factors. But note that, there are often other benefits to fewer dependencies, from shorter build times to less surface to test, to less risk from API changes or bugs from downstream dependencies.</p>
+</blockquote>
+<p>Are all of these 10 crates I used above strictly necessarily? No. I could get away with writing my own hex converter, human-readable size converter, command-line argument parser, drop mmap support, drop support for chrono date/time, and rewrite to use standard <code>Result&lt;T, E&gt;</code> instead of using <code>anyhow</code>. This is what such a <code>Cargo.toml</code> would look like:</p>
+<pre data-lang="toml" style="background-color:#2b303b;color:#c0c5ce;" class="language-toml "><code class="language-toml" data-lang="toml"><span>[dependencies]
+</span><span>
+</span><span style="color:#65737e;"># Data serialization
+</span><span style="color:#bf616a;">serde </span><span>= { </span><span style="color:#bf616a;">version </span><span>= &quot;</span><span style="color:#a3be8c;">1.0</span><span>&quot; }
+</span><span>
+</span><span style="color:#65737e;"># Reading the input file&#39;s filesystem
+</span><span style="color:#bf616a;">stfs </span><span>= { </span><span style="color:#bf616a;">version </span><span>= &quot;</span><span style="color:#a3be8c;">0.1</span><span>&quot;, </span><span style="color:#bf616a;">path </span><span>= &quot;</span><span style="color:#a3be8c;">../stfs</span><span>&quot; }
+</span><span>
+</span><span style="color:#65737e;"># Also for reading the input file&#39;s filesystem
+</span><span style="color:#bf616a;">xcontent </span><span>= { </span><span style="color:#bf616a;">path </span><span>= &quot;</span><span style="color:#a3be8c;">../xcontent</span><span>&quot; }
+</span><span>
+</span><span style="color:#65737e;"># Serializing data to JSON
+</span><span style="color:#bf616a;">serde_json </span><span>= &quot;</span><span style="color:#a3be8c;">1.0</span><span>&quot;
+</span></code></pre>
+<p>But you know what I get from splurging on 6 extra deps?</p>
+<p><strong>I can just write my fucking code</strong>. That's the biggest economic factor I care about.</p>
+<p>I don't have to worry about making my argument parser print out help and keeping its flags and info up-to-date and manually pretty. I don't have to leave the user with a shitty <code>DateTime</code> field because I can't write a good one for them since my app doesn't revolve around dates. I don't have to write boilerplate for bubbling up errors. <strong>The overall quality of the application and my dev experience is improved.</strong></p>
+<p><code>hex</code> and <code>humansize</code> are arguably my application's <a href="https://en.wikipedia.org/wiki/Npm_left-pad_incident"><code>left-pad</code></a>. Converting to/from hex is not terribly complex and converting a number of bytes to the best unit of KB/MB/GB is extremely easy. In fact, I'm pretty sure I originally wrote it for this project and then removed it. These dependencies do one task that's simple enough for me to write but I didn't.</p>
+<p>Why? Because each handles some edge cases that may matter for me, and I'm not wanting to spend 30m of my time writing something that's not core to my application when someone already wrote the code and did it better than I would in those 30m. Instead I took 3 minutes to search around to find the crate, ensure it fit my needs and to sanity check it looked kinda legit, and then used it in my application.</p>
+<p>I got. Shit. Done.</p>
+<p>I will say that there have been times where I've compiled something and thought, &quot;Holy shit 500+ dependencies?&quot; But to me this isn't a signal of it's security but rather <em>bloat</em> and <em>complexity</em>. I have to think about everything the application does, its complexity, and consider if it's just bloated for no reason or if there is good reason for having so many dependencies. This can impact my judgement on the application's <em>quality</em> and how likely I am to use really use the tool.</p>
+<p><a href="https://x.com/Lucretiel/status/1791916569951375591">@Lucretiel said something else recently on Twitter</a> said something that loosely fits into this topic:</p>
+<blockquote>
+<p>It’s a good thing we’re keeping our dependency count low, I think to myself, as I read about how my UI framework also provides threads, networking utilities, data structures, floating point math, D-Bus, cryptographic utilities, geographic utilities, and a Bluetooth implementation</p>
+</blockquote>
+<p>Bloat is everywhere. You just need to know how to look for it.</p>
+<h3 id="circle-of-trust">Circle of trust</h3>
+<blockquote>
+<p>Anyway, the more dependencies you have, the larger your circle of implicit trust is, the larger your attack surface is, and the more supply chain risk you’re taking.</p>
+</blockquote>
+<p>I'd rather assume an author of a crate that looks like it provides what I need has non-malicious intent than the other way around. Maybe that perspective will change if I ever get burned and my laptop gets ransomwared because I missed a <code>build.rs</code> file or a proc macro that does sketchy things.</p>
+<p>But consider for a second: do you consider your OS as part of your circle of trust? It's unlikely you'll ever get backdoored by your OS, but bugs are certainly present and depending on your threat model a vulnerable OS means a problem for you.</p>
+<p>Do you know how much attack surface there is with say image parsing on iOS/macOS?</p>
+<p>You can choose to not bring in libjpeg/libpng/libwebp and just use ImageIO (which is used by UIKit/CoreGraphics). Easy! Except you now have at least 30 different image formats on your attack surface that you didn't know about. And there's no way to turn them off. And now you're stuck ensuring that the image you're parsing is a trusted image format.</p>
+<p>You might be screaming, &quot;But Apple is trusted! And Apple publishes updates!&quot;</p>
+<p>Ok? Did you validate how many of those updates are backported to major iOS versions used by your users? Did you audit Apple's closed-source lib and discover this attack surface and then weigh the economic costs of not using it? I mean, ImageIO is mostly just a wrapper around libjpeg and libpng, so why not just use them directly?</p>
+<p>Likely answer: <em>Because it's convenient and you might not care about the problems I am describing because you aren't some security nerd.</em></p>
+<h2 id="closing-thoughts">Closing thoughts</h2>
+<p>I would like to thank John for sharing his thoughts and perspective. I do outright agree with some his points:</p>
+<ul>
+<li>Avoiding unnecessary dependencies may be better long-term for better compile times and less potential problems down the road. This is a tradeoff worth considering, but to me is a minor point.</li>
+<li>The bigger your dependency graph, the bigger your single-points of failure. I see this as a tradeoff for rapid development.</li>
+<li>Understand what makes sense for your team and your own threat model.</li>
+</ul>
+<p>But I disagree with some of the foundational arguments like:</p>
+<blockquote>
+<p>C’s advantage in terms of lack of dependencies (which can come with a lower attack surface in general) is large, but still doesn’t make it the right economic choice in the first place. It might still be wiser to choose Rust when all economic factors are considered, but the security argument is just not one I find compelling enough.</p>
+</blockquote>
+<p>The security risk of dependency use is simply not one I find compelling enough to select C over Rust, and certainly is not scarier than a buffer overflow. C lacking first-class support for dependencies should be considered a strong disadvantage since you can't even get good support for 1st-party dependencies.</p>
+<p>The benefits Rust provides <em>as a language</em> are already enough for a lot of people to select it over C -- myself included. A stellar default package manager and build tool makes it all the better to use. In my opinion  &quot;dependency usage&quot; should be a minor footnote (and John explicitly says to weigh these kinds of factors yourself).</p>
+<p>Additionally, I'd argue that a critical mem safety issue is statistically way more likely to happen and can have critical impact even with modern mitigations. Some of the memory safety bugs that we're finding are old enough to drink in the US, showing that they can be very difficult to find. The <code>xz</code> backdoor required around 3 years worth of effort to attempt to sneak into the application and was discovered in less than a week after it went live.</p>
+<p>Don't live in fear of dependencies. Do what provides the least friction for you to accomplish the engineering you enjoy doing within your personal or team parameters.</p>
+
+</main>
+<p>
+</p>
+<footer>
+    Made with <a href="https://codeberg.org/alanpearce/zola-bearblog">Zola ʕ•ᴥ•ʔ Bear</a>
+</footer>
+</body>
+</html>
