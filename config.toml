@@ -13,7 +13,7 @@ description = "nothing interesting"
 
 taxonomies = [{ name = "tags" }]
 
-generate_feed = true
+generate_feeds = true
 
 [markdown]
 # Whether to do syntax highlighting
