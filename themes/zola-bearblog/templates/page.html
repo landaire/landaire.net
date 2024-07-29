@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block title %}{{ page.title }} | {{ super() }}{% endblock %}
+
+{% block main %}
+{%- if not page.extra.menu %}
+{% if page.extra.image %}
+<div class="header-block">
+  {% set image = resize_image(path=page.extra.image, width=page.extra.image_width, height=page.extra.image_height,
+  op="fit") %}
+  <a href="{{ page.extra.image }}" class="header-img"><img src="{{ image.url }}" /></a>
+  {% endif %}
+  <h1>{{ page.title }}</h1>
+</div>
+{%- if page.date %}
+<p>
+  <i>
+    <time datetime='{{ page.date | date(format=' %+') }}' pubdate>
+      {{- page.date | date(format=config.extra.date_format) -}}
+    </time>
+  </i>
+</p>
+{%- endif %}
+{%- endif %}
+<main>
+  {{ page.content | safe }}
+</main>
+<p>
+  {%- if page.taxonomies %}
+  {%- for name, taxon in page.taxonomies %}
+  {{ name | capitalize }}:
+  {%- for item in taxon %}
+  <a href="{{ get_taxonomy_url(kind=name, name=item) }}">#{{ item }}</a>
+  {%- endfor %}
+  {%- endfor %}
+  {%- endif %}
+</p>
+{% endblock %}

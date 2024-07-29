@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="{{ lang | default(value="en-US" ) }}">
+<head>
+  {%- if config.webserver_sends_csp_headers %}
+  {%- include "security_tags.html" ignore missing %}
+  {%- endif %}
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  {% include "favicon.html" ignore missing -%}
+  <title>{%- block title %}{{ config.title }}{%- endblock %}</title>
+  {% include "seo_tags.html" ignore missing %}
+  <meta name="referrer" content="no-referrer-when-downgrade">
+  {%- if config.generate_feed %}
+  {% block rss -%}
+  <link rel="alternate" type={% if config.feed_filename == "atom.xml" %}"application/atom+xml"{% else %}"application/rss+xml"{% endif %} title="{{ config.title }}" href="{{ get_url(path=config.feed_filename) | safe }}">
+  {%- endblock -%}
+  {%- endif %}
+  <style>
+  {%- include "style.css.html" ignore missing -%}
+  </style>
+  {% include "custom_head.html" ignore missing -%}
+</head>
+<body>
+  {% include "header.html" ignore missing -%}
+  {% block main %}{%- endblock -%}
+  {% include "footer.html" ignore missing -%}
+  {% include "custom_body.html" ignore missing -%}
+</body>
+</html>

@@ -1,0 +1,35 @@
+title = "Zola ʕ•ᴥ•ʔ Bear Blog"
+base_url = "https://zola-bearblog.netlify.app/"
+description = "A Zola-theme based on Bear Blog."
+
+# Whether to automatically compile all Sass files in the sass directory
+compile_sass = false
+
+# Whether to build a search index to be used later on by a JavaScript library
+build_search_index = false
+
+taxonomies = [
+  {name = "categories", feed = true},
+  {name = "tags", feed = true},
+]
+
+[markdown]
+# Whether to do syntax highlighting
+# Theme can be customised by setting the `highlight_theme` variable to a theme supported by Zola
+highlight_code = true
+
+[extra]
+date_format="%d %b, %Y"
+webserver_sends_csp_headers=true
+
+[[extra.main_menu]]
+name = "Bear"
+url = "@/bear.md"
+
+[[extra.main_menu]]
+name = "Zola"
+url = "@/zola.md"
+
+[[extra.main_menu]]
+name = "Blog"
+url = "@/blog/_index.md"
