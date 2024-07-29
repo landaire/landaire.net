@@ -55,7 +55,7 @@ This is a very, very simplified drawing of what you'd find on Microsoft's [Hyper
 2. ERA OS (aka GameOS) which is where games run
 3. SystemOS which is where applications run.
 
-All of the operating systems for each VM is a very slimmed down version of Windows based on Windows Core OS (WCOS) and the Hyper-V architecture is mostly what you'd encounter on a normal PC.
+All of the operating systems for each VM are a very slimmed down version of Windows based on Windows Core OS (WCOS) and the Hyper-V architecture is mostly what you'd encounter on a normal PC.
 
 There's something missing here though, which is the _security processor_ (SP). The Xbox One's security processor should be the only thing on the Xbox which can reveal a title's plaintext on Xbox One. Microsoft's [Pluton Processor](https://learn.microsoft.com/en-us/windows/security/hardware-security/pluton/microsoft-pluton-security-processor) is based on learnings from the Xbox One's security processor.
 
