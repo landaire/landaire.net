@@ -63,7 +63,7 @@ The core idea behind all of this is to **make piracy extremely difficult** (if n
 
 ## OK, How Does This Relate to the PE loader?
 
-Emma found a vulnerability/feature in an application on the Xbox One marketplace called _GameScript_, which is an ImGui UI for messing with the [Ape programming language](https://github.com/kgabis/ape). Through this vulnerability Emma was able to read/write arbitrary memory and run shellcode. But now the problem: how can we run arbtirary executables easily?
+Emma found a vulnerability/feature in an application on the Xbox One marketplace called _GameScript_, which is an ImGui UI for messing with the [Ape programming language](https://github.com/kgabis/ape). Through this vulnerability Emma was able to read/write arbitrary memory and run shellcode. So now we have arbitrary code execution in SystemOS, but now the problem: how can we run arbtirary *executables* easily?
 
 Since we have the ability to read/write arbitrary memory and change page permissions, Emma asked if I would write a PE loader to simplify the development pipeline while she worked on porting her exploit over. Easy enough right?
 
@@ -71,12 +71,14 @@ Since we have the ability to read/write arbitrary memory and change page permiss
 
 ## Reinventing the Wheel
 
-The specific technique of user-mode portable executable (PE/.exe file) loading is referred as "Reflective PE Loading" which to me is some #redteam term I'd never heard before embarking on this project. This name is meaningless in my opinion, but a "reflective PE loader" is simply some user-mode code that can load a PE without going through the normal `LoadLibrary()` / `CreateProcess()` routines and executes the PE's entrypoint. I took a look at the work involved and decided I was better off writing my own loader for a few reasons:
+The specific technique of user-mode portable executable (PE/.exe file) loading is referred as "Reflective PE Loading" which to me is some #redteam term I'd never heard before embarking on this project. This name is meaningless in my opinion, but a "reflective PE loader" is simply some user-mode code that can load a PE without going through the normal `LoadLibrary()` / `CreateProcess()` routines and executes the PE's entrypoint. Avoiding `LoadLibrary()` and `CreateProcess()` are very important for us because on Xbox this new PE will go through code integrity (CI), and any code we write will not be properly signed.
+
+I took a look at the work involved and decided I was better off writing my own loader for a few reasons:
 
 1. I despise dealing with C/C++ build systems
-2. Since I'm targeting _Xbox_ and not _Windows_, I might encounter some problems and I know how to debug my own code better than someone else's
+2. Since I'm targeting _Xbox Windows_ and not _desktop Windows_, I might encounter some problems and I know how to debug my own code better than someone else's.
 3. On the Xbox we're going to _have to_ use a PE loader for running any executable until we eventually break code integrity. So we better know how it works and be able to load complex applications.
-4. I don't give a shit about EDR evasion or anything like that.
+4. I don't give a shit about EDR evasion or any #redteam stuff like that.
 5. It seemed simple enough at the time to just rewrite it in Rust, so I did.
 
 For my project's base I combined two open-source Rust projects:
@@ -147,7 +149,7 @@ As you might have noticed, we're not linking against any libraries and calling i
 Although it's been talked about before, I'll give a brief overview of how a basic loader works:
 
 1. Parse the PE headers and `VirtualAlloc()` some memory for the "cloned" PE with all the fixups applied. You'll try to `VirtualAlloc()` at the PE's preferred load address, but if you don't get it fall back to a random address -- this is your _load address_. From here you calculate the delta between the preferred and actual load address and this will be used for fixing relocations.
-2. Iterate each PE section and copy it over to the newly `VirtualAlloc`'d region. The virtual addresses here are _relative_ virtual addresses, so you just take each section's VirtualAddress, add it to the load address. Copy the section from its old location to the new address.
+2. Iterate each PE section and copy it over to the newly `VirtualAlloc`'d region. The virtual addresses here are _relative_ virtual addresses, so you just take each section's VirtualAddress, add it to the load address, and copy the section from its old location to the new address.
 3. For each section, look at its `Characteristics` field and determine the correct permissions. `VirtualProtect()` the section according to the permissions.
 4. For each import in the import table (`IMAGE_DIRECTORY_ENTRY_IMPORT`), ensure the imported DLL is loaded, then use the loaded DLL's handle with `GetProcAddress()` to get the address of the function being loaded. You could also parse the module's exports and match things up, but this is the lazy way. For each import, overwrite the real address in the import's thunk.
 5. Fix relocations. This basically involves walking the `IMAGE_DIRECTORY_ENTRY_BASERELOC` directory and fixing each `IMAGE_BASE_RELOCATION` such that you add the delta calculated in step 1 to the relocation's `VirtualAddress` field. There's some nuance here where you need to only modify certain bits, etc. etc. but this is the basic idea.
@@ -224,17 +226,17 @@ There were some parts that really kicked my ass in figuring out, but in my opini
 
 ### Thread-Local Storage
 
-Related to #2, the absolute biggest challenge I faced was with applications that use thread-local storage. Having done all of my development in Rust, my test program that I was loading was also obviously in Rust. I kept encountering `int 29` (`RtlFailFast(code)`) instructions that crashed the application though when I'd execute its entrypoint. This was **extremely** painful to debug, but eventually I figured out that I was failing after fetching data from thread-local storage:
+Related to #2, the absolute biggest challenge I faced was with applications that use thread-local storage. Having done all of my development in Rust, my test program that I was loading was also written in Rust. I kept encountering `int 29` instructions (`RtlFailFast(code)`) that crashed the application when I'd execute its entrypoint. This was **extremely** painful to debug, but eventually I figured out that I was failing after fetching data from thread-local storage:
 
 [![Screenshot of assembly instructions from a Rust "hello world" application loading data from thread-local storage in IDA pro](/img/pe-loader/tls-thread-set-current.png)](/img/pe-loader/tls-thread-set-current.png)
 
 [![Screenshot of assembly instructions from a Rust "hello world" application executing an `int 29` instruction in IDA pro](/img/pe-loader/int-29.png)](/img/pe-loader/int-29.png)
 
-I was kind of confused because I didn't expect my application to use thread-local storage, but even a basic "hello world" Rust program did:
+I was kind of confused because I didn't expect my application to use thread-local storage, but apparently even the most basic "hello world" Rust program uses TLS:
 
 [![Screenshot of a Rust "hello world" application loaded into the "PE Bear" program, showing its TLS directory](/img/pe-loader/pe-bear-tls.png)](/img/pe-loader/pe-bear-tls.png)
 
-It turns out that this is related to Rust's thread initialization code that sets some thread-locals for the current thread and thread ID: https://github.com/rust-lang/rust/blob/2e630267b2bce50af3258ce4817e377fa09c145b/library/std/src/thread/mod.rs#L694
+It turns out that this is related to Rust's thread initialization code that sets some thread-locals for the current thread and thread ID: [https://github.com/rust-lang/rust/blob/2e630267b2bce50af3258ce4817e377fa09c145b/library/std/src/thread/mod.rs#L694](https://github.com/rust-lang/rust/blob/2e630267b2bce50af3258ce4817e377fa09c145b/library/std/src/thread/mod.rs#L694)
 
 So I come to realize that my original idea for how I was handling thread-local storage was completely flawed. I was _allocating_ new memory for my module's TLS, but didn't even realize it had some default state associated with it that I had to copy over. Simple fix right?
 
@@ -318,7 +320,9 @@ This code *worked*, but it didn't work for long. I obviously had no idea how thr
 
 #### Patching ntdll for One Stupid List
 
-In the above section I mentioned that Windows keeps a cache of TLS directories for each loaded module, and I think this is a critical reason why the reflective PE loaders  I sampled didn't bother with TLS data. I really only discovered this by painful debugging and figuring out the application only crashed when spawning new threads, that the crashes were relating to TLS, and figuring that something must be wrong with the TLS data. It finally clicked when I noticed that the `ThreadLocalStoragePointer` for the crashing thread's TEB didn't match the spawning thread's...
+In the above section I mentioned that Windows keeps a cache of TLS directories for each loaded module, and I think this is a critical reason why the reflective PE loaders  I sampled didn't bother with TLS data. I really only discovered this by painfully debugging and figuring out the application only crashed when spawning new threads, that the crashes were relating to data in TLS, and figuring that something must be wrong with the TLS data.
+
+It finally clicked when I noticed that the `ThreadLocalStoragePointer` for the crashing thread's TEB didn't match the spawning thread's...
 
 [![!teb command in WinDbg](/img/pe-loader/teb-command.png)](/img/pe-loader/teb-command.png)
 
@@ -353,9 +357,11 @@ Instead I popped `ntdll.dll` into IDA to see what functions were using this `Ldr
 
 [![IDA Pro window showing functions using LdrpTlsList](/img/pe-loader/LdrpFindTlsEntry.png)](/img/pe-loader/LdrpFindTlsEntry.png)
 
-I conveniently found that in Windows (but not ReactOS) is a function, "LdrpFindTlsList", which will return a `PTLS_ENTRY` (the actual Windows data structure for `LDRP_TLS_DATA`) given a `PLDR_DATA_TABLE_ENTRY`. Ken Johnson even conviently provided the source code on his blog: http://www.nynaeve.net/Code/VistaImplicitTls.cpp
+I conveniently found that in Windows (but not ReactOS) is a function, "LdrpFindTlsList", which will return a `PTLS_ENTRY` (the actual name of the Windows data structure for ReactOS's `LDRP_TLS_DATA`) given a `PLDR_DATA_TABLE_ENTRY`. Ken Johnson even conviently provided the source code on his blog: http://www.nynaeve.net/Code/VistaImplicitTls.cpp
 
-So now the only missing link: finding the `PLDR_DATA_TABLE_ENTRY`. This actually wasn't so bad and I needed to find this anyways in order to patch command line arguments and image name:
+So now the only missing link: finding the `PLDR_DATA_TABLE_ENTRY`. I'm kind of doing a "draw the rest of the owl" moment, but figuring this out was fairly straightforward by poking through the `!peb` command in WinDbg.
+
+The complete code:
 
 ```rust
 pub unsafe fn patch_module_list(
@@ -414,6 +420,7 @@ pub unsafe fn patch_module_list(
         next = (*next).Flink;
     }
 
+    // This stuff here is completely unnecessary, but I did it anyways as a "just in case"
     if !this_tls_data.is_null() {
         let dosheader = get_dos_header(current_module);
         let ntheader = get_nt_header(current_module, dosheader);
@@ -497,6 +504,10 @@ pub unsafe fn patch_kernelbase(args: Option<&[u16]>, kernelbase_ptr: *mut u8) {
 I thought a great idea to prevent the "host application" (i.e. the application whose address space we're hijacking) from crashing by suspending all of its threads. I was surprised to learn that not only was this fairly easy to do on Windows, it was _even_ easier to accidentally do this from a non-admin session for all other Medium-IL processes!
 
 [![Tweet by @landaire with text, "it has been 0 minutes since I last accidentally suspended all medium-IL threads on my system"](/img/pe-loader/thread_suspension.png)](/img/pe-loader/thread_suspension.png)
+
+_Yeah, don't call `CreateToolhelp32Snapshot()` incorrectly_.
+
+The Windows examples were actually fairly straightforward but on Xbox the code crashed. And that's because the `kernel32_ptr` here is actually to `kernel32legacy.dll` on Xbox where `kernel32.dll` doesn't exist. That took me a while to figure out and hunt down where the functions got relocated to.
 
 Here is the code I eventually came up with:
 
