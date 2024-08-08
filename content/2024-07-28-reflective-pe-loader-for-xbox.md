@@ -1,5 +1,5 @@
 +++
-title = "Writing a Reflective PE Loader in 2024 for the Xbox"
+title = "Writing a PE Loader for the Xbox in 2024"
 description = "Adventures in reinventing the wheel. Also: I hate thread-local storage"
 summary = "Adventures in reinventing the wheel. Also: I hate thread-local storage"
 template = "toc_page.html"
@@ -16,7 +16,7 @@ Adventures in reinventing the wheel
 """
 +++
 
-*Absolutely nothing new is presented in this blog post, but you might learn something like I did. Full source code can be found [on our GitHub](https://github.com/exploits-forsale/solstice).*
+*If you're already familiar with PE loading, absolutely nothing new is presented in this blog post but you might learn something like I did. Full source code can be found [on our GitHub](https://github.com/exploits-forsale/solstice).*
 
 Emma ([@carrot_c4k3](https://twitter.com/carrot_c4k3)) is a good friend of mine. We met about 17 years ago in the Xbox 360 scene and have remained friends ever since.
 
@@ -68,17 +68,21 @@ The core idea behind all of this is to **make piracy extremely difficult**, if n
 
 ## OK, How Does This Relate to the PE loader?
 
-Unrelated to her pwn2own entry, Emma found a vulnerability/feature in an application on the Xbox One marketplace called _GameScript_, which is an ImGui UI for messing with the [Ape programming language](https://github.com/kgabis/ape). Through this vulnerability Emma was able to read/write arbitrary memory and run shellcode. So we have arbitrary code execution in SystemOS, but now the problem: writing shellcode is a pain, so how can we run arbitrary *executables* easily?
+Unrelated to her pwn2own entry, Emma found a vulnerability/feature in an application on the Xbox One marketplace called _GameScript_, which is an ImGui UI for messing with the [Ape programming language](https://github.com/kgabis/ape).
 
-We have the ability to read/write arbitrary memory and change page permissions, so Emma asked if I would write a PE loader. It would be required to simplify the development pipeline while she worked on porting her exploit over and it'll be useful for homebrew later on too. Easy enough right?
+[Through this vulnerability](https://gist.github.com/carrot-c4k3/10fdb4f3d11ca568f5452bbaefdc20dd) Emma was able to read/write arbitrary memory and run shellcode. So we have arbitrary code execution in SystemOS, but now the problem: writing shellcode is a pain, so how can we run arbitrary *executables* easily?
+
+We have the ability to read/write arbitrary memory and change page permissions which is enough to write a portable executable (PE/.exe) loader. Emma asked if I would write one since it would simplify the exploit development pipeline while she worked on porting her exploit over and it'll be useful for homebrew later on too. Easy enough right?
 
 **Wrong.**
 
 ## Reinventing the Wheel
 
-The specific technique of user-mode portable executable (PE/.exe file) loading is referred as "Reflective PE Loading" which to me is some #redteam term I'd never heard before embarking on this project. This name is meaningless in my opinion, but a "reflective PE loader" is simply some user-mode code that can load a PE without going through the normal `LoadLibrary()` / `CreateProcess()` routines and executes the PE's entrypoint.
+This specific technique of PE loading is referred as "Reflective PE Loading" which to me is some #redteam term I'd never heard before embarking on this project. This name is not very descriptive in my opinion, but a "reflective PE loader" is simply some user-mode code that can load and execute a PE without going through the normal `LoadLibrary()` / `CreateProcess()` routines .
 
-Avoiding `LoadLibrary()` and `CreateProcess()` is very important for us since these APIs will go through code integrity (CI)... and any code we write will not be properly signed. I took a look at the work involved and decided I wanted to write my own loader for a few reasons:
+Avoiding `LoadLibrary()` and `CreateProcess()` is very important for us since those will check for code integrity... and any code we write will not be properly signed.
+
+I took a look at the work involved and decided I wanted to write my own loader for a few reasons:
 
 1. I despise dealing with C/C++ build systems.
 
@@ -151,7 +155,45 @@ let baseptr = (VirtualAlloc)(
 );
 ```
 
-As you might have noticed, we're not linking against any libraries and calling those imports directly. Instead we're using indirect calls to functions whose addresses we manually resolved at runtime.
+As you might have noticed, we're not linking against any libraries and calling those imports directly. Instead we're using indirect calls to functions whose addresses we manually resolved at runtime. All you need for shellcode development that _isn't_ painful is to find `kernelbase.dll` which can be done using the `gs` register to grab the PEB:
+
+```rust
+pub fn get_module_by_name(module_name: *const u16) -> Option<PVOID> {
+    let peb: *mut PEB;
+    unsafe {
+        asm!(
+            "mov {}, gs:[0x60]",
+            out(reg) peb,
+        );
+        let ldr = (*peb).Ldr;
+        let module_list = &((*ldr).InLoadOrderModuleList);
+
+        // The first entry of LDR_DATA_TABLE_ENTRY is a LIST_ENTRY, so transmuting this address
+        // from LIST_ENTRY to LDR_DATA_TABLE_ENTRY is legal.
+        let mut cur_module: *const LDR_DATA_TABLE_ENTRY = core::mem::transmute(module_list);
+
+        // The list is doubly-linked, so eventually we will wrap back around to the head.
+        let module_list_head = cur_module;
+
+        loop {
+            let cur_name = (*cur_module).BaseDllName.Buffer;
+            if !cur_name.is_null() && icmp_raw_str_u16(module_name, cur_name) {
+                return Some((*cur_module).BaseAddress);
+            }
+
+            let flink = (*cur_module).InLoadOrderModuleList.Flink;
+            cur_module = flink as *const LDR_DATA_TABLE_ENTRY;
+
+            if cur_module == module_list_head {
+                // We wrapped the whole list and didn't find a result.
+                return None;
+            }
+        }
+    }
+}
+```
+
+Then [parse the PE's export table](https://github.com/exploits-forsale/solstice/blob/6c47b5a0cd155d629845412974e7580fa9dff840/crates/shellcode_utils/src/lib.rs#L121-L161) to find `GetModuleHandleA()`, and `GetProcAddress()`.
 
 ## The Easy Parts
 
@@ -438,7 +480,11 @@ pub unsafe fn patch_module_list(
         next = (*next).Flink;
     }
 
-    // This stuff here is completely unnecessary, but I did it anyways as a "just in case"
+    // This stuff here is mostly unnecessary, but I did it anyways as a "just in case".
+    // The idea is to overwrite the `IMAGE_TLS_DIRECTORY` of the hijacked module
+    // to point at the new module's.
+    // And to get the hijacked module's TLS index since that's the slot we'll be
+    // hijacking for our new module.
     if !this_tls_data.is_null() {
         let dosheader = get_dos_header(current_module);
         let ntheader = get_nt_header(current_module, dosheader);
@@ -480,7 +526,7 @@ Method 2's problems:
 1. The loader may be using a TLS bitmap, which isn't covered by either of the above cases.
 2. Running threads are unaffected.
 3. There may be persistent data in the PEB that we aren't updating.
-4. I had bizzaro crashes that I didn't even bother investigating.
+4. I had bizzaro crashes from spawned threads that I didn't even bother investigating.
 
 {% collapse(preview="Method 2 -- Allocate a New TLS Entry (Terrible)") %}
 I later realized that the function `LdrpAllocateTlsEntry` does _almost_ all of the above work for me for free and doesn't check if the current module already has a TLS slot allocated. Using this function to allocate the TLS slot would also allow me to inject programs that use TLS data into programs that do not have any themselves!
@@ -571,9 +617,9 @@ pub unsafe fn patch_module_list(
 
 Remember how I said [only one loader sampled seemed to support TLS data](https://github.com/DarthTon/Blackbone/blob/5ede6ce50cd8ad34178bfa6cae05768ff6b3859b/src/BlackBone/ManualMap/Native/NtLoader.cpp#L153)? This happens to be the same approach they took.
 
-I looked at who calls `LdrpAllocateTlsEntry` (method #2) and a private function `LdrpHandleTlsData`, which is called when a new module is loaded, has no sanity checks on whether or not the module's TLS data has already been handled. Which is awesome, and actually makes sense!
+I looked at who calls `LdrpAllocateTlsEntry` (method #2) and a private function `LdrpHandleTlsData`, which is called when a new module is loaded, is responsible for setting up almost all of the state relating to a module's TLS.
 
-Why sanity check if this function is only ever called once during real loader scenarios?
+It has no sanity checks on whether or not the module's TLS data has already been handled. Which is awesome, and actually makes sense! Why sanity check if this function is only ever called once during real loader scenarios?
 
 We can abuse this by performing the following operations:
 
@@ -771,14 +817,11 @@ pub unsafe fn suspend_threads(kernel32_ptr: PVOID, kernelbase_ptr: PVOID) {
             if te.dwSize as usize
                 >= offset_of!(THREADENTRY32, th32OwnerProcessID)
                     + core::mem::size_of_val(&te.th32OwnerProcessID)
+                && te.th32OwnerProcessID == pid
+                && current_thread != te.th32ThreadID
             {
-                if te.th32OwnerProcessID == pid {
-                    if current_thread != te.th32ThreadID {
-                        let thread_handle =
-                            OpenThread(THREAD_SUSPEND_RESUME, false, te.th32ThreadID);
-                        SuspendThread(thread_handle);
-                    }
-                }
+                let thread_handle = OpenThread(THREAD_SUSPEND_RESUME, false, te.th32ThreadID);
+                SuspendThread(thread_handle);
             }
             if Thread32Next(h, &mut te as *mut _) == 0 {
                 break;
@@ -806,3 +849,5 @@ This was a fun exercise that taught me a lot about how Windows binaries are load
 With this work, we're now able to do cool things on Xbox :)
 
 [![Collateral Damage Executed Achievement](/img/pe-loader/collat_achievement.webp)](/img/pe-loader/collat_achievement.webp)
+
+*Shoutout tuxuser for figuring out how to fire the toast*
