@@ -10,6 +10,7 @@ date = "2024-07-28"
 #image = "/img/wows-obfuscation/header.png"
 #image_width =  250
 #image_height = 250
+hidden = true
 pretext = """
 Adventures in reinventing the wheel
 """
@@ -63,19 +64,19 @@ The core idea behind all of this is to **make piracy extremely difficult** (if n
 
 ## OK, How Does This Relate to the PE loader?
 
-Emma found a vulnerability/feature in an application on the Xbox One marketplace called _GameScript_, which is an ImGui UI for messing with the [Ape programming language](https://github.com/kgabis/ape). Through this vulnerability Emma was able to read/write arbitrary memory and run shellcode. So now we have arbitrary code execution in SystemOS, but now the problem: how can we run arbtirary *executables* easily?
+Emma found a vulnerability/feature in an application on the Xbox One marketplace called _GameScript_, which is an ImGui UI for messing with the [Ape programming language](https://github.com/kgabis/ape). Through this vulnerability Emma was able to read/write arbitrary memory and run shellcode. So we have arbitrary code execution in SystemOS, but now the problem: writing shellcode is a pain, so how can we run arbtirary *executables* easily?
 
-Since we have the ability to read/write arbitrary memory and change page permissions, Emma asked if I would write a PE loader to simplify the development pipeline while she worked on porting her exploit over. Easy enough right?
+We have the ability to read/write arbitrary memory and change page permissions, so Emma asked if I would write a PE loader. The idea being to simplify the development pipeline while she worked on porting her exploit over, and it'll be useful for homebrew later on too. Easy enough right?
 
 **Wrong.**
 
 ## Reinventing the Wheel
 
-The specific technique of user-mode portable executable (PE/.exe file) loading is referred as "Reflective PE Loading" which to me is some #redteam term I'd never heard before embarking on this project. This name is meaningless in my opinion, but a "reflective PE loader" is simply some user-mode code that can load a PE without going through the normal `LoadLibrary()` / `CreateProcess()` routines and executes the PE's entrypoint. Avoiding `LoadLibrary()` and `CreateProcess()` are very important for us because on Xbox this new PE will go through code integrity (CI), and any code we write will not be properly signed.
+The specific technique of user-mode portable executable (PE/.exe file) loading is referred as "Reflective PE Loading" which to me is some #redteam term I'd never heard before embarking on this project. This name is meaningless in my opinion, but a "reflective PE loader" is simply some user-mode code that can load a PE without going through the normal `LoadLibrary()` / `CreateProcess()` routines and executes the PE's entrypoint. Avoiding `LoadLibrary()` and `CreateProcess()` is very important for us since these APIs will go through code integrity (CI) -- and any code we write will not be properly signed.
 
 I took a look at the work involved and decided I was better off writing my own loader for a few reasons:
 
-1. I despise dealing with C/C++ build systems
+1. I despise dealing with C/C++ build systems.
 2. Since I'm targeting _Xbox Windows_ and not _desktop Windows_, I might encounter some problems and I know how to debug my own code better than someone else's.
 3. On the Xbox we're going to _have to_ use a PE loader for running any executable until we eventually break code integrity. So we better know how it works and be able to load complex applications.
 4. I don't give a shit about EDR evasion or any #redteam stuff like that.
@@ -88,8 +89,8 @@ For my project's base I combined two open-source Rust projects:
 
 rspe already got me most of the way there, but with a few caveats:
 
+- Thoxy67 got great work done, but it seemed like it needed some cleanup (e.g. lots of unnecessary copies)
 - It did not support loading imports by ordinal
-- Thoxy67 got great work done, but it seemed like it was written by someone newer to Rust and needed some cleanup (e.g. unnecessary copies)
 - It did not support thread-local storage at all
 - It did not support command line arguments
 - It did not support environments with W^X mitigations
@@ -142,17 +143,22 @@ let baseptr = (VirtualAlloc)(
 );
 ```
 
-As you might have noticed, we're not linking against any libraries and calling imported functions directly. Instead we're using indirect calls based off of resolving function addresses at runtime.
+As you might have noticed, we're not linking against any libraries and calling imported functions directly. Instead we're using indirect calls to functions whose addresses we manually resolved at runtime.
 
 ## The Easy Parts
 
-Although it's been talked about before, I'll give a brief overview of how a basic loader works:
+[Although it's been talked about before](https://github.com/BenjaminSoelberg/ReflectivePELoader?tab=readme-ov-file), I'll give a brief overview of how a basic loader works:
 
-1. Parse the PE headers and `VirtualAlloc()` some memory for the "cloned" PE with all the fixups applied. You'll try to `VirtualAlloc()` at the PE's preferred load address, but if you don't get it fall back to a random address -- this is your _load address_. From here you calculate the delta between the preferred and actual load address and this will be used for fixing relocations.
+1. Parse the PE headers and `VirtualAlloc()` some memory for the "cloned" PE with all the fixups applied. You'll try to `VirtualAlloc()` at the PE's preferred load address, but if you don't get it fall back to a random address. This is your _load address_. From here you calculate the delta between the preferred and actual load address and this will be used for fixing relocations.
+
 2. Iterate each PE section and copy it over to the newly `VirtualAlloc`'d region. The virtual addresses here are _relative_ virtual addresses, so you just take each section's VirtualAddress, add it to the load address, and copy the section from its old location to the new address.
+
 3. For each section, look at its `Characteristics` field and determine the correct permissions. `VirtualProtect()` the section according to the permissions.
-4. For each import in the import table (`IMAGE_DIRECTORY_ENTRY_IMPORT`), ensure the imported DLL is loaded, then use the loaded DLL's handle with `GetProcAddress()` to get the address of the function being loaded. You could also parse the module's exports and match things up, but this is the lazy way. For each import, overwrite the real address in the import's thunk.
+
+4. For each import in the import table (`IMAGE_DIRECTORY_ENTRY_IMPORT`), ensure the imported DLL is loaded. Then use the loaded DLL's handle with `GetProcAddress()` to get the address of the function being imported. For each import, overwrite the real address in the import's thunk. You could also parse the module's exports and match things up, but this is the lazy way.
+
 5. Fix relocations. This basically involves walking the `IMAGE_DIRECTORY_ENTRY_BASERELOC` directory and fixing each `IMAGE_BASE_RELOCATION` such that you add the delta calculated in step 1 to the relocation's `VirtualAddress` field. There's some nuance here where you need to only modify certain bits, etc. etc. but this is the basic idea.
+
 6. Call the module's entrypoints.
 
 Step 6 is actually a bit of a heavy bullet point. I learned through this experience that PEs can actually have _multiple_ thread-local storage callbacks called before the actual module entrypoint. Calling these is fairly straightforward:
@@ -320,7 +326,7 @@ This code *worked*, but it didn't work for long. I obviously had no idea how thr
 
 #### Patching ntdll for One Stupid List
 
-In the above section I mentioned that Windows keeps a cache of TLS directories for each loaded module, and I think this is a critical reason why the reflective PE loaders  I sampled didn't bother with TLS data. I really only discovered this by painfully debugging and figuring out the application only crashed when spawning new threads, that the crashes were relating to data in TLS, and figuring that something must be wrong with the TLS data.
+In the above section I mentioned that Windows keeps a cache of TLS directories for each loaded module, and I think this is a critical reason why the reflective PE loaders I sampled didn't bother with TLS data ((only one loader sampled seemed to support TLS data)[https://github.com/DarthTon/Blackbone/blob/5ede6ce50cd8ad34178bfa6cae05768ff6b3859b/src/BlackBone/ManualMap/Native/NtLoader.cpp#L153]). I really only discovered this by painfully debugging and figuring out the application only crashed when spawning new threads, that the crashes were relating to data in TLS, and figuring that something must be wrong with the TLS data.
 
 It finally clicked when I noticed that the `ThreadLocalStoragePointer` for the crashing thread's TEB didn't match the spawning thread's...
 
@@ -454,6 +460,91 @@ pub unsafe fn patch_module_list(
     }
 }
 ```
+
+I later realized that the function `LdrpAllocateTlsEntry` does _almost_ all of the above work for me for free and doesn't check if the current module already has a TLS slot allocated. Using this function to allocate the TLS slot would also allow me to inject programs that use TLS data into programs that do not have any themselves!
+
+I could therefore rewrite my loader to do the following instead:
+
+```rust
+const LDRP_ALLOCATE_TLS_ENTRY_SIGNATURE_BYTES: [u8; 8] = [
+    0x4C, 0x89, 0x4C, 0x24, 0x20, 0x4C, 0x89, 0x44, 0x24, 0x18, 0x48, 0x89, 0x54, 0x24, 0x10, 0x53,
+    0x56, 0x57, 0x41, 0x56, 0x41, 0x57, 0x48, 0x83, 0xEC, 0x30, 0x49, 0x8B,
+];
+
+// Signature taken from http://www.nynaeve.net/Code/VistaImplicitTls.cpp
+type LdrpAllocateTlsEntryFn = unsafe extern "system" fn(
+    image_tls_dir: *const IMAGE_TLS_DIRECTORY64,
+    entry: *mut LDR_DATA_TABLE_ENTRY,
+    tls_index: &mut u32,
+    allocated_bitmap: *mut c_void,
+    tls_entry: *mut *const c_void,
+) -> NTSTATUS;
+
+/// Patches the module list to change the old image name to the new image name.
+///
+/// This is useful to ensure that a program that depends on `GetModuleHandle*`
+/// doesn't fail simply because its module is not found
+pub unsafe fn patch_module_list(
+    image_name: Option<&[u16]>,
+    new_base_address: *mut c_void,
+    module_size: usize,
+    get_module_handle_fn: GetModuleHandleAFn,
+    this_tls_data: *const IMAGE_TLS_DIRECTORY64,
+    virtual_protect: VirtualProtectFn,
+    entrypoint: *const c_void,
+) -> u32 {
+    let current_module = get_module_handle_fn(core::ptr::null());
+
+    let teb = teb();
+    let peb = (*teb).ProcessEnvironmentBlock;
+    let ldr_data = (*peb).Ldr;
+    let module_list_head = &mut (*ldr_data).InMemoryOrderModuleList as *mut LIST_ENTRY;
+    let mut next = (*module_list_head).Flink;
+    let mut tls_index = 0;
+    while next != module_list_head {
+        // -1 because this is the second field in the LDR_DATA_TABLE_ENTRY struct.
+        // the first one is also a LIST_ENTRY
+        let module_info = (next.offset(-1)) as *mut LDR_DATA_TABLE_ENTRY;
+        if (*module_info).DllBase == current_module {
+            (*module_info).DllBase = new_base_address;
+            // EntryPoint
+            (*module_info).Reserved3[0] = entrypoint as *mut c_void;
+            // SizeOfImage
+            (*module_info).Reserved3[1] = module_size as *mut c_void;
+
+            if !this_tls_data.is_null() {
+                let ntdll_addr = get_module_handle_fn("ntdll.dll\0".as_ptr() as *const _);
+                if let Some(ntdll_text) = get_module_section(ntdll_addr as *mut _, b".text") {
+                    for window in ntdll_text.windows(LDRP_ALLOCATE_TLS_ENTRY_SIGNATURE_BYTES.len())
+                    {
+                        if window == LDRP_ALLOCATE_TLS_ENTRY_SIGNATURE_BYTES {
+                            // Get this window's pointer -- it should be to the start of the function
+                            let mut ptr = window.as_ptr();
+                            let LdrpAllocateTlsEntry: LdrpAllocateTlsEntryFn =
+                                core::mem::transmute(ptr);
+
+                            let mut tls_entry: *const c_void = core::ptr::null();
+                            LdrpAllocateTlsEntry(
+                                this_tls_data,                   // ImageName
+                                module_info,                     // Entry
+                                &mut tls_index,                  // TlsIndex
+                                core::ptr::null_mut(),           // AllocatedBitmap
+                                &mut tls_entry as *mut *const _, // TlsEntry
+                            );
+                        }
+                    }
+                }
+            }
+            break;
+        }
+        next = (*next).Flink;
+    }
+
+    tls_index
+}
+```
+
+I really don't like using the signature bytes -- especially a signature so large -- but I'll take it.
 
 ### Patching Command-Line Args and Image Name
 
