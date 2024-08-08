@@ -28,6 +28,7 @@ author = "@landaire"
 github = "landaire"
 twitter = "landaire"
 license = ""
+hide_made_with_line = true
 
 [[extra.menu]]
 name = ""
