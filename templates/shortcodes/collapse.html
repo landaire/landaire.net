@@ -1,0 +1,9 @@
+<div class="wrap-collabsible">
+    <input id="collapsible{{nth}}" class="toggle" type="checkbox" />
+    <label for="collapsible{{nth}}" class="lbl-toggle">{{ preview }}</label>
+    <div class="collapsible-content">
+        <div class="content-inner">
+            {{ body | markdown(inline=true) | safe }}
+        </div>
+    </div>
+</div>

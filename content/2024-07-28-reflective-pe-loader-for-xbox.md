@@ -324,7 +324,7 @@ This code *worked*, but it didn't work for long. I obviously had no idea how thr
 2. TLS is allocated in slots for the current thread and each slot is a pointer to the TLS data.
 3. Windows keeps a cache of TLS directories for each loaded module, which makes solving the above for new threads pretty challenging.
 
-#### Patching ntdll for One Stupid List
+### Fixing TLS Data
 
 In the above section I mentioned that Windows keeps a cache of TLS directories for each loaded module, and I think this is a critical reason why the reflective PE loaders I sampled didn't bother with TLS data ((only one loader sampled seemed to support TLS data)[https://github.com/DarthTon/Blackbone/blob/5ede6ce50cd8ad34178bfa6cae05768ff6b3859b/src/BlackBone/ManualMap/Native/NtLoader.cpp#L153]). I really only discovered this by painfully debugging and figuring out the application only crashed when spawning new threads, that the crashes were relating to data in TLS, and figuring that something must be wrong with the TLS data.
 
@@ -359,7 +359,13 @@ typedef struct _LDRP_TLS_DATA
 
 Now that I know the TLS data is cached, can't I just overwrite the `TlsDirectory` data in this list from the host module with the data from the new module? Well yes... and no. The `LDRP_TLS_DATA` is heap-allocated, so I'd have to scan the heap which would be pretty bug-prone.
 
-Instead I popped `ntdll.dll` into IDA to see what functions were using this `LdrpTlsList` to see if maybe there was some other way I could grab the list's address.
+#### Bad Approaches to Fixing TLS Data
+
+*Note: All of the bad methods build on each other in order. So if you're looking to explore these, I recommend exploring all.*
+
+{% collapse(preview="Method 1 -- List Patching (Least Worst)") %}
+
+I popped `ntdll.dll` into IDA to see what functions were using this `LdrpTlsList` to see if maybe there was some other way I could grab the list's address.
 
 [![IDA Pro window showing functions using LdrpTlsList](/img/pe-loader/LdrpFindTlsEntry.png)](/img/pe-loader/LdrpFindTlsEntry.png)
 
@@ -461,6 +467,11 @@ pub unsafe fn patch_module_list(
 }
 ```
 
+{% end %}
+
+Method 1 has a big problem: if the program you're loading requires TLS, you must inject into a program with TLS. Otherwise you'll be replacing a different module's TLS data. Unless you're very careful that could be a Window component you need to use.
+
+{% collapse(preview="Method 2 -- Allocate a New TLS Entry (Terrible)") %}
 I later realized that the function `LdrpAllocateTlsEntry` does _almost_ all of the above work for me for free and doesn't check if the current module already has a TLS slot allocated. Using this function to allocate the TLS slot would also allow me to inject programs that use TLS data into programs that do not have any themselves!
 
 I could therefore rewrite my loader to do the following instead:
@@ -545,6 +556,7 @@ pub unsafe fn patch_module_list(
 ```
 
 I really don't like using the signature bytes -- especially a signature so large -- but I'll take it.
+{% end %}
 
 ### Patching Command-Line Args and Image Name
 
