@@ -10,6 +10,7 @@
   {%- endif %}
   <ul class="blog-posts">
     {% for page in term.pages %}
+    {% if not page.extra.hidden %}
     <li>
       <span>
         <i>
@@ -20,6 +21,7 @@
       </span>
       <a href="{{ page.permalink }}">{{ page.title }}</a>
     </li>
+    {% endif %}
     {% else %}
     <li>
       No posts yet
