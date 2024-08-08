@@ -83,7 +83,7 @@ body {
 font-family: Verdana, sans-serif;
 margin: auto;
 padding: 20px;
-max-width: 720px;
+max-width: 900px;
 text-align: left;
 background-color: #fff;
 word-wrap: break-word;
@@ -265,7 +265,41 @@ align-items: center;
 margin-right: 1rem ;
 }
 
-code, code * {
+/*
+@media (min-width: 1200px) {
+    pre {
+        width: 1080px;
+        position: relative;
+        left: calc(-540px + 50%);
+    }
+}
+
+pre {
+text-align: center;
+background-color: transparent !important;
+}
+
+pre code  {
+display: inline-block;
+text-align: left;
+}
+*/
+
+/*
+pre code {
+    width: 120em;
+    position: relative;
+    left: calc(-60em + 50%);
+}
+*/
+
+pre, pre * {
 font-family: 'BerkeleyMono', monospace;
 font-variant-ligatures: none;
+}
+
+pre {
+    max-height: 100vh;
+    overflow: -moz-scrollbars-vertical; 
+    overflow-y: scroll;
 }
