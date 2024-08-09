@@ -1,10 +1,10 @@
 +++
 title = "Writing a PE Loader for the Xbox in 2024"
-description = "Adventures in reinventing the wheel. Also: I hate thread-local storage"
-summary = "Adventures in reinventing the wheel. Also: I hate thread-local storage"
+description = "Adventures in reinventing the wheel. Also: I hate thread-local storage."
+summary = "Adventures in reinventing the wheel. Also: I hate thread-local storage."
 template = "toc_page.html"
 toc = true
-date = "2024-07-28"
+date = "2024-08-12"
 
 [extra]
 #image = "/img/wows-obfuscation/header.png"
@@ -12,17 +12,15 @@ date = "2024-07-28"
 #image_height = 250
 hidden = true
 pretext = """
-Adventures in reinventing the wheel
+*If you're already familiar with PE loading, absolutely nothing new is presented in this blog post but you might learn something like I did. Full source code can be found [on our GitHub](https://github.com/exploits-forsale/solstice). [Jump to the end](#fin) to see the fruits of our labor.*
 """
 +++
 
-*If you're already familiar with PE loading, absolutely nothing new is presented in this blog post but you might learn something like I did. Full source code can be found [on our GitHub](https://github.com/exploits-forsale/solstice).*
+Emma ([@carrot_c4k3](https://twitter.com/carrot_c4k3)) is a good friend of mine. We met in 2007 from the Xbox 360 scene and have remained friends ever since.
 
-Emma ([@carrot_c4k3](https://twitter.com/carrot_c4k3)) is a good friend of mine. We met about 17 years ago in the Xbox 360 scene and have remained friends ever since.
+Emma recently participated in pwn2own in the Windows LPE category and ended up using a great bug for LPE. The bug far exceeded the category though: this vulnerability was also a _sandbox escape_, i.e. it's in an NT syscall which is reachable from the UWP sandbox. A couple months ago she got a wild idea: why not try to port the exploit over to the Xbox One? (Modern Xboxes, not to be confused with the OG Xbox)
 
-Emma recently participated in pwn2own in the Windows LPE category and ended up using a great bug for LPE. The bug far exceeded the category though: this vulnerability was also a _sandbox escape_, i.e. it's in an NT syscall which is reachable from the UWP sandbox. A couple months ago she got a wild idea: why not try to port the exploit over to the Xbox One?
-
-## Brief Primer of Xbox One's Security
+## Brief Primer on Xbox One's Security
 
 Since I'll be talking about this in the context of the Xbox, it's worthwhile to spend a moment discussing the Xbox One's security model. There's [a very great and in-depth overview of the Xbox One's security model on YouTube](https://www.youtube.com/watch?v=U7VwtOrwceo) presented by Tony Chen who is one of the folks who designed it. I highly recommend watching it if you're interested, but I'll do my best at giving a crash course:
 
@@ -56,11 +54,11 @@ Since I'll be talking about this in the context of the Xbox, it's worthwhile to 
 
 This is a very, very simplified drawing of what you'd find on Microsoft's [Hyper-V Architecture page](https://learn.microsoft.com/en-us/virtualization/hyper-v-on-windows/reference/hyper-v-architecture). The main thing I'm trying to highlight here is that there are 3 VMs with 3 different purposes:
 
-1. HostOS, which acts very similar to your standard Hyper-V host
-2. ERA OS (aka GameOS) which is where games run
-3. SystemOS which is where applications run.
+1. HostOS, which acts very similar to your standard Hyper-V host.
+2. ERA OS (aka GameOS) which is where games run.
+3. SystemOS which is where applications run. Here you'll find the system shell and UWP applications from the Windows Store.
 
-All of the operating systems for each VM are a very slimmed down version of Windows based on Windows Core OS (WCOS) and the Hyper-V architecture is mostly what you'd encounter on a normal PC but with some additional Xbox-specific VSPs/functionality.
+Each VM is running a very slimmed down version of Windows based on Windows Core OS (WCOS). The Hyper-V architecture is mostly what you'd encounter on a normal PC but with some additional Xbox-specific VSPs/functionality.
 
 Missing from the above diagram is the _security processor_ (SP). The Xbox One's security processor should be the only thing on the Xbox which can reveal a title's plaintext on Xbox One. (*Random fact: Microsoft's [Pluton Processor](https://learn.microsoft.com/en-us/windows/security/hardware-security/pluton/microsoft-pluton-security-processor) is based on learnings from the Xbox One's security processor*)
 
@@ -78,9 +76,9 @@ We have the ability to read/write arbitrary memory and change page permissions w
 
 ## Reinventing the Wheel
 
-This specific technique of PE loading is referred as "Reflective PE Loading" which to me is some #redteam term I'd never heard before embarking on this project. This name is not very descriptive in my opinion, but a "reflective PE loader" is simply some user-mode code that can load and execute a PE without going through the normal `LoadLibrary()` / `CreateProcess()` routines .
+The specific technique of PE loading outlined here is referred to as "Reflective PE Loading". To me this sounds like some #redteam term I'd never heard before embarking on this project, and is not very descriptive in my opinion... but a "reflective PE loader" is simply some user-mode code that can load and execute a PE without going through the normal `LoadLibrary()` / `CreateProcess()` routines .
 
-Avoiding `LoadLibrary()` and `CreateProcess()` is very important for us since those will check for code integrity... and any code we write will not be properly signed.
+Avoiding `LoadLibrary()` and `CreateProcess()` is very important for us since those will check for code integrity and any code we write will not be properly signed.
 
 I took a look at the work involved and decided I wanted to write my own loader for a few reasons:
 
@@ -88,7 +86,7 @@ I took a look at the work involved and decided I wanted to write my own loader f
 
 2. Since I'm targeting _Xbox Windows_ and not _desktop Windows_, I might encounter some problems and I know how to debug my own code better than someone else's.
 
-3. On the Xbox we're going to _have to_ use a PE loader for running any executable until we eventually break code integrity. So we better know how it works and be able to load complex applications.
+3. On the Xbox we're required to use a PE loader for running unsigned executables until we eventually break code integrity. So we better know how it works and be able to load complex applications.
 
 4. I don't give a shit about EDR evasion or any #redteam stuff like that.
 
@@ -108,7 +106,9 @@ rspe already got me most of the way there, but with a few caveats:
 - It did not support environments with W^X mitigations
 - It did not work with _shellcode-based programming_ in mind.
 
-And on that last point, you might be wondering, "What is shellcode-based programming?" Well why don't I just give an example. Here's how a `VirtualAlloc()` call in `rspe` worked before:
+{% collapse(preview="What is shellcode-based programming?") %}
+
+On that last point above you might be wondering, "What is shellcode-based programming?" Well why don't I just give an example. Here's how a `VirtualAlloc()` call in `rspe` worked before:
 
 ```rust
 #[link(name = "kernel32")]
@@ -195,23 +195,25 @@ pub fn get_module_by_name(module_name: *const u16) -> Option<PVOID> {
 
 Then [parse the PE's export table](https://github.com/exploits-forsale/solstice/blob/6c47b5a0cd155d629845412974e7580fa9dff840/crates/shellcode_utils/src/lib.rs#L121-L161) to find `GetModuleHandleA()`, and `GetProcAddress()`.
 
+{% end %}
+
 ## The Easy Parts
 
 [Although it's been talked about before](https://github.com/BenjaminSoelberg/ReflectivePELoader?tab=readme-ov-file), I'll give a brief overview of how a basic loader works:
 
 1. Parse the PE headers and `VirtualAlloc()` some memory for the "cloned" PE with all the fixups applied. You'll try to `VirtualAlloc()` at the PE's preferred load address, but if you don't get it fall back to a random address. This is your _load address_. From here you calculate the delta between the preferred and actual load address and this will be used for fixing relocations.
 
-2. [Iterate each PE section and copy it over to the newly `VirtualAlloc`'d region.](https://github.com/exploits-forsale/solstice/blob/6c47b5a0cd155d629845412974e7580fa9dff840/crates/solstice_loader/src/pelib.rs#L211-L254) The virtual addresses here are _relative_ virtual addresses, so you just take each section's VirtualAddress, add it to the load address, and copy the section from its old location to the new address.
+2. [Iterate each PE section and copy it over to the newly `VirtualAlloc`'d region](https://github.com/exploits-forsale/solstice/blob/6c47b5a0cd155d629845412974e7580fa9dff840/crates/solstice_loader/src/pelib.rs#L211-L254). The virtual addresses here are _relative_ virtual addresses, so you just take each section's VirtualAddress, add it to the load address, and copy the section from its old location to the new address.
 
-3. [Fix section permissions.](https://github.com/exploits-forsale/solstice/blob/6c47b5a0cd155d629845412974e7580fa9dff840/crates/solstice_loader/src/pelib.rs#L256-L321) For each section, look at its `Characteristics` field and determine the correct permissions. `VirtualProtect()` the section according to the permissions.
+3. [Fix section permissions](https://github.com/exploits-forsale/solstice/blob/6c47b5a0cd155d629845412974e7580fa9dff840/crates/solstice_loader/src/pelib.rs#L256-L321). For each section, look at its `Characteristics` field and determine the correct permissions. `VirtualProtect()` the section according to the permissions.
 
-4. [Fix imports.](https://github.com/exploits-forsale/solstice/blob/6c47b5a0cd155d629845412974e7580fa9dff840/crates/solstice_loader/src/pelib.rs#L425-L545). For each import in the import table (`IMAGE_DIRECTORY_ENTRY_IMPORT`), ensure the imported DLL is loaded. Then use the loaded DLL's handle with `GetProcAddress()` to get the address of the function being imported. For each import in the table, write the real address in the import's thunk. Instead of `GetProcAddress()` could also parse the module's exports and match things up, but I took the lazy way.
+4. [Fix imports](https://github.com/exploits-forsale/solstice/blob/6c47b5a0cd155d629845412974e7580fa9dff840/crates/solstice_loader/src/pelib.rs#L425-L545). For each import in the import table (`IMAGE_DIRECTORY_ENTRY_IMPORT`), ensure the imported DLL is loaded. Then use the loaded DLL's handle with `GetProcAddress()` to get the address of the function being imported. For each import in the table, write the real address in the import's thunk. Instead of `GetProcAddress()` could also parse the module's exports and match things up, but I took the lazy way.
 
-5. [Fix relocations.](https://github.com/exploits-forsale/solstice/blob/6c47b5a0cd155d629845412974e7580fa9dff840/crates/solstice_loader/src/pelib.rs#L323-L398) This basically involves walking the `IMAGE_DIRECTORY_ENTRY_BASERELOC` directory and fixing each `IMAGE_BASE_RELOCATION` such that you add the delta calculated in step 1 to the relocation's `VirtualAddress` field. There's some nuance here where you need to only modify certain bits, etc. etc. but this is the basic idea.
+5. [Fix relocations](https://github.com/exploits-forsale/solstice/blob/6c47b5a0cd155d629845412974e7580fa9dff840/crates/solstice_loader/src/pelib.rs#L323-L398). This basically involves walking the `IMAGE_DIRECTORY_ENTRY_BASERELOC` directory and fixing each `IMAGE_BASE_RELOCATION` such that you add the delta calculated in step 1 to the relocation's `VirtualAddress` field. There's some nuance here where you need to only modify certain bits, etc. etc. but this is the basic idea.
 
-6. [Call the module's entrypoints.](https://github.com/exploits-forsale/solstice/blob/main/crates/solstice_loader/src/lib.rs#L343-L347)
+6. [Call the module's entrypoints](https://github.com/exploits-forsale/solstice/blob/main/crates/solstice_loader/src/lib.rs#L343-L347).
 
-Step 6 is actually a bit of a heavy bullet point. I learned through this experience that PEs can actually have _multiple_ thread-local storage callbacks called before the actual module entrypoint. Calling these is fairly straightforward:
+I learned through this experience that PEs can have multiple thread-local storage callbacks called before the actual module entrypoint. Calling these is fairly straightforward:
 
 ```rust
 let tls_directory =
@@ -274,21 +276,21 @@ There were some parts that really kicked my ass in figuring out, but in my opini
 
 ### Thread-Local Storage
 
-Related to #2, the absolute biggest challenge I faced was with applications that use thread-local storage. Having done all of my development in Rust, my test program that I was loading was also written in Rust.
+Related to #2, the absolute biggest challenge I faced was with applications that use thread-local storage (TLS). Having done all of my development in Rust, my test program that I was loading was also written in Rust.
 
-I kept encountering `int 29` instructions (`RtlFailFast(code)`) that crashed the application when I'd execute its entrypoint. This was **extremely** painful to debug, but eventually I figured out that I was failing after fetching data from thread-local storage:
+I kept crashing on `int 29` instructions (`RtlFailFast(code)`) shortly after executing the module's entrypoint. This was **extremely** painful to debug but eventually I figured out that I was failing after fetching data from TLS
 
-[![Screenshot of assembly instructions from a Rust "hello world" application loading data from thread-local storage in IDA pro](/img/pe-loader/tls-thread-set-current.png)](/img/pe-loader/tls-thread-set-current.png)
+[![Screenshot of assembly instructions from a Rust "hello world" application loading data from TLS in IDA pro](/img/pe-loader/tls-thread-set-current.png)](/img/pe-loader/tls-thread-set-current.png)
 
 [![Screenshot of assembly instructions from a Rust "hello world" application executing an `int 29` instruction in IDA pro](/img/pe-loader/int-29.png)](/img/pe-loader/int-29.png)
 
-I was kind of confused because I didn't expect my application to use thread-local storage, but apparently even the most basic "hello world" Rust program uses TLS:
+I was kind of confused because I didn't expect my application to use TLS, but apparently even the most basic "hello world" Rust program uses TLS:
 
 [![Screenshot of a Rust "hello world" application loaded into the "PE Bear" program, showing its TLS directory](/img/pe-loader/pe-bear-tls.png)](/img/pe-loader/pe-bear-tls.png)
 
 It turns out that this is related to Rust's thread initialization code that sets some thread-locals for the current thread and thread ID: [https://github.com/rust-lang/rust/blob/2e630267b2bce50af3258ce4817e377fa09c145b/library/std/src/thread/mod.rs#L694](https://github.com/rust-lang/rust/blob/2e630267b2bce50af3258ce4817e377fa09c145b/library/std/src/thread/mod.rs#L694)
 
-So I came to realize that my original idea for how I was handling thread-local storage was completely flawed. Originally I was _allocating_ new memory for my module's TLS, but didn't even realize it had some default state associated with it that I had to copy over. Simple fix right?
+So I came to realize that my original idea for how I was handling TLS data was completely flawed. Originally I was _allocating_ new memory for my module's TLS, but didn't even realize it had some default state associated with it that I had to copy over. Simple fix right?
 
 ```patch
 diff --git a/crates/loader/src/lib.rs b/crates/loader/src/lib.rs
@@ -362,9 +364,9 @@ index 97311d0..d66773d 100755
          if !callbacks_addr.is_null() {
 ```
 
-This code *worked*, but it didn't work for long. I obviously had no idea how thread-local storage worked, and soon discovered that in a multi-threaded application I was _again_ getting similar crashes because the TLS data was bad. Through much pain and debugging I ended up learning:
+This code worked, but not for long. I obviously had no idea how TLS worked, and soon discovered that in a multi-threaded application I was _again_ getting similar crashes because the TLS data was bad. Through much pain and debugging I ended up learning:
 
-- Changing the thread-local storage for your current thread is obviously not enough. New threads that spawn won't have the modifications I did above, so they'll have "default" TLS without my module included since the changes I did above are only reflected for the current thread. Duh.
+- Changing the TLS for your current thread is obviously not enough. New threads that spawn won't have the modifications I did above, so they'll have "default" TLS without my module included since the changes I did above are only reflected for the current thread. Duh.
 
 - TLS is allocated in slots for the current thread and each slot is a pointer to the TLS data.
 
@@ -391,7 +393,7 @@ Anyways, I set a breakpoint at the thread initialization routine, `LdrpInitializ
 The [ReactOS source code](https://github.com/mirror/reactos/blob/c6d2b35ffc91e09f50dfb214ea58237509329d6b/reactos/dll/ntdll/ldr/ldrinit.c#L1215-L1273) was of huge help here in figuring out what was going on, but essentially what happens when spawning a new thread is:
 
 1. If any of the currently loaded modules has TLS, allocate a `ThreadLocalStoragePointer`.
-2. The size of this memory block is `sizeof(void*) * NUM_MODULES_WITH_TLS_DATA`
+2. The size of this memory block is `sizeof(void*) * NUM_MODULES_WITH_TLS_DATA`.
 3. Iterate some `TlsLinks` list. This is a list of `LDRP_TLS_DATA`:
 
 ```c
@@ -402,28 +404,38 @@ typedef struct _LDRP_TLS_DATA
 } LDRP_TLS_DATA, *PLDRP_TLS_DATA;
 ```
 
-4. Calculate the size of the TLS data based on the `TlsDirectory`, and copy its contents
+4. Calculate the size of the TLS data based on the `TlsDirectory`, and copy its contents.
 5. Put the pointer to the memory allocated in step 4 in the appropriate slot, recorded as `TlsData->TlsDirectory.Characteristics`.
 
 Now that I know the TLS data is cached, can't I just overwrite the `TlsDirectory` data in this list from the host module with the data from the new module? Well yes... and no. The `LDRP_TLS_DATA` is heap-allocated, so I'd have to scan the heap which would be pretty bug-prone.
 
-#### Not Great Approaches to Fixing TLS Data
+#### Janky Approach to Fixing TLS Data
 
-Method 1 has a big problem: if the program you're loading requires TLS, you must inject into a program with TLS. Otherwise you'll be replacing a random DLL's TLS data. Unless you're very careful that could be a Window component you need to use.
+**tl;dr**: use a private `ntdll` function that returns the cached `TLS_ENTRY` from a `LDR_DATA_TABLE_ENTRY*` to find the hijacked module's TLS data. Once found, overwrite the cached `IMAGE_TLS_DIRECTORY` with the new module's.
 
-{% collapse(preview="Method 1 -- List Patching (Least Worst)") %}
+This has a big problem: if the program you're loading requires TLS, you must inject into a program with TLS. Otherwise you'll be replacing a random DLL's TLS data if you aren't careful.
+
+{% collapse(preview="List Patching Details") %}
 
 I popped `ntdll.dll` into IDA to see what functions were using this `LdrpTlsList` to see if maybe there was some other way I could grab the list's address.
 
 [![IDA Pro window showing functions using LdrpTlsList](/img/pe-loader/LdrpFindTlsEntry.png)](/img/pe-loader/LdrpFindTlsEntry.png)
 
-I found that in Windows (but not ReactOS) is a function, "LdrpFindTlsList", which will return a `PTLS_ENTRY` (the actual name of the Windows data structure for ReactOS's `LDRP_TLS_DATA`) given a `PLDR_DATA_TABLE_ENTRY`. [Ken Johnson even conviently provided the source code on his blog](http://www.nynaeve.net/Code/VistaImplicitTls.cpp).
+I found that in Windows (but not ReactOS) is a function, "`LdrpFindTlsList`", which will return a `PTLS_ENTRY` (the actual name of the Windows data structure for ReactOS's `LDRP_TLS_DATA`) given a `PLDR_DATA_TABLE_ENTRY`. [Ken Johnson even conviently provided the source code on his blog](http://www.nynaeve.net/Code/VistaImplicitTls.cpp).
 
-So now the only missing link: finding the `PLDR_DATA_TABLE_ENTRY`. I'm kind of doing a "draw the rest of the owl" moment, but figuring this out was fairly straightforward by poking through the `!peb` command in WinDbg.
+The `PLDR_DATA_TABLE_ENTRY` can be found in the PEB which you can explore using the `!peb` command in WinDbg.
 
 The complete code:
 
 ```rust
+/// Returns the Thread Environment Block (TEB)
+pub fn teb() -> *mut TEB {
+    let mut teb: *mut TEB;
+    unsafe { core::arch::asm!("mov {}, gs:[0x30]", out(reg) teb) }
+
+    teb
+}
+
 pub unsafe fn patch_module_list(
     image_name: Option<&[u16]>,
     new_base_address: *mut c_void,
@@ -521,109 +533,17 @@ pub unsafe fn patch_module_list(
 
 {% end %}
 
-Method 2's problems:
-
-1. The loader may be using a TLS bitmap, which isn't covered by either of the above cases.
-2. Running threads are unaffected.
-3. There may be persistent data in the PEB that we aren't updating.
-4. I had bizzaro crashes from spawned threads that I didn't even bother investigating.
-
-{% collapse(preview="Method 2 -- Allocate a New TLS Entry (Terrible)") %}
-I later realized that the function `LdrpAllocateTlsEntry` does _almost_ all of the above work for me for free and doesn't check if the current module already has a TLS slot allocated. Using this function to allocate the TLS slot would also allow me to inject programs that use TLS data into programs that do not have any themselves!
-
-I could therefore rewrite my loader to do the following instead:
-
-```rust
-const LDRP_ALLOCATE_TLS_ENTRY_SIGNATURE_BYTES: [u8; 8] = [
-    0x4C, 0x89, 0x4C, 0x24, 0x20, 0x4C, 0x89, 0x44, 0x24, 0x18, 0x48, 0x89, 0x54, 0x24, 0x10, 0x53,
-    0x56, 0x57, 0x41, 0x56, 0x41, 0x57, 0x48, 0x83, 0xEC, 0x30, 0x49, 0x8B,
-];
-
-// Signature taken from http://www.nynaeve.net/Code/VistaImplicitTls.cpp
-type LdrpAllocateTlsEntryFn = unsafe extern "system" fn(
-    image_tls_dir: *const IMAGE_TLS_DIRECTORY64,
-    entry: *mut LDR_DATA_TABLE_ENTRY,
-    tls_index: &mut u32,
-    allocated_bitmap: *mut c_void,
-    tls_entry: *mut *const c_void,
-) -> NTSTATUS;
-
-/// Patches the module list to change the old image name to the new image name.
-///
-/// This is useful to ensure that a program that depends on `GetModuleHandle*`
-/// doesn't fail simply because its module is not found
-pub unsafe fn patch_module_list(
-    image_name: Option<&[u16]>,
-    new_base_address: *mut c_void,
-    module_size: usize,
-    get_module_handle_fn: GetModuleHandleAFn,
-    this_tls_data: *const IMAGE_TLS_DIRECTORY64,
-    virtual_protect: VirtualProtectFn,
-    entrypoint: *const c_void,
-) -> u32 {
-    let current_module = get_module_handle_fn(core::ptr::null());
-
-    let teb = teb();
-    let peb = (*teb).ProcessEnvironmentBlock;
-    let ldr_data = (*peb).Ldr;
-    let module_list_head = &mut (*ldr_data).InMemoryOrderModuleList as *mut LIST_ENTRY;
-    let mut next = (*module_list_head).Flink;
-    let mut tls_index = 0;
-    while next != module_list_head {
-        // -1 because this is the second field in the LDR_DATA_TABLE_ENTRY struct.
-        // the first one is also a LIST_ENTRY
-        let module_info = (next.offset(-1)) as *mut LDR_DATA_TABLE_ENTRY;
-        if (*module_info).DllBase == current_module {
-            (*module_info).DllBase = new_base_address;
-            // EntryPoint
-            (*module_info).Reserved3[0] = entrypoint as *mut c_void;
-            // SizeOfImage
-            (*module_info).Reserved3[1] = module_size as *mut c_void;
-
-            if !this_tls_data.is_null() {
-                let ntdll_addr = get_module_handle_fn("ntdll.dll\0".as_ptr() as *const _);
-                if let Some(ntdll_text) = get_module_section(ntdll_addr as *mut _, b".text") {
-                    for window in ntdll_text.windows(LDRP_ALLOCATE_TLS_ENTRY_SIGNATURE_BYTES.len())
-                    {
-                        if window == LDRP_ALLOCATE_TLS_ENTRY_SIGNATURE_BYTES {
-                            // Get this window's pointer -- it should be to the start of the function
-                            let mut ptr = window.as_ptr();
-                            let LdrpAllocateTlsEntry: LdrpAllocateTlsEntryFn =
-                                core::mem::transmute(ptr);
-
-                            let mut tls_entry: *const c_void = core::ptr::null();
-                            LdrpAllocateTlsEntry(
-                                this_tls_data,                   // ImageName
-                                module_info,                     // Entry
-                                &mut tls_index,                  // TlsIndex
-                                core::ptr::null_mut(),           // AllocatedBitmap
-                                &mut tls_entry as *mut *const _, // TlsEntry
-                            );
-                        }
-                    }
-                }
-            }
-            break;
-        }
-        next = (*next).Flink;
-    }
-
-    tls_index
-}
-```
-{% end %}
-
 #### The Good Method
 
 Remember how I said [only one loader sampled seemed to support TLS data](https://github.com/DarthTon/Blackbone/blob/5ede6ce50cd8ad34178bfa6cae05768ff6b3859b/src/BlackBone/ManualMap/Native/NtLoader.cpp#L153)? This happens to be the same approach they took.
 
-I looked at who calls `LdrpAllocateTlsEntry` (method #2) and a private function `LdrpHandleTlsData`, which is called when a new module is loaded, is responsible for setting up almost all of the state relating to a module's TLS.
+Building on the above list patching method, I saw a different function called `LdrpAllocateTlsEntry` referenced the `LdrpTlsList` cache and is called by `LdrpHandleTlsData`. The latter function is called when a new module is loaded and is responsible for setting up almost all of the state relating to a module's TLS.
 
 It has no sanity checks on whether or not the module's TLS data has already been handled. Which is awesome, and actually makes sense! Why sanity check if this function is only ever called once during real loader scenarios?
 
 We can abuse this by performing the following operations:
 
-1. Update the hijacked module's `LDR_DATA_TABLE_ENTRY` to point to our new module's base address.
+1. Update the hijacked module's `LDR_DATA_TABLE_ENTRY` (found via the PEB) to point to our new module's base address.
 2. Release the hijacked module's TLS data (`LdrpReleaseTlsEntry`)
 3. Call `LdrpHandleTlsData` with the hijacked module to force the new TLS data to be loaded.
 
@@ -641,10 +561,21 @@ const LDRP_RELEASE_TLS_ENTRY_SIGNATURE_BYTES: [u8; 7] = [0x83, 0xE1, 0x07, 0x48,
 const LDRP_HANDLE_TLS_DATA_SIGNATURE_BYTES: [u8; 9] =
     [0xBA, 0x23, 0x00, 0x00, 0x00, 0x48, 0x83, 0xC9, 0xFF];
 
+
+// Function signature/type alias for LdrpReleaseTlsEntry
 type LdrpReleaseTlsEntryFn =
     unsafe extern "system" fn(entry: *mut LDR_DATA_TABLE_ENTRY, unk: *mut c_void) -> NTSTATUS;
 
+// Function signature/type alias for LdrpHandleTlsData
 type LdrpHandleTlsDataFn = unsafe extern "system" fn(entry: *mut LDR_DATA_TABLE_ENTRY);
+
+/// Returns the Thread Environment Block (TEB)
+pub fn teb() -> *mut TEB {
+    let mut teb: *mut TEB;
+    unsafe { core::arch::asm!("mov {}, gs:[0x30]", out(reg) teb) }
+
+    teb
+}
 
 /// Patches the module list to change the old image name to the new image name.
 ///
@@ -732,7 +663,7 @@ pub unsafe fn patch_ldr_data(
 }
 ```
 
-### Patching Command-Line Args and Image Name
+### Patching Command-Line Args 
 
 This has been done by other PE loaders, but I wanted to call this out as well: while the PEB contains the image name and process arugments, so does `kernelbase.dll`! Why? For `GetCommandLineW` and `GetCommandLineA` of course.
 
@@ -741,7 +672,7 @@ This one wasn't _too_ bad to patch so long as you want to rely on the fact that 
 tl;dr of the following code: we scan the global memory of `kernelbase.dll` looking for the previously mentioned `UNICODE_STRING` buffer pointer we obtained from the PEB then, once found, update its pointer and length to match our new pointer and length.
 
 ```rust
-pub unsafe fn patch_kernelbase(args: Option<&[u16]>, kernelbase_ptr: *mut u8) {
+pub unsafe fn patch_cli_args(args: Option<&[u16]>, kernelbase_ptr: *mut u8) {
     if let Some(args) = args {
         let peb = (*teb()).ProcessEnvironmentBlock;
         // This buffer pointer should match the cached UNICODE_STRING in kernelbase
@@ -786,7 +717,7 @@ I thought a great idea to prevent the hijacked application from crashing by susp
 
 _Yeah, don't call `CreateToolhelp32Snapshot()` incorrectly_.
 
-The Windows examples were actually fairly straightforward but on Xbox the code crashed. And that's because the `kernel32_ptr` here actually needs to be a pointer to `kernel32legacy.dll` since on Xbox `kernel32.dll` doesn't exist.
+The Windows examples were fairly straightforward but on Xbox the code crashed. And that's because the `kernel32_ptr` here actually needs to be a pointer to `kernel32legacy.dll` since on Xbox `kernel32.dll` doesn't exist.
 
 That took me a while to figure out and hunt down and double-check where the functions got relocated to.
 
@@ -842,12 +773,25 @@ I'll top this section off with some random subtle differences I noticed about Xb
 
 - `kernel32.dll` does not exist. Instead, some of its functionality is split between `kernelbase.dll` (which exists on Windows of course) and `kernel32legacy.dll`. If you would have found the function in _only_ `kernel32.dll` before, it probably now exists in `kernel32legacy.dll`.
 
+## TODO
+
+There are still some remaining items for the loader:
+
+- Ensure that `GetModuleHandle(NULL)` (handle to self) works correctly.
+- Maybe load .NET binaries? We already have a technique for launching .NET code, but having an all-in-one solution might be nice.
+- Maybe make this a generic crate?
+
 ## fin
 
 This was a fun exercise that taught me a lot about how Windows binaries are loaded. I'd like to thank carrot_c4k3, tuxuser, and 0e9ca321209eca529d6988c276e4e4ed for their help/support.
 
-With this work, we're now able to do cool things on Xbox :)
+With this work, we're now able to do cool things on Xbox :\)
+
+
+{{ video(path="/img/pe-loader/xbox_hacks.mp4") }}
+
+*The top terminal session is the payload server running on my PC, while the bottom netcat session is the output from the exploit and SSH daemon running on my Xbox.*
 
 [![Collateral Damage Executed Achievement](/img/pe-loader/collat_achievement.webp)](/img/pe-loader/collat_achievement.webp)
 
-*Shoutout tuxuser for figuring out how to fire the toast*
+*Shoutout tuxuser for figuring out how to fire the toast.*

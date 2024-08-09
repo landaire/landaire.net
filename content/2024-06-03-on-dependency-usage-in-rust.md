@@ -15,8 +15,6 @@ This is a response to ["C isn't a Hangover; Rust isn't a Hangover Cure"](https:/
 """
 +++
 
-_Rust and JS aren't bad for encouraging dependency use -- your favorite language's tools just suck._
-
 ## Context
 
 A couple months back I read ["C isn't a Hangover; Rust isn't a Hangover Cure"](https://scribe.rip/@john_25313/c-isnt-a-hangover-rust-isn-t-a-hangover-cure-580c9b35b5ce) ([original Medium link](https://medium.com/@john_25313/c-isnt-a-hangover-rust-isn-t-a-hangover-cure-580c9b35b5ce)) by John Viega. I [responded to the post](https://x.com/landaire/status/1782890213146083625) already on Twitter (sometimes known as X) and in hindsight should have just written a blog post to begin with since the platform is so terrible for longform comment.

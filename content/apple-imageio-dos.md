@@ -4,11 +4,16 @@ date = "2016-04-22T15:01:55-07:00"
 draft = false
 title = "Apple ImageIO Denial of Service"
 
+[extra]
+image = "/img/pngbleed.jpg"
+image_width = 250
+image_height = 250
+inline_image = true
+
 +++
 
 Last Updated: April 5, 2017 to address some incompleteness and errors. You can view the revision history [here](https://github.com/landaire/landaire.net).
 
-![#png #bleed #vulnmarketing #infosec #hype. click the image if you're using Safari](/img/pngbleed.jpg)
 
 Application Services is a framework in iOS and OS X which provides what's known as the Image I/O framework. ImageIO itself is a collection of utilities and data types for parsing various image formats. It's used in many OS X and iOS applications including:
 

@@ -8,6 +8,7 @@ toc = true
 image = "/img/yaesu/ft70d.jpg"
 image_width = 500
 image_height = 500
+inline_image = true
 pretext = """
 *This article dives into my full methodology for reverse engineering the tool mentioned in this article. It's a bit longer but is intended to be accessible to folks who aren't necessarily advanced reverse-engineers.*
 

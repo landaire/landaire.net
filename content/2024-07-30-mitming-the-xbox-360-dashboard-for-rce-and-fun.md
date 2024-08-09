@@ -11,9 +11,7 @@ image = "/img/xbox-dashboard/epix-mirrored.jpg"
 image_width = 720
 image_height = 480
 hidden = false
-pretext = """
-The golden era of man-in-the-middle attacks
-"""
+inline_image = true
 +++
 
 In the late 2000s and early 2010s my friends and I were living and breathing Xbox hacking. We were heavily interested in game betas, internal tools, and in general exploring everything the console had to offer.

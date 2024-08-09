@@ -29,6 +29,7 @@ github = "landaire"
 twitter = "landaire"
 license = ""
 hide_made_with_line = true
+show_base_url = false
 
 [[extra.menu]]
 name = ""

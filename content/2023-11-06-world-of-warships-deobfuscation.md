@@ -10,12 +10,12 @@ date = "2023-11-08"
 image = "/img/wows-obfuscation/header.png"
 image_width =  250
 image_height = 250
+inline_image = true
 pretext = """
-An in-depth analysis of how World of Warships obfuscates its game scripts and how to mostly deobfuscate them.
+An in-depth analysis of how World of Warships obfuscates its game scripts and how to mostly deobfuscate them. The `wowsdeob` project can be found on GitHub: [https://github.com/landaire/wowsdeob](https://github.com/landaire/wowsdeob)
 """
 +++
 
-An in-depth analysis of how World of Warships obfuscates its game scripts and how to mostly deobfuscate them. The `wowsdeob` project can be found on GitHub: [https://github.com/landaire/wowsdeob](https://github.com/landaire/wowsdeob)
 
 ## Background
 
