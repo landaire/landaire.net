@@ -3,7 +3,7 @@ module.exports = {
   content: [
     "./templates/**/*.html",
   ],
-  darkMode: "media",
+  darkMode: "class",
   theme: {
     extend: {
       fontFamily: {
@@ -45,7 +45,6 @@ module.exports = {
               backgroundSize: "0% 1px",
               backgroundRepeat: "no-repeat",
               backgroundPosition: "center bottom",
-              transition: "background-size 0.3s ease",
               "&:hover": {
                 backgroundSize: "100% 1px",
               },

@@ -17,9 +17,12 @@ generate_feeds = true
 [markdown]
 insert_anchor_links = "left"
 
+# Class-based highlighting (emits .z-* classes into giallo.css) so we can boost
+# the contrast of Material Ocean's muted tokens in tailwind-input.css. Code
+# blocks stay dark in both light and dark mode.
 [markdown.highlighting]
+style = "class"
 theme = "material-theme-ocean"
-
 
 [extra]
 # Put all your custom variables here

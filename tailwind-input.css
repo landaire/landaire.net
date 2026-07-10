@@ -11,14 +11,30 @@
 }
 
 @layer base {
-  /* Code blocks */
+  /* Let the browser theme its own chrome (scrollbars, form controls,
+     first-paint canvas) to match the active theme. The inline head script
+     also sets `color-scheme` directly so it is correct before CSS loads. */
+  html {
+    color-scheme: light;
+  }
+  html.dark {
+    color-scheme: dark;
+  }
+
+  /* Code blocks: giallo's .z-code sets the dark background (#0F111A) in both
+     light and dark mode; we only frame the card here. Token contrast is
+     boosted in the unlayered block at the end of this file. */
   pre {
-    @apply rounded-lg overflow-x-auto shadow-md;
-    background-color: #0d1117 !important;
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    @apply rounded-lg overflow-x-auto shadow-lg;
+    border: 1px solid rgba(0, 0, 0, 0.1);
     font-size: 0.7rem !important;
     line-height: 1.2 !important;
     padding: 0.5rem 0.75rem !important;
+  }
+
+  .dark pre {
+    @apply shadow-md;
+    border-color: rgba(255, 255, 255, 0.08);
   }
 
   pre code {
@@ -30,28 +46,36 @@
   }
 
   /* Code toolbar: language label + copy button */
+  /* Toolbar + line numbers: default (light) values sit on the #FAFAFA card;
+     the .dark overrides below restore the light-on-dark treatment for Ocean. */
   .code-toolbar {
     @apply flex items-center justify-between select-none;
     padding: 0.35rem 0.75rem;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
     margin: -0.5rem -0.75rem 0.4rem -0.75rem;
+  }
+  .dark .code-toolbar {
+    border-bottom-color: rgba(255, 255, 255, 0.06);
   }
 
   .code-lang {
     font-size: 0.65rem;
     text-transform: uppercase;
     letter-spacing: 0.05em;
-    color: rgba(255, 255, 255, 0.3);
+    color: rgba(0, 0, 0, 0.45);
     font-weight: 600;
+  }
+  .dark .code-lang {
+    color: rgba(255, 255, 255, 0.3);
   }
 
   .code-copy {
     font-size: 0.6rem;
     text-transform: uppercase;
     letter-spacing: 0.05em;
-    color: rgba(255, 255, 255, 0.3);
+    color: rgba(0, 0, 0, 0.45);
     background: none;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(0, 0, 0, 0.15);
     border-radius: 4px;
     padding: 0.15rem 0.5rem;
     cursor: pointer;
@@ -59,8 +83,16 @@
     font-family: inherit;
     margin-left: auto;
   }
+  .dark .code-copy {
+    color: rgba(255, 255, 255, 0.3);
+    border-color: rgba(255, 255, 255, 0.1);
+  }
 
   .code-copy:hover {
+    color: rgba(0, 0, 0, 0.7);
+    border-color: rgba(0, 0, 0, 0.3);
+  }
+  .dark .code-copy:hover {
     color: rgba(255, 255, 255, 0.6);
     border-color: rgba(255, 255, 255, 0.25);
   }
@@ -77,19 +109,12 @@
     width: 2.5em;
     text-align: right;
     padding-right: 1em;
-    color: rgba(255, 255, 255, 0.15);
+    color: rgba(0, 0, 0, 0.3);
     user-select: none;
     pointer-events: none;
   }
-
-  /* Light mode: dark code block with stronger border */
-  @media (prefers-color-scheme: light) {
-    pre {
-      background-color: #1a1e2e !important;
-      color: #e2e8f0;
-      border-color: rgba(0, 0, 0, 0.1);
-      @apply shadow-lg;
-    }
+  .dark .code-ln {
+    color: rgba(255, 255, 255, 0.15);
   }
 
   /* Anchor links on headings */
@@ -157,15 +182,13 @@
     @apply rounded-b-none;
   }
 
-  @media (prefers-color-scheme: dark) {
-    .collapse-section summary {
-      @apply bg-gray-800/60 text-gray-300 border-gray-700
-             hover:bg-gray-700/60;
-    }
+  .dark .collapse-section summary {
+    @apply bg-gray-800/60 text-gray-300 border-gray-700
+           hover:bg-gray-700/60;
+  }
 
-    .collapse-section .collapse-content {
-      @apply bg-gray-800/30 border-gray-700;
-    }
+  .dark .collapse-section .collapse-content {
+    @apply bg-gray-800/30 border-gray-700;
   }
 
   /* Tag pills */
@@ -176,11 +199,9 @@
            hover:bg-accent-200;
   }
 
-  @media (prefers-color-scheme: dark) {
-    .tag-pill {
-      @apply bg-accent-900/40 text-accent-300
-             hover:bg-accent-900/60;
-    }
+  .dark .tag-pill {
+    @apply bg-accent-900/40 text-accent-300
+           hover:bg-accent-900/60;
   }
 
   /* Image styling for content */
@@ -242,14 +263,12 @@
     @apply pl-4;
   }
 
-  @media (prefers-color-scheme: dark) {
-    .toc-sidebar a {
-      @apply text-gray-500 hover:text-gray-300 hover:border-accent-500;
-    }
+  .dark .toc-sidebar a {
+    @apply text-gray-500 hover:text-gray-300 hover:border-accent-500;
+  }
 
-    .toc-sidebar a.active {
-      @apply text-accent-400 border-accent-400;
-    }
+  .dark .toc-sidebar a.active {
+    @apply text-accent-400 border-accent-400;
   }
 
   /* Post list items */
@@ -259,10 +278,8 @@
            hover:bg-gray-50;
   }
 
-  @media (prefers-color-scheme: dark) {
-    .post-item {
-      @apply hover:bg-gray-800/50;
-    }
+  .dark .post-item {
+    @apply hover:bg-gray-800/50;
   }
 
   /* Banner hero image */
@@ -305,9 +322,68 @@
            bg-gray-100 text-gray-800;
   }
 
-  @media (prefers-color-scheme: dark) {
-    .prose-content :not(pre) > code {
-      @apply bg-gray-800 text-gray-200;
-    }
+  .dark .prose-content :not(pre) > code {
+    @apply bg-gray-800 text-gray-200;
   }
+
+  /* Inline code that is itself a link, e.g. [`foo`](…). Plain gray code gives no
+     hint that it's clickable, so tint it with the link accent color (and add a
+     hover underline) so it reads as a link instead of ordinary code. */
+  .prose-content a > code {
+    @apply text-accent-700 bg-accent-100;
+    transition: background-color 0.15s, color 0.15s;
+  }
+  .prose-content a:hover > code {
+    @apply bg-accent-200;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+  .dark .prose-content a > code {
+    @apply text-accent-300 bg-accent-900/40;
+  }
+  .dark .prose-content a:hover > code {
+    @apply bg-accent-900/60;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Code card backgrounds. Forced with !important because `prose-pre:bg-transparent`
+   from the templates ties giallo's .z-code on specificity and wins by source
+   order, leaving a transparent box. Light mode uses material-lighter's #FAFAFA;
+   dark mode uses Material Ocean's #0F111A.
+--------------------------------------------------------------------------- */
+html:not(.dark) pre.z-code {
+  background-color: #fafafa !important;
+}
+html.dark pre.z-code {
+  background-color: #0f111a !important;
+}
+
+/* ---------------------------------------------------------------------------
+   Dark-theme (Material Ocean) contrast boost. Ocean renders its base/identifier
+   tokens in a muted #BABED8 and comments in a near-invisible #464B5D; lift both.
+   Scoped to html.dark so it never touches the light theme. The light theme's
+   own contrast remap lives in /css/code-light.css.
+--------------------------------------------------------------------------- */
+html.dark pre.z-code,
+html.dark .z-code .z-variable,
+html.dark .z-code .z-variable.z-language,
+html.dark .z-code .z-variable.z-other,
+html.dark .z-code .z-variable.z-parameter,
+html.dark .z-code .z-support.z-variable,
+html.dark .z-code .z-support.z-class,
+html.dark .z-code .z-support.z-constant,
+html.dark .z-code .z-support.z-other.z-namespace,
+html.dark .z-code .z-entity.z-name.z-function,
+html.dark .z-code .z-entity.z-name.z-type.z-namespace,
+html.dark .z-code .z-meta.z-function-call.z-arguments,
+html.dark .z-code .z-meta.z-embedded {
+  color: #d2d7ea !important;
+}
+
+html.dark .z-code .z-comment,
+html.dark .z-code .z-punctuation.z-definition.z-comment,
+html.dark .z-code .z-meta.z-preprocessor,
+html.dark .z-code .z-string.z-quoted.z-docstring {
+  color: #8a93b4 !important;
 }
