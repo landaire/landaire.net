@@ -13,7 +13,7 @@ Before continuing any further: if you have a hobby project which you choose to w
 
 But if you are writing software that frequently finds itself on critical attack surface (browsers, media codecs, networking stacks, compression libs, etc.) and believe that you've dulled those edges: you are wrong. You will still get cut in ways you didn't predict, and the blade extends to cut your users too.
 
-## The Consequences of Memory Corruption
+## Extreme Consequences of Memory Corruption
 
 Surveillance-for-hire is a big industry targeting many groups with the goal of intercepting communication and providing access to information which may otherwise be difficult to obtain. I do not have exact numbers to quantify, but a _lot_ of spyware I've seen begins its life on a device with a memory safety issue.
 
