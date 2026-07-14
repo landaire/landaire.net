@@ -11,7 +11,7 @@ The year is 2026. The Programming Language Holy Wars are still going, and [the m
 
 Before continuing any further: if you have a hobby project which you choose to write in `$lang` because you enjoy it, and are aware it has some sharp edges that can cut you from time to time, this is probably not addressed to you. Continue enjoying writing code in that language and ignore people like me who say it's not good enough.
 
-But if you are writing critical infrastructure (browsers, media codecs, networking stacks, etc.) and believe that you've dulled those edges: you are wrong. You will still get cut in ways you didn't predict, and the blade extends to cut your users too.
+But if you are writing software that frequently finds itself on critical attack surface (browsers, media codecs, networking stacks, compression libs, etc.) and believe that you've dulled those edges: you are wrong. You will still get cut in ways you didn't predict, and the blade extends to cut your users too.
 
 ## The Consequences of Memory Corruption
 
@@ -511,11 +511,7 @@ You can make arguments that it's difficult to port a huge, complex codebase like
 
 Not to mention, there are target platform requirements that make it difficult to write anything but C or C++. I can't compile Rust for the Xbox 360 (yet), so even I'm forced to write C or C++ if I want to write some hacks.
 
-But no _new_ critical codebases should be written in these languages if it can be avoided. The cost across many axes -- including genuine harm to users who have _nothing_ to do with the code side of things -- is unacceptable.
-
-Things like Ghostty and TigerBeetle (Zig projects) aren't really critical stacks in the sense that they are on an attack surface **and** critical. I mean this when I say it: have fun building in your favorite programming language for these types of applications.
-
-Bun I'd argue _is_ critical since it has builtin libraries for processing network requests/images/compression/crypto and, as a runtime, who knows how people are going to use the language itself.
+But no _new_ codebases on an attack surface should be written in these languages if it can be avoided. The cost across many axes -- including genuine harm to users who have _nothing_ to do with the code side of things -- is unacceptable.
 
 The Chromium Project's [Rule of 2](https://chromium.googlesource.com/chromium/src/+/HEAD/docs/security/rule-of-2.md) puts it best:
 
