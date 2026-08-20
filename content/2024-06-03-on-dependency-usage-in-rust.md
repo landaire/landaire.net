@@ -50,9 +50,9 @@ On #2 I mostly agree. You are opening up your circle of trust, but done right yo
 
 In the left-pad incident a package named "left-pad" was removed from the npm registry causing widespread build failures for almost every node.js application. The broad usage of this dependency shocked people since it was less than 50 lines of code and could be written by anyone.
 
-If you're pulling in a dependency that's _already_ compromised then you're a bit late, but for avoiding _future_ compromise you can:
+If you're pulling in a dependency that's _already_ compromised, or broken, then you're a bit late, but for avoiding _future_ issues you can:
 
-- Use a package service that does not delete yanked dependencies. This should only be possible in extremely rare scenarios where e.g. someone's private information was exposed. crates.io, Rust's default package source, [does not permit deletion](https://crates.io/policies).
+- Use a package service that does not delete yanked dependencies to avoid build breakage from issues unrelated to security (just yanking a dependency for the sake of it). This should only be possible in extremely rare scenarios where e.g. someone's private information was exposed or the dependency contains malicious code that SHOULD cause a build breakage since that's better than continuing infection. crates.io, Rust's default package source, [does not permit deletion](https://crates.io/policies).
 - Commit lockfiles to ensure that builds are reproducible, the same dependencies are pulled every time, and a future compromise of a dependency doesn't impact you unless you explicitly update. This is the default behavior for Cargo and npm. The lockfile will also ensure that the dependency's location is preserved, preventing dependency substitution attacks and should ensure that with the first point above that even a yanked dependency can still be resolved.
 - Vendor dependencies so that you have a true complete snapshot of things without relying on 3rd parties. This weighs a lot more and is harder to manage over time but is an immediate solution to both of the above points.
 
